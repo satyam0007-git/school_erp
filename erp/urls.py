@@ -31,6 +31,9 @@ urlpatterns = [
     path('school/admission/<int:pk>/promote/', views.student_promote, name='student_promote'),
     path('school/admission/<int:pk>/fail/', views.student_fail, name='student_fail'),
     path('school/admission/<int:pk>/transfer/', views.student_transfer, name='student_transfer'),
+    path('school/admission/bulk-upload/', views.admission_bulk_upload, name='admission_bulk_upload'),
+    path('school/admission/bulk-upload/template/', views.admission_bulk_template, name='admission_bulk_template'),
+    path('school/admission/bulk-upload/errors/', views.admission_bulk_errors_download, name='admission_bulk_errors_download'),
 
     # Fee Submission
     path('school/fees/', views.payment_dashboard, name='payment_dashboard'),
