@@ -423,8 +423,13 @@ def student_list(request):
         .order_by('-academic_session')
     )
 
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'school/admission/student_list.html', {
-        'students': qs[:50],
+        'students': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': paginator.num_pages > 1,
         'classes': SchoolClass.objects.filter(school=school),
         'session_choices': get_academic_session_choices(past_years=2, future_years=10),
         'status_choices': Student.STATUS_CHOICES,
@@ -961,7 +966,7 @@ def payment_dashboard(request):
     total_collected = sum(p['total_amount_paid'] for p in payment_data)
     total_pending = max(total_due - total_collected, Decimal('0.00'))
 
-    paginator = Paginator(payment_data, 20)
+    paginator = Paginator(payment_data, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # Fee data range label (e.g. "April 2026 → May 2026")

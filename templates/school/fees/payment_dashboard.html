@@ -144,7 +144,7 @@
       <tbody>
         {% for p in payment_summary %}
         <tr>
-          <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+          <td class="ps-3 text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
           <td><strong>{{ p.student_name }}</strong></td>
           <td style="font-size:13px;">{{ p.father_name }}</td>
           <td>
