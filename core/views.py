@@ -4,7 +4,7 @@ import json
 import re
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
 
@@ -598,6 +598,363 @@ def student_transfer(request, pk):
     student.save(update_fields=['status', 'updated_at'])
     messages.success(request, f'{student.name} marked as transferred. Record kept for {student.academic_session}.')
     return redirect('student_list')
+
+
+# ── Bulk Admission Upload ──────────────────────────────────────────────────────
+
+_BULK_UPLOAD_HEADERS = [
+    'Student Name*', 'Date of Birth* (DD-MM-YYYY)', 'Class*',
+    'Academic Session*', 'Father Name*', 'Mother Name',
+    'Father WhatsApp*', 'Address*', 'Religion', 'Caste',
+    'Blood Group', 'Previous School', 'Aadhaar Number',
+    'PEN Number', 'Transport Opted (Yes/No)', 'Transport Amount',
+    'Discount Months (0-12)', 'Admission Date (DD-MM-YYYY)',
+]
+
+_VALID_BLOOD_GROUPS = {'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'}
+
+_BULK_FIELD_INFO = [
+    {'name': 'Student Name',        'required': True},
+    {'name': 'Date of Birth',       'required': True},
+    {'name': 'Class',               'required': True},
+    {'name': 'Academic Session',    'required': True},
+    {'name': 'Father Name',         'required': True},
+    {'name': 'Mother Name',         'required': False},
+    {'name': 'Father WhatsApp',     'required': True},
+    {'name': 'Address',             'required': True},
+    {'name': 'Religion',            'required': False},
+    {'name': 'Caste',               'required': False},
+    {'name': 'Blood Group',         'required': False},
+    {'name': 'Previous School',     'required': False},
+    {'name': 'Aadhaar Number',      'required': False},
+    {'name': 'PEN Number',          'required': False},
+    {'name': 'Transport Opted',     'required': False},
+    {'name': 'Transport Amount',    'required': False},
+    {'name': 'Discount Months',     'required': False},
+    {'name': 'Admission Date',      'required': False},
+]
+
+
+def _parse_bulk_date(value):
+    """Parse a date from any value openpyxl might return or a user might type.
+
+    openpyxl returns datetime/date objects for date-formatted Excel cells, so
+    check for those first before attempting string parsing.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    s = str(value).strip()
+    if not s:
+        return None
+    # Handles "2000-12-12" and "2000-12-12 00:00:00" (datetime str-conversion)
+    if len(s) >= 10 and s[4:5] == '-':
+        try:
+            return date.fromisoformat(s[:10])
+        except ValueError:
+            pass
+    for fmt in ('%d-%m-%Y', '%d/%m/%Y', '%m/%d/%Y'):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+@school_only
+def admission_bulk_template(request):
+    """Download the blank Excel import template for bulk admission."""
+    school = request.user.school
+    classes = SchoolClass.objects.filter(school=school).order_by('name')
+    class_names = ', '.join(c.name for c in classes) or 'No classes configured'
+    profile = SchoolProfile.get_for_school(school)
+    default_session = profile.current_academic_session
+    today_str = timezone.localdate().strftime('%d-%m-%Y')
+    first_class = classes.first()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Bulk Admission'
+    ws.row_dimensions[1].height = 30
+
+    ws.append(_BULK_UPLOAD_HEADERS)
+    for cell in ws[1]:
+        _style_header_cell(cell)
+
+    sample_row = [
+        'Rahul Kumar', '15-08-2010', first_class.name if first_class else 'Class 1',
+        default_session, 'Rajesh Kumar', 'Sunita Kumar',
+        '9876543210', '123 Main Street City', 'Hindu', 'General',
+        'O+', 'Delhi Public School', '123456789012',
+        'ABC123', 'No', '', '0', today_str,
+    ]
+    ws.append(sample_row)
+    thin = Side(style='thin', color='E2E8F0')
+    for cell in ws[2]:
+        cell.fill = PatternFill(fill_type='solid', fgColor='FFF3CD')
+        cell.font = Font(italic=True, color='856404', size=10)
+        cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    _auto_width(ws, max_w=30)
+    ws.freeze_panes = 'A2'
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    response = HttpResponse(
+        buf.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="bulk_admission_template.xlsx"'
+    return response
+
+
+@school_only
+def admission_bulk_upload(request):
+    school = request.user.school
+    classes = SchoolClass.objects.filter(school=school).order_by('name')
+    class_map = {c.name.lower(): c for c in classes}
+    upload_result = None
+
+    if request.method == 'GET':
+        request.session.pop('bulk_upload_failed', None)
+
+    if request.method == 'POST':
+        uploaded_file = request.FILES.get('excel_file')
+        if not uploaded_file:
+            messages.error(request, 'Please select an Excel file to upload.')
+        elif not uploaded_file.name.lower().endswith('.xlsx'):
+            messages.error(request, 'Only .xlsx files are supported. Please upload a valid Excel file.')
+        else:
+            try:
+                wb = openpyxl.load_workbook(uploaded_file, data_only=True)
+                ws = wb.active
+
+                total = 0
+                success_count = 0
+                failed_rows = []
+                batch_keys = set()
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    first_val = str(row[0] or '').strip() if row else ''
+                    if not first_val or first_val.upper().startswith('NOTE:'):
+                        continue
+                    total += 1
+                    errors = []
+
+                    def _gc(idx, default=''):
+                        val = row[idx] if idx < len(row) else None
+                        return str(val).strip() if val is not None and str(val).strip() else default
+
+                    name         = _gc(0).title()
+                    dob_raw      = row[1] if len(row) > 1 else None
+                    dob_str      = _gc(1)   # kept for error messages only
+                    class_name   = _gc(2)
+                    session      = _gc(3)
+                    father_name  = _gc(4).title()
+                    mother_name  = _gc(5, '').title()
+                    father_phone = _gc(6)
+                    address      = _gc(7).title()
+                    religion     = _gc(8) or 'Hindu'
+                    caste        = _gc(9) or 'General'
+                    blood_group  = _gc(10) or 'O+'
+                    prev_school  = _gc(11, '').title()
+                    aadhaar      = _gc(12, '')
+                    pen          = _gc(13, '')
+                    transport_str       = _gc(14) or 'No'
+                    transport_amt_str   = _gc(15, '')
+                    discount_str        = _gc(16, '0') or '0'
+                    adm_raw      = row[17] if len(row) > 17 else None
+
+                    if not name:
+                        errors.append('Student Name is required')
+                    if dob_raw is None or not str(dob_raw).strip():
+                        errors.append('Date of Birth is required')
+                    if not class_name:
+                        errors.append('Class is required')
+                    if not session:
+                        errors.append('Academic Session is required')
+                    if not father_name:
+                        errors.append('Father Name is required')
+                    if not father_phone:
+                        errors.append('Father WhatsApp Number is required')
+                    if not address:
+                        errors.append('Address is required')
+
+                    # Pass raw cell value so datetime objects are handled directly
+                    dob = _parse_bulk_date(dob_raw)
+                    if dob_raw is not None and str(dob_raw).strip() and dob is None:
+                        errors.append(f'Invalid Date of Birth "{dob_str}" — use DD-MM-YYYY')
+
+                    admission_dt = _parse_bulk_date(adm_raw) or timezone.localdate()
+
+                    school_class = class_map.get(class_name.lower()) if class_name else None
+                    if class_name and not school_class:
+                        available = ', '.join(c.name for c in classes)
+                        errors.append(f'Class "{class_name}" not found (available: {available})')
+
+                    phone_digits = re.sub(r'\D', '', father_phone) if father_phone else ''
+                    if father_phone and len(phone_digits) != 10:
+                        errors.append(f'Father phone must be exactly 10 digits (got "{father_phone}")')
+                    elif father_phone:
+                        father_phone = phone_digits
+
+                    if session and not re.match(r'^\d{4}-\d{2}$', session):
+                        errors.append(f'Invalid Academic Session "{session}" — use YYYY-YY (e.g. 2025-26)')
+
+                    if blood_group and blood_group.upper() not in _VALID_BLOOD_GROUPS:
+                        errors.append(f'Invalid Blood Group "{blood_group}" — use O+/O-/A+/A-/B+/B-/AB+/AB-')
+                        blood_group = ''
+
+                    transport_opted = transport_str.lower() in ('yes', 'y', '1', 'true')
+                    transport_amount = None
+                    if transport_opted:
+                        if transport_amt_str:
+                            try:
+                                transport_amount = Decimal(transport_amt_str)
+                                if transport_amount <= 0:
+                                    errors.append('Transport Amount must be greater than zero')
+                            except InvalidOperation:
+                                errors.append(f'Invalid Transport Amount "{transport_amt_str}"')
+                        else:
+                            errors.append('Transport Amount is required when Transport Opted is Yes')
+
+                    discount_months = 0
+                    if discount_str:
+                        try:
+                            discount_months = int(float(discount_str))
+                            if not 0 <= discount_months <= 12:
+                                errors.append(f'Discount Months must be 0–12 (got {discount_str})')
+                                discount_months = 0
+                        except (ValueError, TypeError):
+                            pass
+
+                    if not errors and name and father_name and school_class and session and dob:
+                        batch_key = (name.lower(), father_name.lower(), school_class.pk, session, str(dob))
+                        if batch_key in batch_keys:
+                            errors.append('Duplicate row within this upload batch')
+                        elif Student.objects.filter(
+                            school=school,
+                            name__iexact=name,
+                            father_name__iexact=father_name,
+                            school_class=school_class,
+                            academic_session=session,
+                            date_of_birth=dob,
+                        ).exists():
+                            errors.append('Duplicate: student already exists in the system')
+                        else:
+                            batch_keys.add(batch_key)
+
+                    raw_row = [str(v) if v is not None else '' for v in row[:18]]
+                    while len(raw_row) < 18:
+                        raw_row.append('')
+
+                    if errors:
+                        raw_row.append('; '.join(errors))
+                        failed_rows.append(raw_row)
+                    else:
+                        try:
+                            with transaction.atomic():
+                                Student.objects.create(
+                                    school=school,
+                                    school_class=school_class,
+                                    name=name,
+                                    date_of_birth=dob,
+                                    academic_session=session,
+                                    status=Student.STATUS_ACTIVE,
+                                    father_name=father_name,
+                                    mother_name=mother_name,
+                                    father_phone=father_phone,
+                                    address=address,
+                                    religion=religion,
+                                    caste=caste,
+                                    blood_group=blood_group,
+                                    previous_school=prev_school,
+                                    aadhaar_number=aadhaar,
+                                    pen_number=pen,
+                                    transport_opted=transport_opted,
+                                    transport_amount=transport_amount,
+                                    discount_months=discount_months,
+                                    admission_date=admission_dt,
+                                )
+                                success_count += 1
+                        except Exception as exc:
+                            raw_row.append(f'Save error: {exc}')
+                            failed_rows.append(raw_row)
+
+                if failed_rows:
+                    request.session['bulk_upload_failed'] = failed_rows
+                else:
+                    request.session.pop('bulk_upload_failed', None)
+
+                upload_result = {
+                    'total': total,
+                    'success': success_count,
+                    'failed': len(failed_rows),
+                    'has_errors': bool(failed_rows),
+                }
+
+            except Exception as exc:
+                messages.error(request, f'Failed to process file: {exc}')
+
+    return render(request, 'school/admission/bulk_upload.html', {
+        'classes': classes,
+        'field_info': _BULK_FIELD_INFO,
+        'upload_result': upload_result,
+        'has_pending_errors': bool(request.session.get('bulk_upload_failed')),
+    })
+
+
+@school_only
+def admission_bulk_errors_download(request):
+    """Download failed rows from the last bulk upload with error remarks."""
+    failed_rows = request.session.get('bulk_upload_failed', [])
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Failed Records'
+    ws.row_dimensions[1].height = 30
+
+    headers = [
+        'Student Name', 'Date of Birth', 'Class', 'Academic Session',
+        'Father Name', 'Mother Name', 'Father WhatsApp', 'Address',
+        'Religion', 'Caste', 'Blood Group', 'Previous School',
+        'Aadhaar Number', 'PEN Number', 'Transport Opted', 'Transport Amount',
+        'Discount Months', 'Admission Date', 'Error Remarks',
+    ]
+    ws.append(headers)
+    thin = Side(style='thin', color='E2E8F0')
+    for col_idx, cell in enumerate(ws[1], start=1):
+        _style_header_cell(cell, bg_color='DC2626' if col_idx == len(headers) else '1E293B')
+
+    for row_idx, row_data in enumerate(failed_rows, start=2):
+        ws.row_dimensions[row_idx].height = 22
+        padded = list(row_data) + [''] * max(0, len(headers) - len(row_data))
+        ws.append(padded[:len(headers)])
+        for col_idx, cell in enumerate(ws[row_idx], start=1):
+            if col_idx == len(headers):
+                cell.fill = PatternFill(fill_type='solid', fgColor='FEE2E2')
+                cell.font = Font(color='DC2626', size=10)
+                cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+            else:
+                _style_data_cell(cell, row_idx)
+
+    _auto_width(ws, max_w=45)
+    ws.freeze_panes = 'A2'
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    response = HttpResponse(
+        buf.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="bulk_upload_errors.xlsx"'
+    return response
 
 
 # ── Fee Submission ────────────────────────────────────────────────────────────
