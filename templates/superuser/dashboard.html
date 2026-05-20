@@ -219,47 +219,7 @@
 
 {% block extra_js %}
 <script>
-// KPI Color themes for toggle
-const kpiColorThemes = {
-  'total-schools': [
-    { bg: '#eff6ff', border: '#bfdbfe', labelColor: '#3b82f6', valueColor: '#1d4ed8' },
-    { bg: '#fef3c7', border: '#fde047', labelColor: '#d97706', valueColor: '#b45309' },
-    { bg: '#f5d5f7', border: '#e879f9', labelColor: '#a855f7', valueColor: '#7e22ce' }
-  ],
-  'total-students': [
-    { bg: '#eef2ff', border: '#c7d2fe', labelColor: '#6366f1', valueColor: '#4338ca' },
-    { bg: '#fef2f2', border: '#fecaca', labelColor: '#f87171', valueColor: '#b91c1c' },
-    { bg: '#f0fdf4', border: '#bbf7d0', labelColor: '#22c55e', valueColor: '#15803d' }
-  ],
-  'active-schools': [
-    { bg: '#f0fdf4', border: '#bbf7d0', labelColor: '#22c55e', valueColor: '#15803d' },
-    { bg: '#eff6ff', border: '#bfdbfe', labelColor: '#3b82f6', valueColor: '#1d4ed8' },
-    { bg: '#eef2ff', border: '#c7d2fe', labelColor: '#6366f1', valueColor: '#4338ca' }
-  ],
-  'inactive-schools': [
-    { bg: '#fef2f2', border: '#fecaca', labelColor: '#f87171', valueColor: '#b91c1c' },
-    { bg: '#f0fdf4', border: '#bbf7d0', labelColor: '#22c55e', valueColor: '#15803d' },
-    { bg: '#eff6ff', border: '#bfdbfe', labelColor: '#3b82f6', valueColor: '#1d4ed8' }
-  ]
-};
-
-const kpiState = { 'total-schools': 0, 'total-students': 0, 'active-schools': 0, 'inactive-schools': 0 };
-
 function toggleKPI(element) {
-  const kpiType = element.dataset.kpi;
-  const themes = kpiColorThemes[kpiType];
-  
-  // Cycle to next theme
-  kpiState[kpiType] = (kpiState[kpiType] + 1) % themes.length;
-  const currentTheme = themes[kpiState[kpiType]];
-  
-  // Apply smooth transition
-  element.style.background = currentTheme.bg;
-  element.style.borderColor = currentTheme.border;
-  element.querySelector('.kpi-label').style.color = currentTheme.labelColor;
-  element.querySelector('.kpi-value').style.color = currentTheme.valueColor;
-  
-  // Add active class for visual feedback
   element.classList.add('active');
   setTimeout(() => element.classList.remove('active'), 200);
 }
