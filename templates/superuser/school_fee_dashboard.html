@@ -4,28 +4,20 @@
 
 {% block extra_head %}
 <style>
-  .fee-kpi-card { 
-    background:#fff; 
-    border-radius:10px; 
-    padding:14px 18px; 
-    border:1.5px solid #94a3b8; 
-    box-shadow:0 2px 6px rgba(0,0,0,.06); 
+  .fee-kpi-card {
     cursor:pointer;
     transition:all 0.3s ease;
+    border-radius:8px;
   }
-  .fee-kpi-card:hover { 
+  .fee-kpi-card:hover {
     transform:translateY(-2px);
-    box-shadow:0 4px 12px rgba(0,0,0,.1);
-    background-color: #1f2937 !important;
-    border-color: #111827 !important;
+    box-shadow:0 4px 12px rgba(0,0,0,.1) !important;
   }
-  .fee-kpi-card:hover .label { color: #f3f4f6 !important; }
-  .fee-kpi-card:hover .value { color: #f9fafb !important; }
-  .fee-kpi-card.active { 
+  .fee-kpi-card.active {
     transform:scale(1.02);
   }
-  .fee-kpi-card .label { font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; }
-  .fee-kpi-card .value { font-size:22px; font-weight:700; line-height:1.2; margin-top:2px; }
+  .fee-kpi-card .kpi-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+  .fee-kpi-card .kpi-value { font-size:26px; font-weight:700; line-height:1.2; margin-top:2px; }
 
   .fee-table { border-collapse:separate; border-spacing:0; border:1.5px solid #94a3b8; border-radius:10px; overflow:hidden; width:100%; }
   .fee-table thead th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#374151; background:#f1f5f9; border-bottom:2px solid #94a3b8; border-right:1px solid #cbd5e1; padding:12px 14px; white-space:nowrap; position:sticky; top:0; z-index:1; }
@@ -64,21 +56,21 @@
 {# ── KPI Cards ─────────────────────────────────────────────────────────── #}
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-4">
-    <div class="fee-kpi-card kpi-monthly" onclick="toggleKPI(this)" data-kpi="monthly" style="background:#eff6ff; border-color:#bfdbfe;">
-      <div class="label" style="color:#3b82f6;">Total Due</div>
-      <div id="kpi-monthly-total" class="value" style="color:#1d4ed8;">₹{{ total_monthly|floatformat:0 }}</div>
+    <div class="card text-center p-3 fee-kpi-card kpi-monthly" onclick="toggleKPI(this)" data-kpi="monthly" style="background:#eff6ff;border:1.5px solid #bfdbfe;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+      <div class="kpi-label" style="color:#3b82f6;">Total Due</div>
+      <div id="kpi-monthly-total" class="kpi-value" style="color:#1d4ed8;">₹{{ total_monthly|floatformat:0 }}</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
-    <div class="fee-kpi-card kpi-collected" onclick="toggleKPI(this)" data-kpi="collected" style="background:#f0fdf4; border-color:#bbf7d0;">
-      <div class="label" style="color:#22c55e;">Collected</div>
-      <div id="kpi-collected" class="value" style="color:#15803d;">₹{{ total_collected|floatformat:0 }}</div>
+    <div class="card text-center p-3 fee-kpi-card kpi-collected" onclick="toggleKPI(this)" data-kpi="collected" style="background:#f0fdf4;border:1.5px solid #bbf7d0;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+      <div class="kpi-label" style="color:#22c55e;">Collected</div>
+      <div id="kpi-collected" class="kpi-value" style="color:#15803d;">₹{{ total_collected|floatformat:0 }}</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
-    <div class="fee-kpi-card kpi-pending" onclick="toggleKPI(this)" data-kpi="pending" style="background:#fef2f2; border-color:#fecaca;">
-      <div class="label" style="color:#f87171;">Pending</div>
-      <div id="kpi-pending" class="value" style="color:#b91c1c;">₹{{ total_pending|floatformat:0 }}</div>
+    <div class="card text-center p-3 fee-kpi-card kpi-pending" onclick="toggleKPI(this)" data-kpi="pending" style="background:#fef2f2;border:1.5px solid #fecaca;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+      <div class="kpi-label" style="color:#f87171;">Pending</div>
+      <div id="kpi-pending" class="kpi-value" style="color:#b91c1c;">₹{{ total_pending|floatformat:0 }}</div>
     </div>
   </div>
 </div>
