@@ -273,7 +273,7 @@
             <span class="input-icon">🗓️</span>
             <select name="current_academic_session">
               {% for val, label in session_choices %}
-                <option value="{{ val }}">{{ label }}</option>
+                <option value="{{ val }}" {% if val == default_session %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
           </div>
