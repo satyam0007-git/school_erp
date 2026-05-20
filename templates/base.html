@@ -27,26 +27,44 @@
   .sidebar .brand.open .brand-chevron { transform:rotate(180deg); color:#cbd5e1; }
   .sidebar .brand-menu {
     position:absolute;
-    top:calc(100% + 6px);
-    left:12px;
-    right:12px;
-    background:#111827;
-    border:1px solid #334155;
-    border-radius:10px;
-    box-shadow:0 12px 32px rgba(0,0,0,.45);
-    padding:10px;
+    top:calc(100% + 8px);
+    left:10px;
+    right:10px;
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.10);
+    padding:0 0 10px 0;
     z-index:130;
     opacity:0;
-    transform:translateY(-6px);
+    transform:translateY(-8px);
     pointer-events:none;
-    transition:opacity .18s, transform .18s;
+    transition:opacity .2s, transform .2s;
+    overflow:hidden;
   }
   .sidebar .brand.open .brand-menu { opacity:1; transform:translateY(0); pointer-events:auto; }
-  .sidebar .brand-menu-title { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#64748b; margin-bottom:7px; }
-  .sidebar .brand-menu-item { padding:7px 8px; border-radius:7px; background:#1f2937; border:1px solid #334155; margin-bottom:6px; }
+  .sidebar .brand-menu-title {
+    font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700;
+    background:linear-gradient(90deg,#6366f1,#ec4899,#f59e0b);
+    color:#fff; padding:9px 12px 8px; margin-bottom:8px;
+    text-align:center;
+  }
+  .sidebar .brand-menu-item {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 6px; margin:0 0 6px; border-radius:0;
+    background:#f8fafc;
+    transition:background .15s;
+  }
   .sidebar .brand-menu-item:last-child { margin-bottom:0; }
-  .sidebar .brand-menu-label { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; margin-bottom:3px; }
-  .sidebar .brand-menu-value { font-size:12px; color:#e2e8f0; word-break:break-word; }
+  .sidebar .brand-menu-icon {
+    width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .sidebar .brand-menu-item:nth-child(2) .brand-menu-icon { background:rgba(99,102,241,.12); color:#6366f1; }
+  .sidebar .brand-menu-item:nth-child(3) .brand-menu-icon { background:rgba(16,185,129,.12); color:#10b981; }
+  .sidebar .brand-menu-item:nth-child(4) .brand-menu-icon { background:rgba(245,158,11,.12); color:#f59e0b; }
+  .sidebar .brand-menu-text { min-width:0; }
+  .sidebar .brand-menu-label { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:#94a3b8; margin-bottom:2px; }
+  .sidebar .brand-menu-value { font-size:12px; color:#1e293b; word-break:break-word; font-weight:500; }
 
   .sidebar nav { flex:1; padding:8px 0; overflow-y:auto; }
   .sidebar nav a { display:flex; align-items:center; gap:10px; padding:8px 12px; margin:2px 8px; color:#94a3b8; text-decoration:none; font-size:13.5px; border-radius:9px; border-left:none; transition:all .15s; }
@@ -161,18 +179,33 @@
       </div>
     </button>
     <div class="brand-menu" id="brand-profile-menu">
-      <div class="brand-menu-title">Please connect with us.</div>
+      <div class="brand-menu-title">Connect with us</div>
       <div class="brand-menu-item">
-        <div class="brand-menu-label">Name</div>
-        <div class="brand-menu-value">{{ app_settings.superuser_name|default:'Not set' }}</div>
+        <div class="brand-menu-icon">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="brand-menu-text">
+          <div class="brand-menu-label">Name</div>
+          <div class="brand-menu-value">{{ app_settings.superuser_name|default:'Not set' }}</div>
+        </div>
       </div>
       <div class="brand-menu-item">
-        <div class="brand-menu-label">Email</div>
-        <div class="brand-menu-value">{{ app_settings.superuser_email|default:'Not set' }}</div>
+        <div class="brand-menu-icon">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
+        </div>
+        <div class="brand-menu-text">
+          <div class="brand-menu-label">Email</div>
+          <div class="brand-menu-value">{{ app_settings.superuser_email|default:'Not set' }}</div>
+        </div>
       </div>
       <div class="brand-menu-item">
-        <div class="brand-menu-label">Phone</div>
-        <div class="brand-menu-value">{{ app_settings.superuser_phone|default:'Not set' }}</div>
+        <div class="brand-menu-icon">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.37 19a19.45 19.45 0 0 1-5-5 19.79 19.79 0 0 1-3.93-8.45A2 2 0 0 1 4.11 3.5h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 11a16 16 0 0 0 5 5l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21 16.92z"/></svg>
+        </div>
+        <div class="brand-menu-text">
+          <div class="brand-menu-label">Phone</div>
+          <div class="brand-menu-value">{{ app_settings.superuser_phone|default:'Not set' }}</div>
+        </div>
       </div>
     </div>
   </div>
