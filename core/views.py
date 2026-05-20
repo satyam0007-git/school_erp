@@ -178,6 +178,8 @@ def _username_from_name(name):
 @super_only
 def school_add(request):
     session_choices = get_academic_session_choices(past_years=2, future_years=10)
+    su_settings = SuperUserSettings.get_solo()
+    default_session = su_settings.default_session or session_choices[0][0]
     if request.method == 'POST':
         name = request.POST['name'].strip()
         password = request.POST['password']
@@ -201,6 +203,7 @@ def school_add(request):
                 return render(request, 'superuser/school_add.html', {
                     'session_choices': session_choices,
                     'month_choices': MONTH_CHOICES,
+                    'default_session': default_session,
                 })
             school = School.objects.create(
                 name=name,
@@ -237,6 +240,7 @@ def school_add(request):
         'session_choices': session_choices,
         'month_choices': MONTH_CHOICES,
         'base_domain': getattr(_s, 'TENANT_BASE_DOMAIN', 'localhost'),
+        'default_session': default_session,
     })
 
 
