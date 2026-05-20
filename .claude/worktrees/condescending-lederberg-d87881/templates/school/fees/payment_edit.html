@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Edit Payment — {{ payment.receipt_number }}{% endblock %}
+{% block page_title %}Edit Fee Payment{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="card p-4" style="max-width:640px;">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="badge rounded-pill" style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:.04em;">{{ payment.receipt_number }}</span>
+    <h5 class="fw-bold mb-0">Edit Fee Payment</h5>
+  </div>
+
+  {# Student info — read-only #}
+  <div class="mb-3 p-3 rounded" style="background:#f8fafc;border:1.5px solid #e2e8f0;">
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Student</div>
+        <div class="fw-bold">{{ student.name }}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Class</div>
+        <div><span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;">{{ student.school_class }}</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Roll No.</div>
+        <div><code class="text-secondary">{{ student.roll_number }}</code></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Session</div>
+        <div class="text-muted">{{ payment.academic_session }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if errors %}
+  <div class="alert alert-danger py-2">
+    <ul class="mb-0 ps-3">
+      {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" id="editFeeForm">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Payment Date</label>
+        <input type="date" name="payment_date" class="form-control"
+               value="{{ payment.payment_date|date:'Y-m-d' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-semibold">Amount Paid (₹)</label>
+        <input type="text" id="editAmountPaid" class="form-control" readonly
+               value="{{ payment.amount_paid|floatformat:2 }}">
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">Months / Fees</label>
+        <select name="payment_months" id="id_edit_payment_months" class="form-select" multiple>
+          {% for opt in month_options %}
+            <option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>
+          {% endfor %}
+        </select>
+        {% if not month_options %}
+          <div class="text-muted mt-1" style="font-size:12px;">No available months for this session.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Save Changes</button>
+      <a href="{% url 'payment_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+(function () {
+  const monthSelect = document.getElementById('id_edit_payment_months');
+  const amountInput = document.getElementById('editAmountPaid');
+
+  // Fee rate data injected from server
+  const MONTH_OPTIONS = [
+    {% for opt in month_options %}
+      { value: "{{ opt.value }}", selected: {{ opt.selected|yesno:"true,false" }} },
+    {% endfor %}
+  ];
+
+  // Fetch fee structure to get rates for amount calculation
+  fetch("{% url 'student_fee_structure_ajax' %}?student_id={{ student.pk }}")
+    .then(r => r.json())
+    .then(data => {
+      const monthly = (data.items || []).filter(i => i.frequency === 'monthly');
+      const monthlyTransport = monthly.filter(i => i.is_transport).reduce((s, i) => s + parseFloat(i.amount || 0), 0);
+      const monthlyBase = monthly.filter(i => !i.is_transport).reduce((s, i) => s + parseFloat(i.amount || 0), 0);
+      const examAmounts = data.exam_amounts || {};
+
+      function updateAmount() {
+        const selected = Array.from(monthSelect.selectedOptions).map(o => o.value);
+        const total = selected.reduce((sum, v) => {
+          if (v.startsWith('exam_')) return sum + (examAmounts[v] || 0);
+          if (v.endsWith('_transport')) return sum + monthlyTransport;
+          return sum + monthlyBase;
+        }, 0);
+        amountInput.value = total > 0 ? total.toFixed(2) : '';
+      }
+
+      if (window.Choices) {
+        new Choices(monthSelect, {
+          removeItemButton: true,
+          searchEnabled: false,
+          shouldSort: false,
+          placeholderValue: 'Choose months…',
+        });
+      }
+      monthSelect.addEventListener('change', updateAmount);
+      updateAmount();
+    })
+    .catch(() => {
+      if (window.Choices) {
+        new Choices(monthSelect, {
+          removeItemButton: true,
+          searchEnabled: false,
+          shouldSort: false,
+          placeholderValue: 'Choose months…',
+        });
+      }
+    });
+})();
+</script>
+{% endblock %}

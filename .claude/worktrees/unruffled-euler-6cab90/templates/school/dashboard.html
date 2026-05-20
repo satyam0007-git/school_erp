@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - {{ school.name }}{% endblock %}
+{% block page_title %}{{ school.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kpi-card { 
+    cursor:pointer;
+    transition:all 0.3s ease;
+    border-radius:8px;
+  }
+  .kpi-card:hover { 
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(0,0,0,.1) !important;
+  }
+  .kpi-card.active { 
+    transform:scale(1.02);
+  }
+  .kpi-card .kpi-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+  .kpi-card .kpi-value { font-size:36px; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-3">
+  <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;">Academic Session</span>
+  <span style="background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;font-size:12px;font-weight:700;padding:3px 12px;border-radius:999px;">{{ current_session }}</span>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card text-center p-4 kpi-card" onclick="toggleSchoolKPI(this)" data-kpi="students" style="background:#eff6ff;border:1.5px solid #bfdbfe;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+      <div class="kpi-label" style="color:#3b82f6;">Active Students</div>
+      <div class="kpi-value" style="color:#1d4ed8;">{{ students }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center p-4 kpi-card" onclick="toggleSchoolKPI(this)" data-kpi="pending" style="background:#fef2f2;border:1.5px solid #fecaca;box-shadow:0 2px 6px rgba(0,0,0,.06);">
+      <div class="kpi-label" style="color:#f87171;">Pending Fee Records</div>
+      <div class="kpi-value" style="color:#b91c1c;">{{ fees_pending }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <a href="{% url 'student_list' %}" class="card p-4 text-decoration-none text-dark">
+      <div class="text-muted small">Manage</div>
+      <div class="fw-bold fs-5 mt-1">Admission &rarr;</div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'payment_dashboard' %}" class="card p-4 text-decoration-none text-dark">
+      <div class="text-muted small">Manage</div>
+      <div class="fw-bold fs-5 mt-1">Fee Submission &rarr;</div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'config_view' %}" class="card p-4 text-decoration-none text-dark">
+      <div class="text-muted small">Manage</div>
+      <div class="fw-bold fs-5 mt-1">Configuration &rarr;</div>
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const schoolKPIColorThemes = {
+  students: [
+    { bg: '#eff6ff', border: '#bfdbfe', labelColor: '#3b82f6', valueColor: '#1d4ed8' },
+    { bg: '#fef3c7', border: '#fde047', labelColor: '#d97706', valueColor: '#b45309' },
+    { bg: '#f0fdf4', border: '#bbf7d0', labelColor: '#22c55e', valueColor: '#15803d' }
+  ],
+  pending: [
+    { bg: '#fef2f2', border: '#fecaca', labelColor: '#f87171', valueColor: '#b91c1c' },
+    { bg: '#eef2ff', border: '#c7d2fe', labelColor: '#6366f1', valueColor: '#4338ca' },
+    { bg: '#eff6ff', border: '#bfdbfe', labelColor: '#3b82f6', valueColor: '#1d4ed8' }
+  ]
+};
+
+const schoolKPIState = { students: 0, pending: 0 };
+
+function toggleSchoolKPI(element) {
+  const kpiType = element.dataset.kpi;
+  const themes = schoolKPIColorThemes[kpiType];
+  
+  schoolKPIState[kpiType] = (schoolKPIState[kpiType] + 1) % themes.length;
+  const currentTheme = themes[schoolKPIState[kpiType]];
+  
+  element.style.background = currentTheme.bg;
+  element.style.borderColor = currentTheme.border;
+  element.querySelector('.kpi-label').style.color = currentTheme.labelColor;
+  element.querySelector('.kpi-value').style.color = currentTheme.valueColor;
+  
+  element.classList.add('active');
+  setTimeout(() => element.classList.remove('active'), 200);
+}
+</script>
+{% endblock %}

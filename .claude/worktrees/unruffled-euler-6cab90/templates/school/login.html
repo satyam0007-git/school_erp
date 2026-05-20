@@ -1,0 +1,639 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Login — {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --brand:      #0f766e;
+  --brand-mid:  #0d9488;
+  --brand-deep: #0f172a;
+  --text-1:     #0f172a;
+  --text-2:     #475569;
+  --text-3:     #94a3b8;
+  --surface:    #f8fafc;
+  --border:     #e2e8f0;
+  --white:      #ffffff;
+  --err-bg:     #fef2f2;
+  --err-border: #fca5a5;
+  --err-text:   #dc2626;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--brand-deep);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%,  rgba(15,118,110,.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%,  rgba(13,148,136,.18) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 70% at 50% 110%, rgba(20,184,166,.12) 0%, transparent 55%);
+  animation: meshShift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes meshShift {
+  0%   { opacity: 1;   transform: scale(1); }
+  100% { opacity: .85; transform: scale(1.04); }
+}
+
+.orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(80px); opacity: .15; pointer-events: none;
+  animation: float 8s ease-in-out infinite alternate;
+}
+.orb-1 { width: 360px; height: 360px; background: #0d9488; top: -80px; left: -60px; animation-delay: 0s; }
+.orb-2 { width: 260px; height: 260px; background: #6366f1; bottom: -60px; right: -50px; animation-delay: -4s; }
+.orb-3 { width: 180px; height: 180px; background: #14b8a6; top: 50%; left: 55%; animation-delay: -2s; }
+@keyframes float {
+  0%   { transform: translate(0,0) scale(1); }
+  100% { transform: translate(18px,-18px) scale(1.05); }
+}
+
+/* ── shell — slightly smaller ── */
+.login-shell {
+  width: 100%;
+  max-width: 760px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 460px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 28px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+  position: relative;
+  z-index: 10;
+}
+
+/* ══ LEFT brand panel ══ */
+.brand-panel {
+  background: linear-gradient(145deg, #134e4a 0%, #0f766e 45%, #115e59 100%);
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.brand-panel::before {
+  content: '';
+  position: absolute; top: -70px; right: -70px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  border: 55px solid rgba(255,255,255,.05);
+}
+.brand-panel::after {
+  content: '';
+  position: absolute; bottom: -90px; left: -90px;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  border: 70px solid rgba(255,255,255,.04);
+}
+
+.brand-top { position: relative; z-index: 1; }
+
+/* ── dual logo row ── */
+.dual-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.logo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.logo-wrap {
+  width: 72px; height: 72px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.logo-wrap img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+.logo-wrap .initials {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+.logo-label {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: center;
+}
+
+/* divider between the two logos */
+.logo-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,.25);
+  font-size: 10px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.logo-divider-line {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255,.18);
+}
+
+/* software name + badge */
+.brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.6px;
+  line-height: 1.15;
+  margin-bottom: 7px;
+}
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,.85);
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+/* school info card */
+.school-info-card {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.school-icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.12);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.school-info-text p {
+  font-size: 10.5px;
+  color: rgba(255,255,255,.5);
+  margin-bottom: 2px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.school-info-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.brand-middle { position: relative; z-index: 1; }
+
+/* stats strip */
+.brand-stats {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  margin-bottom: 18px;
+}
+.stat-item {
+  flex: 1;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.07);
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,.1);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.stat-label {
+  font-size: 9px;
+  color: rgba(255,255,255,.5);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.brand-quote-block {
+  border-left: 2px solid rgba(255,255,255,.28);
+  padding-left: 13px;
+}
+.brand-quote-text {
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(255,255,255,.75);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.brand-bottom { position: relative; z-index: 1; }
+.brand-secure {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: rgba(255,255,255,.4);
+}
+
+/* ══ RIGHT form panel ══ */
+.form-panel {
+  background: var(--white);
+  padding: 36px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.form-panel-inner { width: 100%; }
+
+.form-eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 8px;
+}
+.form-sub {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 26px;
+  line-height: 1.5;
+}
+
+.alert-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: var(--err-bg);
+  border: 1px solid var(--err-border);
+  border-radius: 9px;
+  padding: 11px 13px;
+  margin-bottom: 18px;
+  font-size: 12.5px;
+  color: var(--err-text);
+  line-height: 1.5;
+}
+.alert-error svg { flex-shrink: 0; margin-top: 1px; }
+
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 6px;
+  letter-spacing: .15px;
+}
+
+.input-wrap { position: relative; }
+.input-wrap > svg {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3); pointer-events: none; transition: color .2s;
+}
+.input-wrap input {
+  width: 100%;
+  padding: 10px 13px 10px 38px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text-1);
+  background: var(--surface);
+  outline: none;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+.input-wrap.has-toggle input { padding-right: 44px; }
+.input-wrap input::placeholder { color: var(--text-3); }
+.input-wrap input:focus {
+  border-color: var(--brand-mid);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
+.input-wrap:focus-within > svg { color: var(--brand-mid); }
+
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); padding: 0;
+  width: 30px; height: 30px; z-index: 2;
+  display: flex; justify-content: center; align-items: center;
+  border-radius: 999px; transition: color .2s;
+}
+.pw-toggle:hover { color: var(--text-2); }
+
+.btn-login {
+  width: 100%;
+  padding: 11px 20px;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: .2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform .15s, box-shadow .2s, opacity .2s;
+  box-shadow: 0 4px 12px rgba(15,118,110,.35);
+}
+.btn-login:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(15,118,110,.4); }
+.btn-login:active { transform: translateY(0); }
+
+.form-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 0;
+  color: var(--text-3);
+  font-size: 11px;
+  letter-spacing: .3px;
+}
+.form-divider::before, .form-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.form-footer {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.form-footer-left {
+  font-size: 11px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.form-footer-left svg { color: #22c55e; }
+.form-version { font-size: 10.5px; color: var(--text-3); }
+
+@media (max-width: 640px) {
+  .login-shell { grid-template-columns: 1fr; max-width: 400px; min-height: auto; }
+  .brand-panel { padding: 28px 28px; min-height: 200px; }
+  .brand-stats, .school-info-card { display: none; }
+  .form-panel { padding: 32px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="login-shell">
+
+  <!-- ══ LEFT BRAND PANEL ══ -->
+  <div class="brand-panel">
+
+    <div class="brand-top">
+
+      <!-- Dual logo row: software logo LEFT · school logo RIGHT -->
+      <div class="dual-logo-row">
+
+        <!-- Software logo -->
+        <div class="logo-box">
+          <div class="logo-wrap">
+            {% if settings.logo %}
+              <img src="{{ settings.logo.url }}" alt="{{ settings.software_name|default:'ERP' }}">
+            {% else %}
+              <span class="initials">
+                {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="logo-divider">
+          <div class="logo-divider-line"></div>
+          <span>×</span>
+          <div class="logo-divider-line"></div>
+        </div>
+
+        <!-- School logo -->
+        <div class="logo-box">
+          <div class="logo-wrap">
+            {% if tenant and tenant.logo %}
+              <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
+            {% else %}
+              <span class="initials">
+                {% if tenant %}{{ tenant.name|slice:":2"|upper }}{% else %}SC{% endif %}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+      <!-- end dual-logo-row -->
+
+      <div class="brand-name">
+        {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}
+      </div>
+
+      <div class="brand-badge">
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+          <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M3 5l1.5 1.5L7 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        School Admin Portal
+      </div>
+    </div>
+
+    <div class="brand-middle">
+
+      {% if tenant %}
+      <div class="school-info-card">
+        <div class="school-icon">
+          <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <div class="school-info-text">
+          <strong>{{ tenant.name }}</strong>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="brand-stats">
+        <div class="stat-item">
+          <div class="stat-num">Smart</div>
+          <div class="stat-label">Attendance</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Auto</div>
+          <div class="stat-label">Fee Alerts</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Live</div>
+          <div class="stat-label">Reports</div>
+        </div>
+      </div>
+
+      {% if settings.organization_address %}
+      <div class="brand-quote-block">
+        <p class="brand-quote-text">"{{ settings.organization_address }}"</p>
+      </div>
+      {% else %}
+      <div class="brand-quote-block">
+        <p class="brand-quote-text">"Empowering institutions with intelligent management, one click at a time."</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="brand-bottom">
+      <div class="brand-secure">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        256-bit SSL encrypted &nbsp;·&nbsp; Role-based access control
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT FORM PANEL ══ -->
+  <div class="form-panel">
+    <div class="form-panel-inner">
+
+      <p class="form-eyebrow">Welcome Back</p>
+      <p class="form-sub">Enter your school credentials to manage students, fees, and reports.</p>
+
+      {% for msg in messages %}
+      <div class="alert-error">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ msg }}
+      </div>
+      {% endfor %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="field">
+          <label for="id_username">Username</label>
+          <div class="input-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input type="text" id="id_username" name="username" placeholder="Enter your username" required autofocus autocomplete="username">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="id_password">Password</label>
+          <div class="input-wrap has-toggle">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="id_password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="pw-toggle" onclick="togglePw()" aria-label="Toggle password">
+              <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Sign In
+        </button>
+      </form>
+
+      <div class="form-divider">secure access</div>
+
+      <div class="form-footer">
+        <div class="form-footer-left">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor">
+            <circle cx="5" cy="5" r="5"/>
+          </svg>
+          System operational
+        </div>
+        <span class="form-version">v2.0 &nbsp;·&nbsp; {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function togglePw() {
+  const input  = document.getElementById('id_password');
+  const button = document.querySelector('.pw-toggle');
+  const icon   = document.getElementById('eyeIcon');
+  if (!input || !icon || !button) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    button.setAttribute('aria-label', 'Hide password');
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    button.setAttribute('aria-label', 'Show password');
+  }
+}
+</script>
+
+</body>
+</html>

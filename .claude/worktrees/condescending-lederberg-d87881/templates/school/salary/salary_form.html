@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% block title %}Pay Salary{% endblock %}
+{% block page_title %}Pay Salary{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-wrap { max-width: 100%; }
+  .section-card { border: 1.5px solid #94a3b8; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); margin-bottom: 20px; overflow: visible; }
+  .section-header { padding: 13px 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; border-radius: 10px 10px 0 0; }
+  .section-header svg { flex-shrink: 0; }
+  .section-header.blue  { background: #eff6ff; color: #1d4ed8; border-bottom: 1px solid #dbeafe; }
+  .section-header.green { background: #f0fdf4; color: #15803d; border-bottom: 1px solid #bbf7d0; }
+  .section-body { padding: 20px; background: #fff; }
+  .form-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+  .input-group-text { background: #f8fafc; border-color: #94a3b8; color: #64748b; }
+  .form-control, .form-select { border-color: #94a3b8; font-size: 14px; }
+  .form-control:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .input-group .form-control, .input-group .form-select { border-left: 0; }
+  .input-group:focus-within .input-group-text { border-color: #3b82f6; }
+  .field-error { font-size: 12px; color: #dc2626; margin-top: 4px; }
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; }
+  .error-box li { font-size: 13px; color: #991b1b; }
+  .btn-save   { background: #16a34a; border: none; color: #fff; border-radius: 8px; padding: 10px 28px; font-weight: 600; font-size: 14px; }
+  .btn-save:hover { background: #15803d; color: #fff; }
+  .btn-cancel { border-radius: 8px; padding: 10px 20px; font-size: 14px; }
+
+  /* Month dropdown */
+  .month-dropdown-btn {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 9px;
+    border: 1.5px solid #94a3b8; background: #fff;
+    font-size: 14px; font-weight: 500; color: #475569;
+    cursor: pointer; text-align: left; transition: border-color .15s, color .15s;
+  }
+  .month-dropdown-btn:hover { border-color: #3b82f6; color: #1d4ed8; }
+  .month-dropdown-btn[aria-expanded="true"] { border-color: #3b82f6; color: #1d4ed8; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .month-dropdown-btn .chevron { margin-left: auto; transition: transform .2s; flex-shrink:0; }
+  .month-dropdown-btn[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+  .month-dropdown-panel {
+    border: 1.5px solid #3b82f6; border-top: none;
+    border-bottom-left-radius: 9px; border-bottom-right-radius: 9px;
+    background: #fff; max-height: 400px; overflow-y: auto;
+  }
+  .month-dropdown-actions {
+    display: flex; gap: 8px; padding: 10px 14px 8px;
+    border-bottom: 1px solid #e2e8f0; background: #f8fafc;
+  }
+  .month-dropdown-actions button {
+    font-size: 12px; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px; border: 1.5px solid #bfdbfe;
+    background: #eff6ff; color: #1d4ed8; cursor: pointer;
+  }
+  .month-dropdown-actions button:hover { background: #dbeafe; }
+  .month-dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; cursor: pointer; transition: background .12s;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .month-dropdown-item:last-child { border-bottom: none; }
+  .month-dropdown-item:hover { background: #f0f9ff; }
+  .month-dropdown-item input[type=checkbox] { width: 16px; height: 16px; accent-color: #3b82f6; flex-shrink: 0; cursor: pointer; }
+  .month-dropdown-item label { flex: 1; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; font-weight: 500; color: #374151; margin: 0; }
+  .month-dropdown-item:has(input:checked) { background: #eff6ff; }
+  .month-dropdown-item:has(input:checked) label { color: #1d4ed8; font-weight: 600; }
+  .month-amt-badge {
+    font-size: 12px; font-weight: 700; color: #16a34a;
+    background: #dcfce7; border-radius: 5px; padding: 2px 8px; white-space: nowrap;
+  }
+  .month-dropdown-item:has(input:checked) .month-amt-badge { background: #dbeafe; color: #1d4ed8; }
+  .month-item { display: none; }
+
+  /* Total box */
+  .salary-total-box {
+    background: #f0fdf4; border: 1.5px solid #86efac;
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .total-breakdown-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: #374151; padding: 4px 0;
+    border-bottom: 1px dashed #bbf7d0;
+  }
+  .total-breakdown-row:last-child { border-bottom: none; }
+  .total-summary-row {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    padding-top: 6px; border-top: 1.5px solid #86efac; margin-top: 2px;
+  }
+  @keyframes amt-pop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+  .amt-updated { animation: amt-pop .25s ease; }
+
+  /* Teacher info card */
+  .teacher-info-card {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1.5px solid #bfdbfe; border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .teacher-info-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .salary-total-box {
+    background: #f0fdf4; border: 1.5px solid #86efac;
+    border-radius: 10px; padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+
+  {% if form.errors %}
+  <div class="error-box mb-3">
+    <ul class="mb-0 ps-3">
+      {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate id="salaryForm">
+    {% csrf_token %}
+
+    {# ── Teacher & Session ─────────────────────────────────────────── #}
+    <div class="section-card">
+      <div class="section-header blue">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Select Teacher
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Teacher <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              {{ form.teacher }}
+            </div>
+            {% if form.teacher.errors %}<div class="field-error">{{ form.teacher.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Academic Session <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </span>
+              {{ form.academic_session }}
+            </div>
+            {% if form.academic_session.errors %}<div class="field-error">{{ form.academic_session.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </span>
+              {{ form.payment_date }}
+            </div>
+            {% if form.payment_date.errors %}<div class="field-error">{{ form.payment_date.errors|join:", " }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Monthly Salary</label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </span>
+              <input type="text" id="monthlySalaryInput"
+                     class="form-control" readonly
+                     value="{% if selected_teacher %}{{ selected_teacher.monthly_salary }}{% endif %}"
+                     placeholder="—" style="background:#f8fafc;color:#64748b;cursor:default;">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# ── Select Months ─────────────────────────────────────────────── #}
+    <div class="section-card">
+      <div class="section-header green">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Select Months to Pay
+      </div>
+      <div class="section-body">
+
+        {% if form.payment_months.errors %}
+        <div class="field-error mb-3">{{ form.payment_months.errors|join:", " }}</div>
+        {% endif %}
+
+        {% if unpaid_months is not None %}
+          {% if unpaid_months %}
+          {# Dropdown #}
+          <div class="month-dropdown-wrapper">
+            <button type="button" class="month-dropdown-btn" id="monthDropdownBtn"
+                    data-bs-toggle="collapse" data-bs-target="#monthDropdownPanel" aria-expanded="false">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="monthDropdownLabel">Select months to pay…</span>
+              <svg class="chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="collapse month-dropdown-panel" id="monthDropdownPanel">
+              {% for val, label, amount, ratio in unpaid_months %}
+              <div class="month-dropdown-item" data-ratio="{{ ratio }}" onclick="toggleMonthCb('{{ val }}')">
+                <input type="checkbox" name="payment_months" id="dd_{{ val }}" value="{{ val }}"
+                       onclick="event.stopPropagation();" onchange="updateTotal()">
+                <label for="dd_{{ val }}" onclick="event.preventDefault();">
+                  <span class="month-name-text">{{ label }}</span>
+                  <span class="month-amt-badge">₹{{ amount }}</span>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          {% else %}
+          <div class="text-center py-3" style="color:#94a3b8;font-size:13px;">
+            <svg width="32" height="32" fill="none" stroke="#cbd5e1" stroke-width="1.5" viewBox="0 0 24 24" style="display:block;margin:0 auto 8px;"><polyline points="20 6 9 17 4 12"/></svg>
+            All months have been paid for this teacher in the selected session.
+          </div>
+          {% endif %}
+        {% else %}
+          <div style="color:#94a3b8;font-size:13px;">Select a teacher to see available months.</div>
+        {% endif %}
+
+        {# Total amount box #}
+        <div class="salary-total-box mt-4" id="totalBox" style="display:none;">
+          <div id="monthBreakdown" style="display:none;"></div>
+          <div class="total-summary-row" id="totalSummaryRow">
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Selected Months</div>
+              <div style="font-size:13px;font-weight:600;color:#1e293b;max-width:240px;" id="selectedMonthsLabel">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Amount to Pay</div>
+              <div style="font-size:26px;font-weight:800;color:#16a34a;line-height:1;" id="totalAmount">₹0</div>
+            </div>
+          </div>
+          <input type="hidden" name="amount_paid" id="amountPaidInput" value="0">
+        </div>
+
+
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-1">
+      <button class="btn btn-save" type="submit">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm Payment
+      </button>
+      <a href="{% url 'salary_dashboard' %}" class="btn btn-outline-secondary btn-cancel">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% if salary_history %}
+<div class="card p-4 mt-4" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+  <h5 class="fw-bold mb-3" style="font-size:15px;color:#1e293b;">Payment History</h5>
+  <div class="table-responsive" style="max-height:420px;overflow-y:auto;border-radius:10px;">
+    <table class="table mb-0" style="border-collapse:separate;border-spacing:0;border:1.5px solid #cbd5e1;border-radius:10px;overflow:hidden;width:100%;">
+      <thead>
+        <tr>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">S.N</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Name</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Session</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Date</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Months Paid</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;border-right:1px solid #e2e8f0;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Amount</th>
+          <th style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;background:#f1f5f9;border-bottom:2px solid #cbd5e1;padding:10px 14px;white-space:nowrap;position:sticky;top:0;">Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in salary_history %}
+        <tr style="transition:background .12s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;color:#94a3b8;">{{ forloop.counter }}</td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;font-weight:600;color:#1e293b;">{{ p.teacher.name }}</td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;color:#64748b;white-space:nowrap;">{{ p.academic_session }}</td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;color:#64748b;white-space:nowrap;">{{ p.payment_date|date:"d M Y" }}</td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;">
+            {% for m in p.payment_months %}
+              <span class="badge rounded-pill" style="background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;margin-right:2px;">{{ m|title }}</span>
+            {% endfor %}
+          </td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;border-right:1px solid #f1f5f9;font-weight:700;color:#16a34a;white-space:nowrap;">₹{{ p.amount_paid|floatformat:2 }}</td>
+          <td style="font-size:13px;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
+            <a href="{% url 'salary_detail' p.pk %}" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:underline;">{{ p.receipt_number }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const monthAmounts = {{ month_amounts_json|default:"{}" }};
+const monthLabels = {};
+
+// Build label map from dropdown items
+document.querySelectorAll('.month-dropdown-item').forEach(function(item) {
+  const cb     = item.querySelector('input[type=checkbox]');
+  const nameEl = item.querySelector('.month-name-text');
+  if (cb && nameEl) monthLabels[cb.value] = nameEl.textContent.trim();
+});
+
+function currentSalary() {
+  const inp = document.getElementById('monthlySalaryInput');
+  return inp ? (parseFloat(inp.value) || 0) : (parseFloat('{{ selected_teacher.monthly_salary|default:0 }}') || 0);
+}
+
+function fmtINR(n) {
+  return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+
+// Toggle a month via row click
+function toggleMonthCb(val) {
+  const cb = document.getElementById('dd_' + val);
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  updateTotal();
+}
+
+function updateTotal() {
+  const checked = Array.from(document.querySelectorAll('.month-dropdown-item input[type=checkbox]:checked'));
+  let total = 0;
+  const rows = [];
+  checked.forEach(function(c) {
+    const ratio = parseFloat(c.closest('.month-dropdown-item').dataset.ratio || 1);
+    const amt   = parseFloat((currentSalary() * ratio).toFixed(2));
+    total += amt;
+    rows.push({label: monthLabels[c.value] || c.value, amount: amt});
+  });
+
+  // Update dropdown button label
+  const lbl = document.getElementById('monthDropdownLabel');
+  if (lbl) {
+    lbl.textContent = checked.length === 0
+      ? 'Select months to pay…'
+      : checked.length + ' month' + (checked.length > 1 ? 's' : '') + ' selected';
+  }
+
+  // Breakdown list
+  const bd = document.getElementById('monthBreakdown');
+  if (rows.length > 1) {
+    bd.innerHTML = rows.map(r =>
+      '<div class="total-breakdown-row">' +
+        '<span>' + r.label + '</span>' +
+        '<span style="font-weight:700;color:#15803d;">' + fmtINR(r.amount) + '</span>' +
+      '</div>'
+    ).join('');
+    bd.style.display = 'block';
+  } else {
+    bd.style.display = 'none';
+    bd.innerHTML = '';
+  }
+
+  // Total amount
+  const totalEl = document.getElementById('totalAmount');
+  totalEl.textContent = fmtINR(total);
+  totalEl.classList.remove('amt-updated');
+  void totalEl.offsetWidth;
+  totalEl.classList.add('amt-updated');
+
+  document.getElementById('amountPaidInput').value = total.toFixed(2);
+  const names = checked.map(c => monthLabels[c.value] || c.value).join(', ');
+  document.getElementById('selectedMonthsLabel').textContent = checked.length > 0 ? names : '—';
+
+  const box = document.getElementById('totalBox');
+  if (box) box.style.display = checked.length > 0 ? '' : 'none';
+}
+
+function selectAllMonths() {
+  document.querySelectorAll('.month-dropdown-item input[type=checkbox]').forEach(function(cb) { cb.checked = true; });
+  updateTotal();
+}
+function clearAllMonths() {
+  document.querySelectorAll('.month-dropdown-item input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+  updateTotal();
+}
+
+// Pre-select months if form had errors (re-submitted)
+{% if form.payment_months.value %}
+var preSelected = {{ form.payment_months.value|safe }};
+if (Array.isArray(preSelected)) {
+  preSelected.forEach(function(v) {
+    var cb = document.getElementById('m_' + v);
+    if (cb) cb.checked = true;
+  });
+  updateTotal();
+}
+{% endif %}
+
+// Auto-reload with teacher details when teacher or session changes
+(function() {
+  var teacherSel  = document.querySelector('select[name="teacher"]');
+  var sessionSel  = document.querySelector('select[name="academic_session"]');
+
+  function reload() {
+    var tid = teacherSel ? teacherSel.value : '';
+    var sess = sessionSel ? sessionSel.value : '';
+    var url = window.location.pathname + '?';
+    if (tid)  url += 'teacher_id=' + encodeURIComponent(tid) + '&';
+    if (sess) url += 'session='    + encodeURIComponent(sess);
+    window.location.href = url;
+  }
+
+  if (teacherSel)  teacherSel.addEventListener('change', reload);
+  if (sessionSel)  sessionSel.addEventListener('change', reload);
+})();
+</script>
+{% endblock %}

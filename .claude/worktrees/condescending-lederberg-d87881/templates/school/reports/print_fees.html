@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fee Payments Report{% if session %} — {{ session }}{% endif %}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1e293b; background: #fff; }
+
+  .no-print { display: flex; gap: 10px; justify-content: flex-end; padding: 10px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+  .btn-print { background: #1e293b; color: #fff; border: none; padding: 8px 20px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-close  { background: #e2e8f0; color: #1e293b; border: none; padding: 8px 16px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+  .page { padding: 20px 24px 24px; }
+
+  .report-header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 16px; }
+  .report-header .school-info h1 { font-size: 20px; font-weight: 800; color: #1d4ed8; }
+  .report-header .school-info p { font-size: 11px; color: #64748b; margin-top: 3px; }
+  .report-header .report-meta { text-align: right; font-size: 11px; color: #64748b; line-height: 1.6; }
+  .report-header .report-meta strong { display: block; font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+
+  .summary-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .summary-card { flex: 1; border-radius: 8px; padding: 10px 14px; border: 1.5px solid #e2e8f0; }
+  .summary-card .s-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .summary-card .s-value { font-size: 16px; font-weight: 700; margin-top: 3px; }
+  .card-blue   { background: #eff6ff; border-color: #bfdbfe; }
+  .card-blue   .s-label { color: #3b82f6; } .card-blue   .s-value { color: #1d4ed8; }
+  .card-green  { background: #f0fdf4; border-color: #bbf7d0; }
+  .card-green  .s-label { color: #22c55e; } .card-green  .s-value { color: #15803d; }
+  .card-red    { background: #fef2f2; border-color: #fecaca; }
+  .card-red    .s-label { color: #f87171; } .card-red    .s-value { color: #b91c1c; }
+  .card-indigo { background: #eef2ff; border-color: #c7d2fe; }
+  .card-indigo .s-label { color: #6366f1; } .card-indigo .s-value { color: #4338ca; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #374151; background: #f1f5f9; border-bottom: 2px solid #94a3b8; border-right: 1px solid #cbd5e1; padding: 8px 10px; white-space: nowrap; }
+  thead th:last-child { border-right: none; }
+  tbody td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; vertical-align: middle; }
+  tbody td:last-child { border-right: none; }
+  tbody tr:last-child td { border-bottom: none; }
+  tfoot td { padding: 8px 10px; font-weight: 700; font-size: 12px; background: #eff6ff; border-top: 2px solid #bfdbfe; border-right: 1px solid #bfdbfe; }
+  tfoot td:last-child { border-right: none; }
+  .text-success { color: #15803d; font-weight: 600; }
+  .text-danger  { color: #b91c1c; font-weight: 600; }
+  .text-muted   { color: #64748b; }
+  .text-right   { text-align: right; }
+  .text-center  { text-align: center; }
+
+  .print-footer { display: none; }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { font-size: 10px; }
+    thead { display: table-row-group; }
+    tfoot { display: table-row-group; }
+    thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tfoot td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .summary-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { margin: 10mm 10mm; size: A4 landscape; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-close" onclick="window.close()">✕ Close</button>
+  <button class="btn-print" onclick="window.print()">🖨 Print</button>
+</div>
+
+<div class="page">
+
+  <div class="report-header">
+    <div class="school-info">
+      <h1>{{ school.name }}</h1>
+      <p>Fee Payments Report{% if session %} &mdash; Session {{ session }}{% endif %}</p>
+    </div>
+    <div class="report-meta">
+      <strong>Fee Payments Report</strong>
+      {% if date_from %}From: {{ date_from }}{% if date_to %} &nbsp;To: {{ date_to }}{% endif %}{% elif date_to %}Date: {{ date_to }}{% endif %}<br>
+      Total Records: {{ payments|length }}
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-card card-indigo">
+      <div class="s-label">Total Records</div>
+      <div class="s-value">{{ payments|length }}</div>
+    </div>
+    <div class="summary-card card-green">
+      <div class="s-label">Amount Paid</div>
+      <div class="s-value">&#8377;{{ totals.paid|floatformat:0|default:"0" }}</div>
+    </div>
+  </div>
+
+  {% if payments %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Receipt No.</th>
+        <th>Payment Date</th>
+        <th>Student Name</th>
+        <th>Roll No.</th>
+        <th>Class</th>
+        <th>Session</th>
+        <th>Months Paid</th>
+        <th class="text-right">Paid (&#8377;)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td class="text-muted">{{ forloop.counter }}</td>
+        <td>{{ p.receipt_number }}</td>
+        <td>{{ p.payment_date }}</td>
+        <td><strong>{{ p.student_name }}</strong></td>
+        <td class="text-muted">{{ p.roll_number }}</td>
+        <td>{{ p.class_name }}</td>
+        <td class="text-muted">{{ p.session }}</td>
+        <td>{{ p.months_paid }}</td>
+        <td class="text-right text-success">{{ p.amount_paid }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="8" style="color:#1d4ed8;">TOTAL ({{ payments|length }} records)</td>
+        <td class="text-right" style="color:#15803d;">&#8377;{{ totals.paid|floatformat:0|default:"0" }}</td>
+      </tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <p style="text-align:center;padding:40px;color:#94a3b8;">No records found for the selected filters.</p>
+  {% endif %}
+
+  <div class="print-footer">
+    <span>{{ school.name }} &mdash; Fee Payments Report</span>
+    <span>{% if session %}Session: {{ session }} &nbsp;|&nbsp; {% endif %}Generated: {% now "d M Y" %}</span>
+  </div>
+
+</div>
+
+<script>window.onload = function() { window.print(); };</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Delete{% endblock %}
+{% block page_title %}Delete{% endblock %}
+{% block content %}
+<div class="confirm-box">
+  <h2>Confirm Delete</h2>
+  <p>Are you sure you want to delete <strong>{{ name }}</strong>? This cannot be undone.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button class="btn btn-danger">Yes, Delete</button>
+      <a href="javascript:history.back()" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

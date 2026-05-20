@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% block title %}Admission{% endblock %}
+{% block page_title %}Admission{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filter-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1.5px solid #94a3b8;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    margin-bottom: 20px;
+  }
+  .student-table { border-collapse: separate; border-spacing: 0; border: 1.5px solid #94a3b8; border-radius: 10px; width: 100%; }
+  .student-table thead th:first-child { border-radius: 10px 0 0 0; }
+  .student-table thead th:last-child  { border-radius: 0 10px 0 0; }
+  .student-table thead th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #374151; background: #f1f5f9; border-bottom: 2px solid #94a3b8; border-right: 1px solid #cbd5e1; padding: 12px 14px; white-space: nowrap; }
+  .student-table thead th:last-child { border-right: none; }
+  .student-table tbody td { vertical-align: middle; padding: 11px 14px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; }
+  .student-table tbody td:last-child { border-right: none; }
+  .student-table tbody tr:last-child td { border-bottom: none; }
+  .student-table tbody tr:hover td { background: #f8fafc; }
+  .btn-action { min-width: 72px; font-size: 12px; font-weight: 600; padding: 5px 0; white-space: nowrap; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+  .kpi-card { background: #fff; border-radius: 10px; padding: 14px 18px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,.06); display: flex; align-items: center; gap: 12px; }
+  .kpi-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+  .kpi-value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .kpi-body { flex: 1; min-width: 0; }
+  .kpi-filter-note { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Filter card (top) ─────────────────────────────────────────────────── #}
+<div class="filter-card">
+  <form method="get" id="filterForm">
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div class="d-flex flex-wrap gap-2 align-items-center" style="flex:1 1 0;min-width:0;">
+      <div class="input-group" style="min-width:160px;flex:1 1 160px;border:1.5px solid #94a3b8;border-radius:6px;overflow:hidden;">
+        <span class="input-group-text bg-white border-0 py-1">
+          <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input class="form-control form-control-sm border-0 ps-0" id="qInput" name="q" value="{{ selected_q }}"
+               placeholder="Name, roll no, father…" autocomplete="off" style="box-shadow:none;">
+      </div>
+
+      <select class="form-select form-select-sm" style="min-width:120px;flex:1 1 120px;border:1.5px solid #94a3b8;" name="class"
+              onchange="document.getElementById('filterForm').submit()">
+        <option value="">All Classes</option>
+        {% for c in classes %}
+          <option value="{{ c.pk }}" {% if selected_class == c.pk|stringformat:'s' %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+
+      <select class="form-select form-select-sm" style="min-width:120px;flex:1 1 120px;border:1.5px solid #94a3b8;" name="status"
+              onchange="document.getElementById('filterForm').submit()">
+        <option value="">All Status</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <select class="form-select form-select-sm" style="min-width:130px;flex:1 1 130px;border:1.5px solid #94a3b8;" name="session"
+              onchange="document.getElementById('filterForm').submit()">
+        <option value="" {% if not selected_session %}selected{% endif %}>All Sessions</option>
+        {% for val, label in session_choices %}
+          <option value="{{ val }}" {% if val == selected_session %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      {% if has_filters %}
+      <a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-sm" style="white-space:nowrap;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Clear
+      </a>
+      {% endif %}
+      </div>{# end filters group #}
+      <a href="{% url 'student_create' %}" class="btn btn-sm d-flex align-items-center gap-1 flex-shrink-0"
+         style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:600;border:none;border-radius:8px;padding:7px 14px;box-shadow:0 2px 8px rgba(34,197,94,.25);white-space:nowrap;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Admission
+      </a>
+    </div>
+  </form>
+</div>
+<script>
+(function () {
+  var t;
+  document.getElementById('qInput').addEventListener('input', function () {
+    clearTimeout(t);
+    t = setTimeout(function () { document.getElementById('filterForm').submit(); }, 400);
+  });
+})();
+</script>
+
+{# ── KPI row (filter-aware) ────────────────────────────────────────────── #}
+{% with is_filtered=has_filters %}
+<div class="d-flex gap-2 mb-4" style="flex-wrap:nowrap;overflow-x:auto;align-items:stretch;">
+
+  <div class="kpi-card flex-fill" style="background:#eff6ff;border-color:#bfdbfe;min-width:80px;">
+    <div>
+      <div class="kpi-label" style="color:#3b82f6;">Total</div>
+      <div class="kpi-value" style="color:#1d4ed8;">{{ filtered_total }}</div>
+      {% if is_filtered %}<div class="kpi-filter-note">of {{ total_students }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="kpi-card flex-fill" style="background:#f5f3ff;border-color:#ddd6fe;min-width:90px;">
+    <div>
+      <div class="kpi-label" style="color:#6366f1;">Promoted</div>
+      <div class="kpi-value" style="color:#4338ca;">{{ filtered_promoted }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card flex-fill" style="background:#fff1f2;border-color:#fecdd3;min-width:80px;">
+    <div>
+      <div class="kpi-label" style="color:#f87171;">Fail</div>
+      <div class="kpi-value" style="color:#dc2626;">{{ filtered_fail }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card flex-fill" style="background:#f8fafc;border-color:#cbd5e1;min-width:100px;">
+    <div>
+      <div class="kpi-label" style="color:#64748b;">Transferred</div>
+      <div class="kpi-value" style="color:#475569;">{{ filtered_inactive }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card" style="background:#fefce8;border-color:#fde68a;min-width:190px;flex:1.6;">
+    <div class="kpi-body">
+      <div class="kpi-label" style="color:#ca8a04;">Class-wise{% if is_filtered %} (filtered){% endif %}</div>
+      <div class="d-flex align-items-center gap-2 mt-1">
+        <select class="form-select form-select-sm" id="classKpiSelect"
+                style="max-width:130px;border:1.5px solid #fde68a;background:#fefce8;color:#92400e;">
+          <option value="">Select Class</option>
+          {% for item in filtered_class_wise %}
+            <option value="{{ item.count }}">{{ item.school_class__name }} ({{ item.count }})</option>
+          {% endfor %}
+        </select>
+        <span class="kpi-value" id="classKpiCount" style="color:#92400e;">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endwith %}
+
+{# ── Student table ────────────────────────────────────────────────────── #}
+<div class="table-responsive" style="overflow:visible;">
+  <table class="table mb-0 student-table">
+      <thead>
+        <tr>
+          <th class="ps-3">S.N</th>
+          <th>Roll No</th>
+          <th>Student Name</th>
+          <th>Father's Name</th>
+          <th>Class</th>
+          <th>Session</th>
+          <th>Academic Session</th>
+          <th>Status</th>
+          <th class="text-center pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td class="ps-3 text-muted" style="font-size:13px;">{{ forloop.counter }}</td>
+          <td><code class="text-secondary" style="font-size:13px;">{{ s.roll_number }}</code></td>
+          <td>
+            <strong class="d-block">{{ s.name }}</strong>
+          </td>
+          <td style="font-size:13px;">{{ s.father_name }}</td>
+          <td>
+            <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:600;">{{ s.school_class }}</span>
+          </td>
+          <td><small class="text-muted">{{ s.academic_session }}</small></td>
+          <td style="font-size:12px;color:#475569;font-weight:500;">{{ session_start_month }} — {{ session_end_month }}</td>
+          <td>
+            {% if s.status == 'inactive' %}
+              <span class="badge rounded-pill bg-secondary">Transferred</span>
+            {% elif s.status == 'fail' %}
+              <span class="badge rounded-pill bg-danger">Fail</span>
+            {% elif s.status == 'promoted' %}
+              <span class="badge rounded-pill bg-primary">Promoted</span>
+            {% endif %}
+          </td>
+          <td class="text-center pe-3">
+            <div class="act-menu-wrap" style="position:relative;display:inline-block;">
+              <button class="act-toggle" type="button"
+                      style="font-size:12px;font-weight:600;padding:5px 14px;border:1.5px solid #3b82f6;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer;white-space:nowrap;"
+                      onclick="toggleActMenu(this)">
+                Actions ▾
+              </button>
+              <div class="act-menu" style="display:none;position:fixed;z-index:9999;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:160px;font-size:13px;padding:4px 0;">
+
+                <a class="act-item" href="{% url 'student_edit' s.pk %}"
+                   style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#3b82f6;text-decoration:none;">
+                  <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </a>
+
+                {% if s.status == 'active' %}
+                <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                <form method="post" action="{% url 'student_promote' s.pk %}"
+                      onsubmit="return confirm('Promote {{ s.name|escapejs }} to next class and next session?');">
+                  {% csrf_token %}
+                  <button type="submit" class="act-item"
+                          style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#d97706;background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+                    <svg width="14" height="14" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>
+                    Promote
+                  </button>
+                </form>
+                <form method="post" action="{% url 'student_fail' s.pk %}"
+                      onsubmit="return confirm('Mark {{ s.name|escapejs }} as failed and retain in same class next session?');">
+                  {% csrf_token %}
+                  <button type="submit" class="act-item"
+                          style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#dc2626;background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+                    <svg width="14" height="14" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    Fail
+                  </button>
+                </form>
+                <form method="post" action="{% url 'student_transfer' s.pk %}"
+                      onsubmit="return confirm('Mark {{ s.name|escapejs }} as transferred? Record kept but will not move to next class.');">
+                  {% csrf_token %}
+                  <button type="submit" class="act-item"
+                          style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#b45309;background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+                    <svg width="14" height="14" fill="none" stroke="#b45309" stroke-width="2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                    Transfer
+                  </button>
+                </form>
+                {% endif %}
+
+                <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                <button type="button" class="act-item"
+                        style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#6366f1;background:none;border:none;width:100%;text-align:left;cursor:pointer;"
+                        onclick="closeAllActMenus();showHallTicket({
+                          name:'{{ s.name|escapejs }}',
+                          roll:'{{ s.roll_number|escapejs }}',
+                          cls:'{{ s.school_class|escapejs }}',
+                          session:'{{ s.academic_session|escapejs }}',
+                          dob:'{{ s.date_of_birth|date:"d M Y" }}',
+                          father:'{{ s.father_name|escapejs }}',
+                          phone:'{{ s.father_phone|escapejs }}',
+                          school:'{{ request.user.school.name|escapejs }}',
+                          logo:'{% if request.user.school.logo %}{{ request.user.school.logo.url|escapejs }}{% endif %}',
+                          address:'{{ request.user.school.address|escapejs }}'
+                        })">
+                  <svg width="14" height="14" fill="none" stroke="#6366f1" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  Hall Ticket
+                </button>
+
+                <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                <a class="act-item" href="{% url 'student_delete' s.pk %}"
+                   onclick="return confirm('Delete {{ s.name|escapejs }}? This cannot be undone.')"
+                   style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#ef4444;text-decoration:none;">
+                  <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  Delete
+                </a>
+
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center py-5">
+            <div style="color:#94a3b8;">
+              <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" class="mb-2 d-block mx-auto"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <div class="fw-semibold mb-1">No students found</div>
+              <small>Try adjusting your filters or <a href="{% url 'student_list' %}">clear all filters</a></small>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+</div>
+
+{# ── Exam Hall Ticket Modal ────────────────────────────────────────────── #}
+<div class="modal fade" id="hallTicketModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius:0;background:transparent;">
+
+      <!-- Print / Close bar -->
+      <div class="d-flex justify-content-end gap-2 mb-2 px-1">
+        <button class="btn btn-sm btn-primary px-3" onclick="printHallTicket()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="me-1"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+      <!-- Ticket body -->
+      <div id="hallTicketContent" style="background:#fff;border:1px solid #c7d2e0;font-family:'Segoe UI',Arial,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.12);">
+
+        <!-- School header -->
+        <div style="background:linear-gradient(135deg,#1a3a6b 0%,#1e4a8a 100%);padding:12px 16px;display:flex;align-items:center;gap:12px;">
+          <div id="ht-logo-wrap" style="display:none;flex-shrink:0;">
+            <img id="ht-logo" src="" alt="" style="width:54px;height:54px;border-radius:6px;object-fit:contain;border:2px solid rgba(255,255,255,0.5);background:#fff;padding:2px;">
+          </div>
+          <div style="flex:1;text-align:center;">
+            <div id="ht-school" style="color:#fff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;line-height:1.2;"></div>
+            <div id="ht-address-sub" style="color:#a8c4e8;font-size:9px;margin-top:3px;"></div>
+          </div>
+        </div>
+
+        <!-- Title bar -->
+        <div style="background:linear-gradient(90deg,#1d4ed8,#2563eb);padding:6px 16px;text-align:center;">
+          <span style="color:#fff;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;">Examination Hall Ticket</span>
+        </div>
+
+        <!-- Roll + Session row -->
+        <div style="display:flex;border-bottom:1px solid #dde3ed;background:#f8fafc;">
+          <div style="flex:1;padding:8px 16px;border-right:1px solid #dde3ed;">
+            <div style="font-size:8px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Roll Number</div>
+            <div id="ht-roll" style="font-size:20px;font-weight:800;color:#1a3a6b;letter-spacing:.03em;margin-top:1px;"></div>
+          </div>
+          <div style="flex:1;padding:8px 16px;text-align:right;">
+            <div style="font-size:8px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Academic Session</div>
+            <div id="ht-session" style="font-size:15px;font-weight:700;color:#1e293b;margin-top:1px;"></div>
+          </div>
+        </div>
+
+        <!-- Student info + Photo -->
+        <div style="padding:12px 16px 8px;display:flex;align-items:flex-start;gap:12px;">
+          <table style="flex:1;min-width:0;border-collapse:collapse;font-size:12px;width:100%;">
+            <colgroup><col style="width:110px;"><col></colgroup>
+            <tr>
+              <td style="color:#64748b;font-weight:600;padding:5px 0;border-bottom:1px solid #f1f5f9;white-space:nowrap;">Student Name</td>
+              <td style="color:#0f172a;font-weight:700;padding:5px 6px;border-bottom:1px solid #f1f5f9;" id="ht-name"></td>
+            </tr>
+            <tr>
+              <td style="color:#64748b;font-weight:600;padding:5px 0;border-bottom:1px solid #f1f5f9;white-space:nowrap;">Father's Name</td>
+              <td style="color:#1e293b;font-weight:600;padding:5px 6px;border-bottom:1px solid #f1f5f9;" id="ht-father"></td>
+            </tr>
+            <tr>
+              <td style="color:#64748b;font-weight:600;padding:5px 0;border-bottom:1px solid #f1f5f9;white-space:nowrap;">Class / Section</td>
+              <td style="color:#1e293b;font-weight:600;padding:5px 6px;border-bottom:1px solid #f1f5f9;" id="ht-class"></td>
+            </tr>
+            <tr>
+              <td style="color:#64748b;font-weight:600;padding:5px 0;white-space:nowrap;">Contact No.</td>
+              <td style="color:#1e293b;padding:5px 6px;" id="ht-phone"></td>
+            </tr>
+          </table>
+          <!-- Passport photo box -->
+          <div style="flex-shrink:0;">
+            <div style="width:100px;height:120px;border:2px dashed #2563eb;border-radius:6px;background:linear-gradient(135deg,#eff6ff,#dbeafe);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              <span style="font-size:8px;color:#64748b;font-weight:600;line-height:1.4;text-align:center;">Passport<br>Size Photo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="border-top:1.5px dashed #c7d2e0;margin:0 16px;"></div>
+
+        <!-- Instructions + Signature row -->
+        <div style="display:flex;align-items:flex-end;padding:8px 16px 12px;gap:12px;">
+          <div style="flex:1;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:7px 10px;">
+            <div style="font-size:8px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Important Instructions</div>
+            <ol style="margin:0;padding-left:14px;font-size:9.5px;color:#78350f;line-height:1.65;">
+              <li>Candidates must bring this hall ticket to the examination hall.</li>
+              <li>Mobile phones and electronic gadgets are strictly prohibited.</li>
+            </ol>
+          </div>
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="width:90px;height:32px;border-bottom:1.5px solid #475569;"></div>
+            <div style="font-size:8px;color:#64748b;font-weight:600;margin-top:3px;white-space:nowrap;">Principal's Signature</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:linear-gradient(135deg,#1a3a6b 0%,#1e4a8a 100%);padding:6px 16px;display:flex;align-items:center;gap:5px;">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="ht-address" style="font-size:9px;color:#a8c4e8;line-height:1.4;"></span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Custom action dropdown ──────────────────────────────────────────────
+  function toggleActMenu(btn) {
+    var menu = btn.nextElementSibling;
+    var isOpen = menu.style.display === 'block';
+    closeAllActMenus();
+    if (!isOpen) {
+      // Measure menu height by briefly making it invisible-but-rendered
+      menu.style.visibility = 'hidden';
+      menu.style.display = 'block';
+      var menuH = menu.offsetHeight;
+      var menuW = menu.offsetWidth || 160;
+      menu.style.visibility = '';
+
+      var rect = btn.getBoundingClientRect();
+      var spaceBelow = window.innerHeight - rect.bottom;
+      var top = spaceBelow >= menuH + 8
+        ? rect.bottom + 4              // open downward
+        : rect.top - menuH - 4;        // flip upward
+      var left = Math.max(4, rect.right - menuW);
+
+      menu.style.top  = top + 'px';
+      menu.style.left = left + 'px';
+    }
+  }
+
+  function closeAllActMenus() {
+    document.querySelectorAll('.act-menu').forEach(function(m){ m.style.display='none'; });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.act-menu-wrap')) closeAllActMenus();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAllActMenus();
+  });
+
+  // ── Class KPI select ───────────────────────────────────────────────────
+  document.getElementById('classKpiSelect').addEventListener('change', function () {
+    const el = document.getElementById('classKpiCount');
+    el.textContent = this.value !== '' ? this.value : '—';
+  });
+
+  function showHallTicket(data) {
+    const logoWrap = document.getElementById('ht-logo-wrap');
+    const logoImg  = document.getElementById('ht-logo');
+    if (data.logo) {
+      logoImg.src = data.logo;
+      logoWrap.style.display = 'block';
+    } else {
+      logoWrap.style.display = 'none';
+    }
+    document.getElementById('ht-school').textContent     = data.school || 'School Name';
+    document.getElementById('ht-address-sub').textContent = data.address || '';
+    document.getElementById('ht-roll').textContent    = data.roll;
+    document.getElementById('ht-session').textContent = data.session || '';
+    document.getElementById('ht-name').textContent    = data.name;
+    document.getElementById('ht-father').textContent  = data.father || '';
+    document.getElementById('ht-class').textContent   = data.cls;
+
+    document.getElementById('ht-phone').textContent   = data.phone;
+    document.getElementById('ht-address').textContent = data.address || '';
+    new bootstrap.Modal(document.getElementById('hallTicketModal')).show();
+  }
+
+  function printHallTicket() {
+    const content = document.getElementById('hallTicketContent').outerHTML;
+    const win = window.open('', '_blank', 'width=520,height=750');
+    win.document.write(`<!DOCTYPE html><html><head><title>Exam Hall Ticket</title>
+      <style>
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+        body { margin: 20px; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; }
+        @media print { body { margin: 0; } }
+      </style></head><body>` + content + `<script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
+    win.document.close();
+  }
+</script>
+{% endblock %}

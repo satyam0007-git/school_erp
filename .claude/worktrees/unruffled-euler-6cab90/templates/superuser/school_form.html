@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% block title %}Edit School{% endblock %}
+{% block page_title %}Edit School{% endblock %}
+
+{% block extra_head %}
+<style>
+  .es-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 860px) { .es-body { grid-template-columns: 1fr; } }
+
+  .es-section {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .es-section-head {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .es-sec-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .es-sec-icon.blue  { background: #eff6ff; }
+  .es-sec-icon.green { background: #f0fdf4; }
+  .es-sec-icon.amber { background: #fffbeb; }
+  .es-section-head h3 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
+  .es-section-head p  { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+  .es-section-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+
+  .fg { display: flex; flex-direction: column; gap: 6px; }
+  .fg label { font-size: 13px; font-weight: 600; color: #374151; }
+  .fg .req { color: #ef4444; margin-left: 2px; }
+  .fg .input-wrap { position: relative; }
+  .fg .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; pointer-events: none;
+  }
+  .fg input[type="text"],
+  .fg input[type="email"],
+  .fg input[type="password"],
+  .fg input[type="number"] {
+    width: 100%; padding: 11px 14px 11px 38px;
+    border: 1.5px solid #e2e8f0; border-radius: 9px;
+    font-size: 14px; outline: none; background: #f8fafc;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  .fg input[type="number"]::-webkit-inner-spin-button,
+  .fg input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+  .fg input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+    background: #fff;
+  }
+  .fg .hint { font-size: 11px; color: #94a3b8; }
+
+  /* ── Logo upload (chat-attachment style) ── */
+  .logo-attach-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px;
+    background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 20px;
+    font-size: 12px; font-weight: 600; color: #475569;
+    cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+    white-space: nowrap; user-select: none;
+  }
+  .logo-attach-btn:hover { background: #e2e8f0; border-color: #94a3b8; color: #1e293b; }
+  .logo-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px 4px 4px;
+    background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 20px;
+    font-size: 12px; font-weight: 600; color: #166534; max-width: 240px;
+  }
+  .logo-chip img {
+    width: 28px; height: 28px; border-radius: 50%;
+    object-fit: cover; border: 1.5px solid #bbf7d0; background: #fff; flex-shrink: 0;
+  }
+  .logo-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+  .logo-chip-remove {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #dcfce7; border: 1.5px solid #86efac;
+    color: #16a34a; font-size: 11px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0; transition: background .15s;
+  }
+  .logo-chip-remove:hover { background: #bbf7d0; }
+
+  /* Active toggle */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #f8fafc; border: 1.5px solid #e2e8f0;
+    border-radius: 9px; padding: 12px 16px;
+  }
+  .toggle-row .toggle-label { font-size: 14px; font-weight: 600; color: #374151; }
+  .toggle-row .toggle-sub   { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #cbd5e1; border-radius: 24px; transition: .2s;
+  }
+  .slider:before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + .slider { background: #22c55e; }
+  .switch input:checked + .slider:before { transform: translateX(20px); }
+
+  /* Action bar */
+  .es-actions {
+    margin-top: 24px;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .es-actions-left { font-size: 13px; color: #64748b; }
+  .es-actions-right { display: flex; gap: 12px; align-items: center; }
+
+  .btn-save {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff; border: none; border-radius: 9px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: opacity .2s, transform .1s;
+    box-shadow: 0 2px 8px rgba(59,130,246,.35);
+  }
+  .btn-save:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-save:active { transform: translateY(0); }
+
+  .btn-back {
+    padding: 12px 22px;
+    background: transparent; color: #475569;
+    border: 1.5px solid #e2e8f0; border-radius: 9px;
+    font-size: 14px; font-weight: 500;
+    text-decoration: none; transition: all .2s;
+  }
+  .btn-back:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+  <div class="es-body">
+
+    <!-- School Details -->
+    <div class="es-section">
+      <div class="es-section-head">
+        <div class="es-sec-icon blue">🏛️</div>
+        <div>
+          <h3>School Details</h3>
+          <p>Basic information about the school</p>
+        </div>
+      </div>
+      <div class="es-section-body">
+        <div class="fg">
+          <label>School Name <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">🏫</span>
+            <input type="text" name="name" value="{{ school.name }}" required>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Phone Number</label>
+          <div class="input-wrap">
+            <span class="input-icon">📞</span>
+            <input type="text" name="phone" value="{{ school.phone }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" name="email" value="{{ school.email }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">📍</span>
+            <input type="text" name="address" value="{{ school.address }}" placeholder="e.g. 12 MG Road, Delhi - 110001">
+          </div>
+        </div>
+        <div class="fg">
+          <label>School Logo</label>
+          <input type="file" name="logo" id="logo-input" accept="image/*" style="display:none;">
+          <input type="hidden" name="clear_logo" id="clear-logo" value="0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="logo-attach-btn" id="logo-attach-btn" onclick="document.getElementById('logo-input').click()"
+              {% if school.logo %}style="display:none;"{% endif %}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.42 16.4a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Attach logo
+            </span>
+            <div class="logo-chip" id="logo-chip" {% if not school.logo %}style="display:none;"{% endif %}>
+              <img id="logo-preview-img" src="{% if school.logo %}{{ school.logo.url }}{% endif %}" alt="">
+              <span class="logo-chip-name" id="logo-chip-name">{% if school.logo %}{{ school.logo.name|slice:"13:" }}{% endif %}</span>
+              <span class="logo-chip-remove" onclick="removeLogo()">✕</span>
+            </div>
+          </div>
+          <span class="hint" style="margin-top:4px;">PNG, JPG or SVG — optional</span>
+        </div>
+        <div class="fg">
+          <label>Fee Per Student / Month (₹)</label>
+          <div class="input-wrap">
+            <span class="input-icon">₹</span>
+            <input type="number" name="fee_per_student" value="{{ school.fee_per_student }}" min="0" step="0.01">
+          </div>
+          <span class="hint">Software charge per student per month</span>
+        </div>
+        <div class="fg">
+          <label>Subdomain</label>
+          <div class="input-wrap" style="display:flex;align-items:center;gap:0;">
+            <span class="input-icon">🌐</span>
+            <input type="text" name="subdomain" id="subdomain-input"
+                   value="{{ school.subdomain|default:'' }}"
+                   placeholder="e.g. greenwood"
+                   pattern="[a-z0-9\-]*" title="Lowercase letters, numbers, and hyphens only"
+                   style="border-radius:9px 0 0 9px;">
+            <span style="padding:11px 12px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-left:none;border-radius:0 9px 9px 0;font-size:13px;color:#475569;white-space:nowrap;">.{{ base_domain }}</span>
+          </div>
+          {% if school.subdomain %}
+          <span class="hint">Current portal: <a href="{{ school.get_tenant_url }}" target="_blank">{{ school.get_tenant_url }}</a></span>
+          {% else %}
+          <span class="hint">Leave blank to skip. Only lowercase letters, numbers, and hyphens.</span>
+          {% endif %}
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">School Status</div>
+            <div class="toggle-sub">Toggle to activate or deactivate this school</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="is_active" {% if school.is_active %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Account -->
+    {% if admin_user %}
+    <div class="es-section">
+      <div class="es-section-head">
+        <div class="es-sec-icon green">🔐</div>
+        <div>
+          <h3>Admin Account</h3>
+          <p>Login credentials for the school administrator</p>
+        </div>
+      </div>
+      <div class="es-section-body">
+        <div class="fg">
+          <label>Admin Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" name="admin_username" value="{{ admin_user.username }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label>New Password</label>
+          <div class="input-wrap" style="display:flex;gap:0">
+            <span class="input-icon">🔑</span>
+            <input type="password" name="admin_password" id="admin_password" placeholder="Leave blank to keep current" style="border-radius:9px 0 0 9px;flex:1">
+            <button type="button" onclick="togglePassword()" id="toggle-btn"
+              style="padding:0 14px;border:1.5px solid #e2e8f0;border-left:none;border-radius:0 9px 9px 0;background:#f8fafc;cursor:pointer;font-size:16px;color:#64748b;transition:background .2s;"
+              onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background='#f8fafc'">👁️</button>
+          </div>
+          <span class="hint">Leave blank to keep existing password</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Action Bar -->
+  <div class="es-actions">
+    <div class="es-actions-left">
+      Editing <strong>{{ school.name }}</strong>
+    </div>
+    <div class="es-actions-right">
+      <a href="{% url 'super_dashboard' %}" class="btn-back">← Back to Dashboard</a>
+      <button type="submit" class="btn-save">✓ Save Changes</button>
+    </div>
+  </div>
+
+</form>
+
+<script>
+document.getElementById('logo-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById('logo-preview-img').src = e.target.result;
+    document.getElementById('logo-chip-name').textContent = file.name;
+    document.getElementById('logo-attach-btn').style.display = 'none';
+    document.getElementById('logo-chip').style.display = 'inline-flex';
+    document.getElementById('clear-logo').value = '0';
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeLogo() {
+  document.getElementById('logo-input').value = '';
+  document.getElementById('logo-preview-img').src = '';
+  document.getElementById('logo-chip-name').textContent = '';
+  document.getElementById('logo-chip').style.display = 'none';
+  document.getElementById('logo-attach-btn').style.display = 'inline-flex';
+  document.getElementById('clear-logo').value = '1';
+}
+
+function togglePassword() {
+  const input = document.getElementById('admin_password');
+  const btn = document.getElementById('toggle-btn');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+</script>
+{% endblock %}

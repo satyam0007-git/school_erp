@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}School Fee{% endblock %}
+{% block page_title %}School Fee{% endblock %}
+
+{% block extra_head %}
+<style>
+  .fee-kpi-card { 
+    background:#fff; 
+    border-radius:10px; 
+    padding:14px 18px; 
+    border:1.5px solid #94a3b8; 
+    box-shadow:0 2px 6px rgba(0,0,0,.06); 
+    cursor:pointer;
+    transition:all 0.3s ease;
+  }
+  .fee-kpi-card:hover { 
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+    background-color: #1f2937 !important;
+    border-color: #111827 !important;
+  }
+  .fee-kpi-card:hover .label { color: #f3f4f6 !important; }
+  .fee-kpi-card:hover .value { color: #f9fafb !important; }
+  .fee-kpi-card.active { 
+    transform:scale(1.02);
+  }
+  .fee-kpi-card .label { font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; }
+  .fee-kpi-card .value { font-size:22px; font-weight:700; line-height:1.2; margin-top:2px; }
+
+  .fee-table { border-collapse:separate; border-spacing:0; border:1.5px solid #94a3b8; border-radius:10px; overflow:hidden; width:100%; }
+  .fee-table thead th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#374151; background:#f1f5f9; border-bottom:2px solid #94a3b8; border-right:1px solid #cbd5e1; padding:12px 14px; white-space:nowrap; position:sticky; top:0; z-index:1; }
+  .fee-table thead th:last-child { border-right:none; }
+  .fee-table tbody td { vertical-align:middle; font-size:13px; padding:11px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #f1f5f9; }
+  .fee-table tbody td:last-child { border-right:none; }
+  .fee-table tbody tr:last-child td { border-bottom:none; }
+  .fee-table tbody tr:hover td { background:#f8fafc; }
+
+  .filter-bar { background:#fff; border-radius:10px; padding:14px 18px; border:1.5px solid #94a3b8; box-shadow:0 2px 6px rgba(0,0,0,.06); margin-bottom:16px; }
+  .filter-bar .form-control, .filter-bar .form-select { border:1.5px solid #94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Filter Bar ────────────────────────────────────────────────────────── #}
+<div class="filter-bar">
+  <div class="d-flex gap-2 align-items-center w-100">
+    <input class="form-control form-control-sm flex-grow-1" id="filter-name" placeholder="Search by school name…" oninput="applyFilters()">
+    <select class="form-select form-select-sm flex-grow-1" id="filter-session" onchange="applyFilters()">
+      <option value="">All Sessions</option>
+      {% for s in session_options %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-select form-select-sm flex-grow-1" id="filter-status" onchange="applyFilters()">
+      <option value="">All Status</option>
+      <option value="paid">Paid Up</option>
+      <option value="pending">Pending</option>
+    </select>
+    <button class="btn btn-outline-secondary btn-sm px-3" id="clear-btn" onclick="clearFilters()" style="display:none;white-space:nowrap;">Clear</button>
+  </div>
+</div>
+
+{# ── KPI Cards ─────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4">
+    <div class="fee-kpi-card kpi-monthly" onclick="toggleKPI(this)" data-kpi="monthly" style="background:#eff6ff; border-color:#bfdbfe;">
+      <div class="label" style="color:#3b82f6;">Monthly Total</div>
+      <div id="kpi-monthly-total" class="value" style="color:#1d4ed8;">₹{{ total_monthly|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="fee-kpi-card kpi-collected" onclick="toggleKPI(this)" data-kpi="collected" style="background:#f0fdf4; border-color:#bbf7d0;">
+      <div class="label" style="color:#22c55e;">Collected</div>
+      <div id="kpi-collected" class="value" style="color:#15803d;">₹{{ total_collected|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="fee-kpi-card kpi-pending" onclick="toggleKPI(this)" data-kpi="pending" style="background:#fef2f2; border-color:#fecaca;">
+      <div class="label" style="color:#f87171;">Pending</div>
+      <div id="kpi-pending" class="value" style="color:#b91c1c;">₹{{ total_pending|floatformat:0 }}</div>
+    </div>
+  </div>
+</div>
+
+{# ── Table ─────────────────────────────────────────────────────────────── #}
+<div class="table-responsive" style="max-height:520px;overflow-y:auto;border-radius:10px;">
+  <table class="table mb-0 fee-table">
+    <thead>
+      <tr>
+        <th class="ps-3">S.N</th>
+        <th>School</th>
+        <th>Session</th>
+        <th>Students</th>
+        <th>Fee/Student (₹)</th>
+        <th>Monthly Total (₹)</th>
+        <th>Collected (₹)</th>
+        <th>Balance (₹)</th>
+        <th>Status</th>
+        <th class="text-center pe-3">Action</th>
+      </tr>
+    </thead>
+    <tbody id="fee-tbody">
+      {% for r in rows %}
+      <tr data-name="{{ r.school.name|lower }}"
+          data-status="{% if r.is_paid_up %}paid{% else %}pending{% endif %}"
+          data-session="{{ r.session }}"
+          data-current="{% if r.is_current_session %}true{% else %}false{% endif %}">
+        <td class="ps-3 text-muted row-sn"></td>
+        <td><strong>{{ r.school.name }}</strong></td>
+        <td>
+          <span class="badge rounded-pill" style="background:#f0f9ff;color:#0369a1;font-size:11px;font-weight:600;border:1px solid #bae6fd;">{{ r.session }}</span>
+        </td>
+        <td>
+          <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;">{{ r.active_students }}</span>
+        </td>
+        <td>{{ r.fee_per_student|floatformat:0 }}</td>
+        <td class="fw-semibold">{{ r.monthly_bill|floatformat:0 }}</td>
+        <td class="text-success fw-semibold">{{ r.total_paid|floatformat:0 }}</td>
+        <td class="fw-semibold {% if r.balance > 0 %}text-danger{% else %}text-success{% endif %}">{{ r.balance|floatformat:0 }}</td>
+        <td>
+          {% if r.is_paid_up %}
+            <span class="badge rounded-pill bg-success">Paid</span>
+          {% else %}
+            <span class="badge rounded-pill bg-warning text-dark">Pending</span>
+          {% endif %}
+        </td>
+        <td class="text-center pe-3">
+          {% if r.is_current_session %}
+            <a href="{% url 'super_collect_fee' r.school.pk %}" class="btn btn-sm btn-primary" style="font-size:12px;font-weight:600;">Collect Fee</a>
+          {% else %}
+            <a href="{% url 'super_collect_fee' r.school.pk %}?session={{ r.session }}" class="btn btn-sm btn-primary" style="font-size:12px;font-weight:600;">Collect Fee</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="text-center py-5 text-muted">No active schools found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div id="no-results" style="display:none;" class="text-center py-4 text-muted">No schools match your filter.</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleKPI(element) {
+  element.classList.add('active');
+  setTimeout(() => element.classList.remove('active'), 200);
+}
+
+var DEFAULT_SESSION = "{{ default_session|escapejs }}";
+
+function applyFilters() {
+  const name    = document.getElementById('filter-name').value.trim().toLowerCase();
+  const session = document.getElementById('filter-session').value;
+  const status  = document.getElementById('filter-status').value;
+  const rows    = document.querySelectorAll('#fee-tbody tr[data-name]');
+  let visible   = 0;
+
+  rows.forEach(row => {
+    const sessionMatch = !session || row.dataset.session === session;
+    const show = sessionMatch
+              && (!name   || row.dataset.name.includes(name))
+              && (!status || row.dataset.status === status);
+
+    row.style.display = show ? '' : 'none';
+    if (show) {
+      visible++;
+      row.querySelector('.row-sn').textContent = visible;
+    }
+  });
+
+  // Recompute KPI values from visible rows (monthly total, collected, pending)
+  let monthlyTotal = 0;
+  let collectedTotal = 0;
+  let pendingTotal = 0;
+  function parseNumber(str) {
+    if (!str) return 0;
+    const n = parseFloat(str.replace(/[^0-9.-]+/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+  rows.forEach(row => {
+    if (row.style.display === '') {
+      const monthlyEl = row.querySelector('td:nth-child(6)');
+      const collectedEl = row.querySelector('td:nth-child(7)');
+      const balanceEl = row.querySelector('td:nth-child(8)');
+      const m = monthlyEl ? parseNumber(monthlyEl.textContent) : 0;
+      const c = collectedEl ? parseNumber(collectedEl.textContent) : 0;
+      const b = balanceEl ? parseNumber(balanceEl.textContent) : 0;
+      monthlyTotal += m;
+      collectedTotal += c;
+      pendingTotal += b;
+    }
+  });
+
+  const elMonthly = document.getElementById('kpi-monthly-total');
+  const elCollected = document.getElementById('kpi-collected');
+  const elPending = document.getElementById('kpi-pending');
+  if (elMonthly) elMonthly.textContent = '₹' + Math.round(monthlyTotal);
+  if (elCollected) elCollected.textContent = '₹' + Math.round(collectedTotal);
+  if (elPending) elPending.textContent = '₹' + Math.round(pendingTotal);
+
+  // Only show Clear when user has changed something away from the default state
+  const isDirty = name || status || (session !== DEFAULT_SESSION);
+  document.getElementById('no-results').style.display = (visible === 0 && isDirty) ? 'block' : 'none';
+  document.getElementById('clear-btn').style.display = isDirty ? '' : 'none';
+}
+
+function clearFilters() {
+  document.getElementById('filter-name').value    = '';
+  document.getElementById('filter-session').value = DEFAULT_SESSION;
+  document.getElementById('filter-status').value  = '';
+  applyFilters();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  if (DEFAULT_SESSION) {
+    document.getElementById('filter-session').value = DEFAULT_SESSION;
+  }
+  applyFilters();
+});
+</script>
+{% endblock %}

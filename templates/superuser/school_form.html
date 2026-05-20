@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% block title %}Edit School{% endblock %}
+{% block page_title %}Edit School{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Two-column layout ── */
+  .as-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) { .as-body { grid-template-columns: 1fr; } }
+
+  /* ── Section cards ── */
+  .as-section {
+    background: #fff;
+    border-radius: 12px;
+    border: 1.5px solid #94a3b8;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+  .as-section-head {
+    padding: 16px 22px 14px;
+    border-bottom: 1.5px solid #94a3b8;
+    background: #f8fafc;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .as-section-head .sec-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    border: 1.5px solid rgba(0,0,0,.08);
+  }
+  .sec-icon.blue  { background: #eff6ff; }
+  .sec-icon.green { background: #f0fdf4; }
+  .sec-icon.amber { background: #fffbeb; }
+  .as-section-head h3 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
+  .as-section-head p  { font-size: 12px; color: #64748b; margin: 2px 0 0; }
+  .as-section-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Fields ── */
+  .fg { display: flex; flex-direction: column; gap: 5px; }
+  .fg label { font-size: 13px; font-weight: 600; color: #374151; }
+  .fg .req   { color: #ef4444; margin-left: 2px; }
+  .fg .input-wrap { position: relative; }
+  .fg .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; pointer-events: none;
+  }
+
+  /* ── Shared input/select styles ── */
+  .fg input,
+  .fg select {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1.5px solid #94a3b8;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    background: #f8fafc;
+    color: #1e293b;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .fg select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  .fg input:focus,
+  .fg select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    background: #fff;
+  }
+  .fg .hint { font-size: 11px; color: #64748b; }
+
+  /* ── Logo upload ── */
+  .logo-attach-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px;
+    background: #f1f5f9; border: 1.5px solid #cbd5e1; border-radius: 20px;
+    font-size: 12px; font-weight: 600; color: #475569;
+    cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+    white-space: nowrap; user-select: none;
+  }
+  .logo-attach-btn:hover { background: #e2e8f0; border-color: #94a3b8; color: #1e293b; }
+  .logo-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px 4px 4px;
+    background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 20px;
+    font-size: 12px; font-weight: 600; color: #166534; max-width: 220px;
+  }
+  .logo-chip img {
+    width: 28px; height: 28px; border-radius: 50%;
+    object-fit: cover; border: 1.5px solid #bbf7d0; background: #fff; flex-shrink: 0;
+  }
+  .logo-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .logo-chip-remove {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #dcfce7; border: 1.5px solid #86efac;
+    color: #16a34a; font-size: 11px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0; transition: background .15s;
+  }
+  .logo-chip-remove:hover { background: #bbf7d0; }
+
+  /* ── Active toggle ── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #f8fafc; border: 1.5px solid #94a3b8;
+    border-radius: 8px; padding: 11px 14px;
+  }
+  .toggle-label { font-size: 14px; font-weight: 600; color: #374151; }
+  .toggle-sub   { font-size: 12px; color: #64748b; margin-top: 2px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #cbd5e1; border-radius: 24px; transition: .2s;
+  }
+  .slider:before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + .slider { background: #22c55e; }
+  .switch input:checked + .slider:before { transform: translateX(20px); }
+
+  /* ── Tip strip ── */
+  .tip-strip {
+    background: #fffbeb; border: 1.5px solid #fbbf24;
+    border-radius: 10px; padding: 12px 16px;
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; color: #92400e;
+  }
+
+  /* ── Subdomain suffix ── */
+  .subdomain-suffix {
+    padding: 10px 12px; background: #f1f5f9;
+    border: 1.5px solid #94a3b8; border-left: none;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px; color: #475569; white-space: nowrap;
+  }
+
+  /* ── Password toggle button ── */
+  .pw-toggle {
+    padding: 0 14px;
+    border: 1.5px solid #94a3b8; border-left: none;
+    border-radius: 0 8px 8px 0;
+    background: #f8fafc; cursor: pointer;
+    font-size: 16px; color: #64748b; transition: background .2s;
+  }
+  .pw-toggle:hover { background: #f1f5f9; }
+
+  /* ── Action bar ── */
+  .as-actions {
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1.5px solid #94a3b8;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    padding: 18px 26px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .as-actions-left { font-size: 13px; color: #64748b; }
+  .as-actions-left strong { color: #1e293b; }
+  .as-actions-right { display: flex; gap: 12px; align-items: center; }
+
+  .btn-save {
+    padding: 11px 30px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff; border: none; border-radius: 9px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: opacity .2s, transform .1s;
+    box-shadow: 0 2px 8px rgba(59,130,246,.35);
+  }
+  .btn-save:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-save:active { transform: translateY(0); }
+
+  .btn-back {
+    padding: 11px 22px;
+    background: transparent; color: #475569;
+    border: 1.5px solid #94a3b8; border-radius: 9px;
+    font-size: 14px; font-weight: 500;
+    text-decoration: none; transition: all .2s;
+  }
+  .btn-back:hover { background: #f1f5f9; border-color: #334155; color: #1e293b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+  <div class="as-body">
+
+    <!-- School Details -->
+    <div class="as-section">
+      <div class="as-section-head">
+        <div class="sec-icon blue">🏛️</div>
+        <div>
+          <h3>School Details</h3>
+          <p>Basic information about the school</p>
+        </div>
+      </div>
+      <div class="as-section-body">
+        <div class="fg">
+          <label>School Name <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">🏫</span>
+            <input type="text" name="name" value="{{ school.name }}" required>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Phone Number</label>
+          <div class="input-wrap">
+            <span class="input-icon">📞</span>
+            <input type="text" name="phone" value="{{ school.phone }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" name="email" value="{{ school.email }}">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">📍</span>
+            <input type="text" name="address" value="{{ school.address }}" placeholder="e.g. 12 MG Road, Delhi - 110001">
+          </div>
+        </div>
+        <div class="fg">
+          <label>School Logo</label>
+          <input type="file" name="logo" id="logo-input" accept="image/*" style="display:none;">
+          <input type="hidden" name="clear_logo" id="clear-logo" value="0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="logo-attach-btn" id="logo-attach-btn" onclick="document.getElementById('logo-input').click()"
+              {% if school.logo %}style="display:none;"{% endif %}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.42 16.4a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Attach logo
+            </span>
+            <div class="logo-chip" id="logo-chip" {% if not school.logo %}style="display:none;"{% endif %}>
+              <img id="logo-preview-img" src="{% if school.logo %}{{ school.logo.url }}{% endif %}" alt="">
+              <span class="logo-chip-name" id="logo-chip-name">{% if school.logo %}{{ school.logo.name|slice:"13:" }}{% endif %}</span>
+              <span class="logo-chip-remove" onclick="removeLogo()">✕</span>
+            </div>
+          </div>
+          <span class="hint" style="margin-top:4px;">PNG, JPG or SVG — optional</span>
+        </div>
+        <div class="fg">
+          <label>Fee Per Student / Month (₹)</label>
+          <div class="input-wrap">
+            <span class="input-icon" style="font-size:13px;font-weight:700;color:#374151;">₹</span>
+            <input type="number" name="fee_per_student" value="{{ school.fee_per_student }}" min="0" step="0.01">
+          </div>
+          <span class="hint">Software charge per student per month</span>
+        </div>
+        <div class="fg">
+          <label>Subdomain</label>
+          <div class="input-wrap" style="display:flex;align-items:center;gap:0;">
+            <span class="input-icon">🌐</span>
+            <input type="text" name="subdomain" id="subdomain-input"
+                   value="{{ school.subdomain|default:'' }}"
+                   placeholder="e.g. greenwood"
+                   pattern="[a-z0-9\-]*" title="Lowercase letters, numbers, and hyphens only"
+                   style="border-radius:8px 0 0 8px;">
+            <span class="subdomain-suffix">.{{ base_domain }}</span>
+          </div>
+          {% if school.subdomain %}
+          <span class="hint">Current portal: <a href="{{ school.get_tenant_url }}" target="_blank">{{ school.get_tenant_url }}</a></span>
+          {% else %}
+          <span class="hint">Leave blank to skip. Only lowercase letters, numbers, and hyphens.</span>
+          {% endif %}
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">School Status</div>
+            <div class="toggle-sub">Toggle to activate or deactivate this school</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="is_active" {% if school.is_active %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Academic Session -->
+    <div class="as-section">
+      <div class="as-section-head">
+        <div class="sec-icon amber">📅</div>
+        <div>
+          <h3>Academic Session</h3>
+          <p>Starting session and fee cycle months for this school</p>
+        </div>
+      </div>
+      <div class="as-section-body">
+        <div class="fg">
+          <label>Academic Session <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">🗓️</span>
+            <select name="current_academic_session">
+              {% for val, label in session_choices %}
+                <option value="{{ val }}" {% if val == profile.current_academic_session %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Billing Start Month <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">📆</span>
+            <select name="billing_start_month">
+              {% for val, label in month_choices %}
+                <option value="{{ val }}" {% if val == profile.billing_start_month %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Billing Last Month <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">📆</span>
+            <select name="billing_end_month">
+              {% for val, label in month_choices %}
+                <option value="{{ val }}" {% if val == profile.billing_end_month %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="tip-strip">
+          <span style="font-size:18px;">💡</span>
+          <span>Billing months define from which months fees are collected. <strong>{{ profile.billing_start_month|capfirst }} → {{ profile.billing_end_month|capfirst }}</strong>.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Account -->
+    {% if admin_user %}
+    <div class="as-section">
+      <div class="as-section-head">
+        <div class="sec-icon green">🔐</div>
+        <div>
+          <h3>Admin Account</h3>
+          <p>Login credentials for the school administrator</p>
+        </div>
+      </div>
+      <div class="as-section-body">
+        <div class="fg">
+          <label>Admin Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" name="admin_username" value="{{ admin_user.username }}" autocomplete="off">
+          </div>
+        </div>
+        <div class="fg">
+          <label>New Password</label>
+          <div class="input-wrap" style="display:flex;gap:0;">
+            <span class="input-icon">🔑</span>
+            <input type="password" name="admin_password" id="admin_password"
+                   placeholder="Leave blank to keep current"
+                   style="border-radius:8px 0 0 8px;flex:1;">
+            <button type="button" class="pw-toggle" id="toggle-btn" onclick="togglePassword()">👁️</button>
+          </div>
+          <span class="hint">Leave blank to keep existing password</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Action Bar -->
+  <div class="as-actions">
+    <div class="as-actions-left">
+      Editing <strong>{{ school.name }}</strong>
+    </div>
+    <div class="as-actions-right">
+      <a href="{% url 'super_dashboard' %}" class="btn-back">← Back to Dashboard</a>
+      <button type="submit" class="btn-save">✓ Save Changes</button>
+    </div>
+  </div>
+
+</form>
+
+<script>
+document.getElementById('logo-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById('logo-preview-img').src = e.target.result;
+    document.getElementById('logo-chip-name').textContent = file.name;
+    document.getElementById('logo-attach-btn').style.display = 'none';
+    document.getElementById('logo-chip').style.display = 'inline-flex';
+    document.getElementById('clear-logo').value = '0';
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeLogo() {
+  document.getElementById('logo-input').value = '';
+  document.getElementById('logo-preview-img').src = '';
+  document.getElementById('logo-chip-name').textContent = '';
+  document.getElementById('logo-chip').style.display = 'none';
+  document.getElementById('logo-attach-btn').style.display = 'inline-flex';
+  document.getElementById('clear-logo').value = '1';
+}
+
+function togglePassword() {
+  const input = document.getElementById('admin_password');
+  const btn = document.getElementById('toggle-btn');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+document.getElementById('subdomain-input').addEventListener('input', function () {
+  this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+});
+</script>
+{% endblock %}
