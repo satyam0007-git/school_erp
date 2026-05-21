@@ -163,21 +163,26 @@
   </tbody>
 </table>
 
+{% load fee_tags %}
 {% if is_paginated %}
-<div class="d-flex flex-column align-items-center gap-1 mt-3">
-
+<div class="d-flex justify-content-center mt-3">
   <nav aria-label="Page navigation">
-    <ul class="pagination pagination-sm mb-0">
+    <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
       <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
         <a class="page-link" href="{% if page_obj.has_previous %}?page=1&q={{ selected_q }}&session={{ selected_session }}&status={{ selected_status }}{% else %}#{% endif %}" title="First">«</a>
       </li>
       <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
         <a class="page-link" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}&q={{ selected_q }}&session={{ selected_session }}&status={{ selected_status }}{% else %}#{% endif %}" title="Previous">‹</a>
       </li>
-      {% for p in page_obj.paginator.page_range %}
-        <li class="page-item {% if p == page_obj.number %}active{% endif %}">
-          <a class="page-link" href="?page={{ p }}&q={{ selected_q }}&session={{ selected_session }}&status={{ selected_status }}">{{ p }}</a>
-        </li>
+      {% smart_page_range page_obj as page_range %}
+      {% for p in page_range %}
+        {% if p == '...' %}
+          <li class="page-item disabled"><span class="page-link px-2">…</span></li>
+        {% else %}
+          <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+            <a class="page-link" href="?page={{ p }}&q={{ selected_q }}&session={{ selected_session }}&status={{ selected_status }}">{{ p }}</a>
+          </li>
+        {% endif %}
       {% endfor %}
       <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
         <a class="page-link" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}&q={{ selected_q }}&session={{ selected_session }}&status={{ selected_status }}{% else %}#{% endif %}" title="Next">›</a>
