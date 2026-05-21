@@ -1380,27 +1380,25 @@ def payment_dashboard(request):
     session_months = get_session_months(session_start_month, session_end_month)
     current_month_key = CAL_TO_MONTH[reference_date.month]
 
-    # Determine whether the session has actually started (guards against future sessions)
     try:
         _sess_start_year = int(selected_session.split('-')[0])
     except (ValueError, IndexError):
         _sess_start_year = reference_date.year
     _sess_start_cal = MONTH_TO_CAL.get(session_start_month, 1)
+    _sess_end_cal   = MONTH_TO_CAL.get(session_end_month, 3)
+    _sess_end_year  = _sess_start_year if _sess_end_cal >= _sess_start_cal else _sess_start_year + 1
     _sess_start_date = date(_sess_start_year, _sess_start_cal, 1)
-    _session_started = reference_date >= _sess_start_date
+    _sess_end_date   = date(_sess_end_year, _sess_end_cal,
+                            calendar.monthrange(_sess_end_year, _sess_end_cal)[1])
 
-    # Determine how many months are "due" for the selected session
-    if selected_session == profile_session:
-        if not _session_started:
-            default_months_due = 0  # session is in the future
-        elif current_month_key in session_months:
-            default_months_due = session_months.index(current_month_key) + 1
-        else:
-            default_months_due = len(session_months)
-    elif selected_session < profile_session:
-        default_months_due = len(session_months)  # past session — all months due
+    if reference_date < _sess_start_date:
+        default_months_due = 0  # session hasn't started yet
+    elif reference_date > _sess_end_date:
+        default_months_due = len(session_months)  # session fully completed — all months due
+    elif current_month_key in session_months:
+        default_months_due = session_months.index(current_month_key) + 1  # running — up to today
     else:
-        default_months_due = 0  # future session — nothing due yet
+        default_months_due = len(session_months)
 
     month_label_map = {v: l for v, l in MONTH_CHOICES}
 
@@ -1567,21 +1565,21 @@ def _build_fee_dashboard_data(request):
         _sess_start_year = int(selected_session.split('-')[0])
     except (ValueError, IndexError):
         _sess_start_year = reference_date.year
-    _sess_start_cal = MONTH_TO_CAL.get(session_start_month, 1)
+    _sess_start_cal  = MONTH_TO_CAL.get(session_start_month, 1)
+    _sess_end_cal    = MONTH_TO_CAL.get(session_end_month, 3)
+    _sess_end_year   = _sess_start_year if _sess_end_cal >= _sess_start_cal else _sess_start_year + 1
     _sess_start_date = date(_sess_start_year, _sess_start_cal, 1)
-    _session_started = reference_date >= _sess_start_date
+    _sess_end_date   = date(_sess_end_year, _sess_end_cal,
+                            calendar.monthrange(_sess_end_year, _sess_end_cal)[1])
 
-    if selected_session == profile_session:
-        if not _session_started:
-            default_months_due = 0
-        elif current_month_key in session_months:
-            default_months_due = session_months.index(current_month_key) + 1
-        else:
-            default_months_due = len(session_months)
-    elif selected_session < profile_session:
-        default_months_due = len(session_months)
-    else:
+    if reference_date < _sess_start_date:
         default_months_due = 0
+    elif reference_date > _sess_end_date:
+        default_months_due = len(session_months)
+    elif current_month_key in session_months:
+        default_months_due = session_months.index(current_month_key) + 1
+    else:
+        default_months_due = len(session_months)
 
     payment_data = []
     for student in students.order_by('school_class__name', 'name'):
@@ -1614,8 +1612,8 @@ def _build_fee_dashboard_data(request):
     total_pending = sum(p['balance_payment'] for p in payment_data if p['balance_payment'] > 0)
 
     session_start_year = int(selected_session[:4]) if selected_session and len(selected_session) >= 4 else reference_date.year
-    session_start_cal = MONTH_TO_CAL[profile.session_start_month]
-    _range_start_key = session_months[0] if session_months else profile.session_start_month
+    session_start_cal = MONTH_TO_CAL[session_start_month]
+    _range_start_key = session_months[0] if session_months else session_start_month
     _range_end_key   = session_months[default_months_due - 1] if default_months_due > 0 else session_months[0]
     _sy = lambda key: session_start_year if MONTH_TO_CAL[key] >= session_start_cal else session_start_year + 1
     fee_range_label = f"{_range_start_key.capitalize()} {_sy(_range_start_key)} → {_range_end_key.capitalize()} {_sy(_range_end_key)}"
