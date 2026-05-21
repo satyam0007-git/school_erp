@@ -1439,7 +1439,7 @@ def payment_dashboard(request):
 
     total_due = sum(p['total_payment_need_to_pay_till_month'] for p in payment_data)
     total_collected = sum(p['total_amount_paid'] for p in payment_data)
-    total_pending = max(total_due - total_collected, Decimal('0.00'))
+    total_pending = sum(p['balance_payment'] for p in payment_data if p['balance_payment'] > 0)
 
     paginator = Paginator(payment_data, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -1538,7 +1538,7 @@ def _build_fee_dashboard_data(request):
 
     total_due = sum(p['total_payment_need_to_pay_till_month'] for p in payment_data)
     total_collected = sum(p['total_amount_paid'] for p in payment_data)
-    total_pending = max(total_due - total_collected, Decimal('0.00'))
+    total_pending = sum(p['balance_payment'] for p in payment_data if p['balance_payment'] > 0)
 
     session_start_year = int(selected_session[:4]) if selected_session and len(selected_session) >= 4 else reference_date.year
     session_start_cal = MONTH_TO_CAL[profile.session_start_month]
