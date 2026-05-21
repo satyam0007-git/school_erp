@@ -11,6 +11,7 @@ from functools import wraps
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -604,11 +605,12 @@ def student_transfer(request, pk):
 
 _BULK_UPLOAD_HEADERS = [
     'Student Name*', 'Date of Birth* (DD-MM-YYYY)', 'Class*',
-    'Academic Session*', 'Father Name*', 'Mother Name',
-    'Father WhatsApp*', 'Address*', 'Religion', 'Caste',
+    'Academic Session*', 'Father Name*', 'Mother Name*',
+    'Father WhatsApp*', 'Address*', 'Religion*', 'Caste*',
     'Blood Group', 'Previous School', 'Aadhaar Number',
     'PEN Number', 'Transport Opted (Yes/No)', 'Transport Amount',
     'Discount Months (0-12)', 'Admission Date (DD-MM-YYYY)',
+    'Paid Amount', 'Payment Date (DD-MM-YYYY)',
 ]
 
 _VALID_BLOOD_GROUPS = {'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'}
@@ -619,11 +621,11 @@ _BULK_FIELD_INFO = [
     {'name': 'Class',               'required': True},
     {'name': 'Academic Session',    'required': True},
     {'name': 'Father Name',         'required': True},
-    {'name': 'Mother Name',         'required': False},
+    {'name': 'Mother Name',         'required': True},
     {'name': 'Father WhatsApp',     'required': True},
     {'name': 'Address',             'required': True},
-    {'name': 'Religion',            'required': False},
-    {'name': 'Caste',               'required': False},
+    {'name': 'Religion',            'required': True},
+    {'name': 'Caste',               'required': True},
     {'name': 'Blood Group',         'required': False},
     {'name': 'Previous School',     'required': False},
     {'name': 'Aadhaar Number',      'required': False},
@@ -632,6 +634,8 @@ _BULK_FIELD_INFO = [
     {'name': 'Transport Amount',    'required': False},
     {'name': 'Discount Months',     'required': False},
     {'name': 'Admission Date',      'required': False},
+    {'name': 'Paid Amount',         'required': False},
+    {'name': 'Payment Date',        'required': False},
 ]
 
 
@@ -669,34 +673,68 @@ def admission_bulk_template(request):
     """Download the blank Excel import template for bulk admission."""
     school = request.user.school
     classes = SchoolClass.objects.filter(school=school).order_by('name')
-    class_names = ', '.join(c.name for c in classes) or 'No classes configured'
     profile = SchoolProfile.get_for_school(school)
-    default_session = profile.current_academic_session
-    today_str = timezone.localdate().strftime('%d-%m-%Y')
-    first_class = classes.first()
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Bulk Admission'
-    ws.row_dimensions[1].height = 30
+    ws.row_dimensions[1].height = 38
 
+    # Row 1: column headers — uniform dark style, * in label marks required fields
     ws.append(_BULK_UPLOAD_HEADERS)
     for cell in ws[1]:
         _style_header_cell(cell)
 
-    sample_row = [
-        'Rahul Kumar', '15-08-2010', first_class.name if first_class else 'Class 1',
-        default_session, 'Rajesh Kumar', 'Sunita Kumar',
-        '9876543210', '123 Main Street City', 'Hindu', 'General',
-        'O+', 'Delhi Public School', '123456789012',
-        'ABC123', 'No', '', '0', today_str,
-    ]
-    ws.append(sample_row)
-    thin = Side(style='thin', color='E2E8F0')
-    for cell in ws[2]:
-        cell.fill = PatternFill(fill_type='solid', fgColor='FFF3CD')
-        cell.font = Font(italic=True, color='856404', size=10)
-        cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    # ── Hidden "Lists" sheet for dynamic dropdowns (Class, Session) ──────────
+    ws_lists = wb.create_sheet('Lists')
+    ws_lists.sheet_state = 'hidden'
+
+    # Col A: school class names
+    class_list = list(classes)
+    for i, cls in enumerate(class_list, start=1):
+        ws_lists.cell(row=i, column=1, value=cls.name)
+    num_classes = len(class_list)
+
+    # Col B: academic sessions (past 2 → future 5)
+    session_choices = get_academic_session_choices(past_years=2, future_years=5)
+    for i, (val, _) in enumerate(session_choices, start=1):
+        ws_lists.cell(row=i, column=2, value=val)
+    num_sessions = len(session_choices)
+
+    # ── Dropdown validations (data rows 2–201) ────────────────────────────────
+    DATA_ROWS = '2:201'
+
+    def _dv(formula1, col_letter):
+        dv = DataValidation(type='list', formula1=formula1, allow_blank=True, showDropDown=False)
+        dv.sqref = f'{col_letter}{DATA_ROWS.split(":")[0]}:{col_letter}{DATA_ROWS.split(":")[1]}'
+        ws.add_data_validation(dv)
+
+    # Class (C) — from hidden sheet
+    if num_classes:
+        _dv(f'Lists!$A$1:$A${num_classes}', 'C')
+
+    # Academic Session (D) — from hidden sheet
+    if num_sessions:
+        _dv(f'Lists!$B$1:$B${num_sessions}', 'D')
+
+    # Religion (I) — inline list matching RELIGION_CHOICES in forms.py
+    _dv('"Hindu,Muslim,Christian,Sikh,Buddhist,Jain,Parsi,Other"', 'I')
+
+    # Caste (J) — inline list matching CASTE_CHOICES in forms.py
+    _dv('"General,OBC,SC,ST,EWS,Other"', 'J')
+
+    # Blood Group (K)
+    _dv('"O+,O-,A+,A-,B+,B-,AB+,AB-"', 'K')
+
+    # Transport Opted (O)
+    _dv('"Yes,No"', 'O')
+
+    # ── Force date columns to Text so Excel never shows the date picker ───────
+    # B=DOB (2), R=Admission Date (18), T=Payment Date (20) — 1-indexed.
+    _DATE_COL_INDICES = [2, 18, 20]
+    for col_idx in _DATE_COL_INDICES:
+        for row_num in range(1, 203):
+            ws.cell(row=row_num, column=col_idx).number_format = '@'
 
     _auto_width(ws, max_w=30)
     ws.freeze_panes = 'A2'
@@ -735,8 +773,13 @@ def admission_bulk_upload(request):
 
                 total = 0
                 success_count = 0
+                fee_success_count = 0
+                fee_skipped_count = 0
                 failed_rows = []
                 batch_keys = set()
+
+                # Fetch school profile once — used for fee distribution session/months
+                profile = SchoolProfile.get_for_school(school)
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     first_val = str(row[0] or '').strip() if row else ''
@@ -751,15 +794,15 @@ def admission_bulk_upload(request):
 
                     name         = _gc(0).title()
                     dob_raw      = row[1] if len(row) > 1 else None
-                    dob_str      = _gc(1)   # kept for error messages only
+                    dob_str      = _gc(1)
                     class_name   = _gc(2)
                     session      = _gc(3)
                     father_name  = _gc(4).title()
-                    mother_name  = _gc(5, '').title()
+                    mother_name  = _gc(5).title()
                     father_phone = _gc(6)
                     address      = _gc(7).title()
-                    religion     = _gc(8) or 'Hindu'
-                    caste        = _gc(9) or 'General'
+                    religion     = _gc(8)
+                    caste        = _gc(9)
                     blood_group  = _gc(10) or 'O+'
                     prev_school  = _gc(11, '').title()
                     aadhaar      = _gc(12, '')
@@ -768,7 +811,10 @@ def admission_bulk_upload(request):
                     transport_amt_str   = _gc(15, '')
                     discount_str        = _gc(16, '0') or '0'
                     adm_raw      = row[17] if len(row) > 17 else None
+                    paid_amount_str     = _gc(18, '')
+                    fee_date_raw        = row[19] if len(row) > 19 else None
 
+                    # ── Admission field validation ─────────────────────────────
                     if not name:
                         errors.append('Student Name is required')
                     if dob_raw is None or not str(dob_raw).strip():
@@ -779,12 +825,17 @@ def admission_bulk_upload(request):
                         errors.append('Academic Session is required')
                     if not father_name:
                         errors.append('Father Name is required')
+                    if not mother_name:
+                        errors.append('Mother Name is required')
                     if not father_phone:
                         errors.append('Father WhatsApp Number is required')
                     if not address:
                         errors.append('Address is required')
+                    if not religion:
+                        errors.append('Religion is required')
+                    if not caste:
+                        errors.append('Caste is required')
 
-                    # Pass raw cell value so datetime objects are handled directly
                     dob = _parse_bulk_date(dob_raw)
                     if dob_raw is not None and str(dob_raw).strip() and dob is None:
                         errors.append(f'Invalid Date of Birth "{dob_str}" — use DD-MM-YYYY')
@@ -832,6 +883,24 @@ def admission_bulk_upload(request):
                         except (ValueError, TypeError):
                             pass
 
+                    # ── Fee field validation ───────────────────────────────────
+                    paid_amount = None
+                    fee_date = None
+                    if paid_amount_str:
+                        try:
+                            paid_amount = Decimal(paid_amount_str)
+                            if paid_amount < 0:
+                                errors.append('Paid Amount must be zero or positive')
+                                paid_amount = None
+                        except InvalidOperation:
+                            errors.append(f'Invalid Paid Amount "{paid_amount_str}"')
+
+                    if paid_amount and paid_amount > 0:
+                        fee_date = _parse_bulk_date(fee_date_raw)
+                        if fee_date is None:
+                            errors.append('Payment Date is required when Paid Amount is entered — use DD-MM-YYYY')
+
+                    # ── Duplicate check ────────────────────────────────────────
                     if not errors and name and father_name and school_class and session and dob:
                         batch_key = (name.lower(), father_name.lower(), school_class.pk, session, str(dob))
                         if batch_key in batch_keys:
@@ -848,8 +917,8 @@ def admission_bulk_upload(request):
                         else:
                             batch_keys.add(batch_key)
 
-                    raw_row = [str(v) if v is not None else '' for v in row[:18]]
-                    while len(raw_row) < 18:
+                    raw_row = [str(v) if v is not None else '' for v in row[:20]]
+                    while len(raw_row) < 20:
                         raw_row.append('')
 
                     if errors:
@@ -858,7 +927,7 @@ def admission_bulk_upload(request):
                     else:
                         try:
                             with transaction.atomic():
-                                Student.objects.create(
+                                student = Student.objects.create(
                                     school=school,
                                     school_class=school_class,
                                     name=name,
@@ -880,7 +949,41 @@ def admission_bulk_upload(request):
                                     discount_months=discount_months,
                                     admission_date=admission_dt,
                                 )
-                                success_count += 1
+                            # Admission committed — count success
+                            success_count += 1
+
+                            # ── Auto fee submission (separate transaction) ─────
+                            if paid_amount and paid_amount > 0 and fee_date:
+                                try:
+                                    advance_available = _get_available_advance(
+                                        student, profile.current_academic_session
+                                    )
+                                    dist = _distribute_lump_sum(
+                                        student, school, paid_amount, advance_available, profile
+                                    )
+                                    if dist['paid_month_tokens'] or dist['exam_fee_items']:
+                                        FeePayment.objects.create(
+                                            school=school,
+                                            student=student,
+                                            payment_date=fee_date,
+                                            academic_session=profile.current_academic_session,
+                                            payment_months=dist['paid_month_tokens'],
+                                            exam_fee_items=dist['exam_fee_items'],
+                                            transport_amount=dist['transport_total'],
+                                            amount_paid=paid_amount,
+                                            gross_amount=dist['gross_amount'],
+                                            advance_used=advance_available,
+                                            advance_balance=dist['advance_balance'],
+                                            is_lump_sum=True,
+                                            collected_by=request.user,
+                                        )
+                                        fee_success_count += 1
+                                    else:
+                                        # No fee structure configured for this class/session
+                                        fee_skipped_count += 1
+                                except Exception:
+                                    fee_skipped_count += 1
+
                         except Exception as exc:
                             raw_row.append(f'Save error: {exc}')
                             failed_rows.append(raw_row)
@@ -893,6 +996,8 @@ def admission_bulk_upload(request):
                 upload_result = {
                     'total': total,
                     'success': success_count,
+                    'fee_success': fee_success_count,
+                    'fee_skipped': fee_skipped_count,
                     'failed': len(failed_rows),
                     'has_errors': bool(failed_rows),
                 }
@@ -923,12 +1028,18 @@ def admission_bulk_errors_download(request):
         'Father Name', 'Mother Name', 'Father WhatsApp', 'Address',
         'Religion', 'Caste', 'Blood Group', 'Previous School',
         'Aadhaar Number', 'PEN Number', 'Transport Opted', 'Transport Amount',
-        'Discount Months', 'Admission Date', 'Error Remarks',
+        'Discount Months', 'Admission Date', 'Paid Amount', 'Payment Date',
+        'Error Remarks',
     ]
     ws.append(headers)
     thin = Side(style='thin', color='E2E8F0')
     for col_idx, cell in enumerate(ws[1], start=1):
         _style_header_cell(cell, bg_color='DC2626' if col_idx == len(headers) else '1E293B')
+
+    # Pre-format date columns as Text so Excel won't auto-convert on open
+    for col_idx in [2, 18, 20]:   # DOB, Admission Date, Payment Date
+        for row_num in range(1, len(failed_rows) + 10):
+            ws.cell(row=row_num, column=col_idx).number_format = '@'
 
     for row_idx, row_data in enumerate(failed_rows, start=2):
         ws.row_dimensions[row_idx].height = 22
@@ -942,6 +1053,9 @@ def admission_bulk_errors_download(request):
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
             else:
                 _style_data_cell(cell, row_idx)
+            # Re-apply text format on date columns after cell styling
+            if col_idx in (2, 18, 20):
+                cell.number_format = '@'
 
     _auto_width(ws, max_w=45)
     ws.freeze_panes = 'A2'
