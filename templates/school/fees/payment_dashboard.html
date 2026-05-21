@@ -225,21 +225,30 @@
 
 {# ── Pagination ────────────────────────────────────────────────────────── #}
 {% if is_paginated %}
-<nav class="mt-3">
-  <ul class="pagination justify-content-center">
-    {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Previous</a>
+<div class="d-flex flex-column align-items-center gap-1 mt-3">
+
+  <nav aria-label="Page navigation">
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_previous %}?page=1{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}{% else %}#{% endif %}" title="First">«</a>
       </li>
-    {% endif %}
-    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
-    {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Next</a>
+      <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}{% else %}#{% endif %}" title="Previous">‹</a>
       </li>
-    {% endif %}
-  </ul>
-</nav>
+      {% for p in page_obj.paginator.page_range %}
+        <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+          <a class="page-link" href="?page={{ p }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ p }}</a>
+        </li>
+      {% endfor %}
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}{% else %}#{% endif %}" title="Next">›</a>
+      </li>
+      <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{% if page_obj.has_next %}?page={{ page_obj.paginator.num_pages }}{% for k,v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}{% else %}#{% endif %}" title="Last">»</a>
+      </li>
+    </ul>
+  </nav>
+</div>
 {% endif %}
 
 {% endblock %}
