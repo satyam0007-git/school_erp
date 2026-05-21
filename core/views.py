@@ -18,9 +18,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Count, Max, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from .forms import FeePaymentForm, StudentForm, TeacherForm, SalaryPaymentForm, SuperUserSettingsForm
@@ -95,6 +97,9 @@ def school_only(fn):
 
         if request.user.is_super():
             return redirect('super_dashboard')
+
+        if not request.user.school_id:
+            return redirect('login')
 
         tenant = getattr(request, 'tenant', None)
         if tenant is not None and request.user.school_id != tenant.pk:
@@ -387,19 +392,14 @@ def student_list(request):
     class_id = request.GET.get('class')
     status = request.GET.get('status')
     profile = SchoolProfile.get_for_school(school)
-    # Default to current session unless the user explicitly submitted a session filter
-    if 'session' in request.GET:
-        session = request.GET.get('session', '').strip()
-    else:
-        session = profile.current_academic_session
+    session = profile.current_academic_session
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(roll_number__icontains=q) | Q(father_name__icontains=q))
     if class_id:
         qs = qs.filter(school_class_id=class_id)
     if status:
         qs = qs.filter(status=status)
-    if session:
-        qs = qs.filter(academic_session=session)
+    qs = qs.filter(academic_session=session)
 
     # KPIs derived from the filtered queryset (not all students)
     filtered_total = qs.count()
@@ -436,10 +436,7 @@ def student_list(request):
         'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
         'classes': SchoolClass.objects.filter(school=school),
-        'session_choices': get_academic_session_choices(past_years=2, future_years=10),
         'status_choices': Student.STATUS_CHOICES,
-        'current_session': profile.current_academic_session,
-        'selected_session': session,
         'session_start_month': profile.session_start_month.capitalize(),
         'session_end_month': profile.session_end_month.capitalize(),
         'total_students': total_students,
@@ -454,17 +451,20 @@ def student_list(request):
         'selected_class': class_id or '',
         'selected_status': status or '',
         'selected_q': q,
-        'has_filters': bool(q or class_id or status or (session and session != profile.current_academic_session)),
+        'has_filters': bool(q or class_id or status),
     })
 
 
 @school_only
 def student_create(request):
     school = request.user.school
-    form = StudentForm(request.POST or None, school=school)
+    profile = SchoolProfile.get_for_school(school)
+    session = profile.current_academic_session
+    form = StudentForm(request.POST or None, school=school, session=session)
     if request.method == 'POST' and form.is_valid():
         student = form.save(commit=False)
         student.school = school
+        student.academic_session = session
         student.save()
         discount_months = form.cleaned_data.get('discount_months')
         if discount_months and discount_months > 0:
@@ -479,7 +479,7 @@ def student_create(request):
 def student_edit(request, pk):
     school = request.user.school
     student = get_object_or_404(Student, pk=pk, school=school)
-    form = StudentForm(request.POST or None, instance=student, school=school)
+    form = StudentForm(request.POST or None, instance=student, school=school, session=student.academic_session)
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Student updated.')
@@ -491,8 +491,16 @@ def student_edit(request, pk):
 def student_delete(request, pk):
     student = get_object_or_404(Student, pk=pk, school=request.user.school)
     if request.method == 'POST':
-        student.delete()
-        messages.success(request, 'Student deleted.')
+        try:
+            student.delete()
+            messages.success(request, 'Student deleted.')
+        except ProtectedError:
+            payment_count = student.fee_payments.count()
+            messages.error(
+                request,
+                f'Cannot delete {student.name} because they have {payment_count} fee payment record(s). '
+                'Delete the fee payments first, or contact your administrator.'
+            )
         return redirect('student_list')
     return render(request, 'school/admission/confirm_delete.html', {'object': student})
 
@@ -605,7 +613,7 @@ def student_transfer(request, pk):
 
 _BULK_UPLOAD_HEADERS = [
     'Student Name*', 'Date of Birth* (DD-MM-YYYY)', 'Class*',
-    'Academic Session*', 'Father Name*', 'Mother Name*',
+    'Father Name*', 'Mother Name*',
     'Father WhatsApp*', 'Address*', 'Religion*', 'Caste*',
     'Blood Group', 'Previous School', 'Aadhaar Number',
     'PEN Number', 'Transport Opted (Yes/No)', 'Transport Amount',
@@ -619,7 +627,6 @@ _BULK_FIELD_INFO = [
     {'name': 'Student Name',        'required': True},
     {'name': 'Date of Birth',       'required': True},
     {'name': 'Class',               'required': True},
-    {'name': 'Academic Session',    'required': True},
     {'name': 'Father Name',         'required': True},
     {'name': 'Mother Name',         'required': True},
     {'name': 'Father WhatsApp',     'required': True},
@@ -685,7 +692,7 @@ def admission_bulk_template(request):
     for cell in ws[1]:
         _style_header_cell(cell)
 
-    # ── Hidden "Lists" sheet for dynamic dropdowns (Class, Session) ──────────
+    # ── Hidden "Lists" sheet for dynamic dropdowns (Class) ───────────────────
     ws_lists = wb.create_sheet('Lists')
     ws_lists.sheet_state = 'hidden'
 
@@ -695,13 +702,13 @@ def admission_bulk_template(request):
         ws_lists.cell(row=i, column=1, value=cls.name)
     num_classes = len(class_list)
 
-    # Col B: academic sessions (past 2 → future 5)
-    session_choices = get_academic_session_choices(past_years=2, future_years=5)
-    for i, (val, _) in enumerate(session_choices, start=1):
-        ws_lists.cell(row=i, column=2, value=val)
-    num_sessions = len(session_choices)
-
     # ── Dropdown validations (data rows 2–201) ────────────────────────────────
+    # Column layout (no Academic Session column):
+    # A=Student Name, B=DOB, C=Class, D=Father Name, E=Mother Name,
+    # F=Father WhatsApp, G=Address, H=Religion, I=Caste, J=Blood Group,
+    # K=Previous School, L=Aadhaar, M=PEN, N=Transport Opted,
+    # O=Transport Amount, P=Discount Months, Q=Admission Date,
+    # R=Paid Amount, S=Payment Date
     DATA_ROWS = '2:201'
 
     def _dv(formula1, col_letter):
@@ -713,25 +720,21 @@ def admission_bulk_template(request):
     if num_classes:
         _dv(f'Lists!$A$1:$A${num_classes}', 'C')
 
-    # Academic Session (D) — from hidden sheet
-    if num_sessions:
-        _dv(f'Lists!$B$1:$B${num_sessions}', 'D')
+    # Religion (H)
+    _dv('"Hindu,Muslim,Christian,Sikh,Buddhist,Jain,Parsi,Other"', 'H')
 
-    # Religion (I) — inline list matching RELIGION_CHOICES in forms.py
-    _dv('"Hindu,Muslim,Christian,Sikh,Buddhist,Jain,Parsi,Other"', 'I')
+    # Caste (I)
+    _dv('"General,OBC,SC,ST,EWS,Other"', 'I')
 
-    # Caste (J) — inline list matching CASTE_CHOICES in forms.py
-    _dv('"General,OBC,SC,ST,EWS,Other"', 'J')
+    # Blood Group (J)
+    _dv('"O+,O-,A+,A-,B+,B-,AB+,AB-"', 'J')
 
-    # Blood Group (K)
-    _dv('"O+,O-,A+,A-,B+,B-,AB+,AB-"', 'K')
-
-    # Transport Opted (O)
-    _dv('"Yes,No"', 'O')
+    # Transport Opted (N)
+    _dv('"Yes,No"', 'N')
 
     # ── Force date columns to Text so Excel never shows the date picker ───────
-    # B=DOB (2), R=Admission Date (18), T=Payment Date (20) — 1-indexed.
-    _DATE_COL_INDICES = [2, 18, 20]
+    # B=DOB (2), Q=Admission Date (17), S=Payment Date (19) — 1-indexed.
+    _DATE_COL_INDICES = [2, 17, 19]
     for col_idx in _DATE_COL_INDICES:
         for row_num in range(1, 203):
             ws.cell(row=row_num, column=col_idx).number_format = '@'
@@ -753,6 +756,7 @@ def admission_bulk_template(request):
 @school_only
 def admission_bulk_upload(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     classes = SchoolClass.objects.filter(school=school).order_by('name')
     class_map = {c.name.lower(): c for c in classes}
     upload_result = None
@@ -775,11 +779,13 @@ def admission_bulk_upload(request):
                 success_count = 0
                 fee_success_count = 0
                 fee_skipped_count = 0
+                fee_provided_count = 0
+                fee_last_error = ''
                 failed_rows = []
                 batch_keys = set()
 
-                # Fetch school profile once — used for fee distribution session/months
-                profile = SchoolProfile.get_for_school(school)
+                # Session is fixed from the school profile — not taken from the file
+                session = profile.current_academic_session
 
                 for row in ws.iter_rows(min_row=2, values_only=True):
                     first_val = str(row[0] or '').strip() if row else ''
@@ -792,27 +798,33 @@ def admission_bulk_upload(request):
                         val = row[idx] if idx < len(row) else None
                         return str(val).strip() if val is not None and str(val).strip() else default
 
+                    # Column layout (no Academic Session):
+                    # A(0)=Name, B(1)=DOB, C(2)=Class, D(3)=Father Name,
+                    # E(4)=Mother Name, F(5)=WhatsApp, G(6)=Address,
+                    # H(7)=Religion, I(8)=Caste, J(9)=Blood Group,
+                    # K(10)=Prev School, L(11)=Aadhaar, M(12)=PEN,
+                    # N(13)=Transport, O(14)=Transport Amt, P(15)=Discount,
+                    # Q(16)=Adm Date, R(17)=Paid Amt, S(18)=Payment Date
                     name         = _gc(0).title()
                     dob_raw      = row[1] if len(row) > 1 else None
                     dob_str      = _gc(1)
                     class_name   = _gc(2)
-                    session      = _gc(3)
-                    father_name  = _gc(4).title()
-                    mother_name  = _gc(5).title()
-                    father_phone = _gc(6)
-                    address      = _gc(7).title()
-                    religion     = _gc(8)
-                    caste        = _gc(9)
-                    blood_group  = _gc(10) or 'O+'
-                    prev_school  = _gc(11, '').title()
-                    aadhaar      = _gc(12, '')
-                    pen          = _gc(13, '')
-                    transport_str       = _gc(14) or 'No'
-                    transport_amt_str   = _gc(15, '')
-                    discount_str        = _gc(16, '0') or '0'
-                    adm_raw      = row[17] if len(row) > 17 else None
-                    paid_amount_str     = _gc(18, '')
-                    fee_date_raw        = row[19] if len(row) > 19 else None
+                    father_name  = _gc(3).title()
+                    mother_name  = _gc(4).title()
+                    father_phone = _gc(5)
+                    address      = _gc(6).title()
+                    religion     = _gc(7)
+                    caste        = _gc(8)
+                    blood_group  = _gc(9) or 'O+'
+                    prev_school  = _gc(10, '').title()
+                    aadhaar      = _gc(11, '')
+                    pen          = _gc(12, '')
+                    transport_str       = _gc(13) or 'No'
+                    transport_amt_str   = _gc(14, '')
+                    discount_str        = _gc(15, '0') or '0'
+                    adm_raw      = row[16] if len(row) > 16 else None
+                    paid_amount_str     = _gc(17, '')
+                    fee_date_raw        = row[18] if len(row) > 18 else None
 
                     # ── Admission field validation ─────────────────────────────
                     if not name:
@@ -821,8 +833,6 @@ def admission_bulk_upload(request):
                         errors.append('Date of Birth is required')
                     if not class_name:
                         errors.append('Class is required')
-                    if not session:
-                        errors.append('Academic Session is required')
                     if not father_name:
                         errors.append('Father Name is required')
                     if not mother_name:
@@ -852,9 +862,6 @@ def admission_bulk_upload(request):
                         errors.append(f'Father phone must be exactly 10 digits (got "{father_phone}")')
                     elif father_phone:
                         father_phone = phone_digits
-
-                    if session and not re.match(r'^\d{4}-\d{2}$', session):
-                        errors.append(f'Invalid Academic Session "{session}" — use YYYY-YY (e.g. 2025-26)')
 
                     if blood_group and blood_group.upper() not in _VALID_BLOOD_GROUPS:
                         errors.append(f'Invalid Blood Group "{blood_group}" — use O+/O-/A+/A-/B+/B-/AB+/AB-')
@@ -896,6 +903,7 @@ def admission_bulk_upload(request):
                             errors.append(f'Invalid Paid Amount "{paid_amount_str}"')
 
                     if paid_amount and paid_amount > 0:
+                        fee_provided_count += 1
                         fee_date = _parse_bulk_date(fee_date_raw)
                         if fee_date is None:
                             errors.append('Payment Date is required when Paid Amount is entered — use DD-MM-YYYY')
@@ -917,8 +925,8 @@ def admission_bulk_upload(request):
                         else:
                             batch_keys.add(batch_key)
 
-                    raw_row = [str(v) if v is not None else '' for v in row[:20]]
-                    while len(raw_row) < 20:
+                    raw_row = [str(v) if v is not None else '' for v in row[:19]]
+                    while len(raw_row) < 19:
                         raw_row.append('')
 
                     if errors:
@@ -955,18 +963,22 @@ def admission_bulk_upload(request):
                             # ── Auto fee submission (separate transaction) ─────
                             if paid_amount and paid_amount > 0 and fee_date:
                                 try:
+                                    fee_session = profile.current_academic_session
                                     advance_available = _get_available_advance(
-                                        student, profile.current_academic_session
+                                        student, fee_session
                                     )
                                     dist = _distribute_lump_sum(
-                                        student, school, paid_amount, advance_available, profile
+                                        student, school, paid_amount, advance_available, profile,
+                                        session=fee_session,
                                     )
-                                    if dist['paid_month_tokens'] or dist['exam_fee_items']:
+                                    # Create FeePayment if months/exam fees were covered OR if
+                                    # the entire amount becomes advance (no fee structure yet)
+                                    if dist['paid_month_tokens'] or dist['exam_fee_items'] or dist['advance_balance'] > 0:
                                         FeePayment.objects.create(
                                             school=school,
                                             student=student,
                                             payment_date=fee_date,
-                                            academic_session=profile.current_academic_session,
+                                            academic_session=fee_session,
                                             payment_months=dist['paid_month_tokens'],
                                             exam_fee_items=dist['exam_fee_items'],
                                             transport_amount=dist['transport_total'],
@@ -975,14 +987,15 @@ def admission_bulk_upload(request):
                                             advance_used=advance_available,
                                             advance_balance=dist['advance_balance'],
                                             is_lump_sum=True,
+                                            is_admission_discount=False,
                                             collected_by=request.user,
                                         )
                                         fee_success_count += 1
                                     else:
-                                        # No fee structure configured for this class/session
                                         fee_skipped_count += 1
-                                except Exception:
+                                except Exception as _fee_exc:
                                     fee_skipped_count += 1
+                                    fee_last_error = str(_fee_exc)
 
                         except Exception as exc:
                             raw_row.append(f'Save error: {exc}')
@@ -998,6 +1011,8 @@ def admission_bulk_upload(request):
                     'success': success_count,
                     'fee_success': fee_success_count,
                     'fee_skipped': fee_skipped_count,
+                    'fee_provided': fee_provided_count,
+                    'fee_last_error': fee_last_error,
                     'failed': len(failed_rows),
                     'has_errors': bool(failed_rows),
                 }
@@ -1010,6 +1025,7 @@ def admission_bulk_upload(request):
         'field_info': _BULK_FIELD_INFO,
         'upload_result': upload_result,
         'has_pending_errors': bool(request.session.get('bulk_upload_failed')),
+        'current_session': profile.current_academic_session,
     })
 
 
@@ -1024,7 +1040,7 @@ def admission_bulk_errors_download(request):
     ws.row_dimensions[1].height = 30
 
     headers = [
-        'Student Name', 'Date of Birth', 'Class', 'Academic Session',
+        'Student Name', 'Date of Birth', 'Class',
         'Father Name', 'Mother Name', 'Father WhatsApp', 'Address',
         'Religion', 'Caste', 'Blood Group', 'Previous School',
         'Aadhaar Number', 'PEN Number', 'Transport Opted', 'Transport Amount',
@@ -1037,7 +1053,7 @@ def admission_bulk_errors_download(request):
         _style_header_cell(cell, bg_color='DC2626' if col_idx == len(headers) else '1E293B')
 
     # Pre-format date columns as Text so Excel won't auto-convert on open
-    for col_idx in [2, 18, 20]:   # DOB, Admission Date, Payment Date
+    for col_idx in [2, 17, 19]:   # DOB, Admission Date, Payment Date
         for row_num in range(1, len(failed_rows) + 10):
             ws.cell(row=row_num, column=col_idx).number_format = '@'
 
@@ -1115,14 +1131,15 @@ def _get_discount_covered_tokens(student, school, profile):
     return tokens
 
 
-def _distribute_lump_sum(student, school, cash_amount, advance_available, profile):
+def _distribute_lump_sum(student, school, cash_amount, advance_available, profile, session=None):
     """Distribute a lump-sum amount across unpaid months/fees automatically.
 
     Priority order per month: tuition fee → transport fee.
     After all months exhausted: exam fees (each tried independently).
     Any amount that cannot cover a full fee item becomes advance balance.
     """
-    session = profile.current_academic_session
+    if session is None:
+        session = student.academic_session
     session_months = get_session_months(profile.session_start_month, profile.session_end_month)
 
     cash_amount = Decimal(str(cash_amount))
@@ -1192,7 +1209,7 @@ def _distribute_lump_sum(student, school, cash_amount, advance_available, profil
 
 def _get_unpaid_month_options(student, school):
     profile = SchoolProfile.get_for_school(school)
-    target_session = profile.current_academic_session
+    target_session = student.academic_session
     session_months = get_session_months(profile.session_start_month, profile.session_end_month)
 
     has_monthly = FeeStructure.objects.filter(
@@ -1252,7 +1269,7 @@ def _get_edit_month_options(payment, school):
     """
     student = payment.student
     profile = SchoolProfile.get_for_school(school)
-    target_session = profile.current_academic_session
+    target_session = payment.academic_session
     session_months = get_session_months(profile.session_start_month, profile.session_end_month)
 
     has_monthly = FeeStructure.objects.filter(
@@ -1335,14 +1352,24 @@ def payment_dashboard(request):
     q = request.GET.get('q', '').strip()
     class_id = request.GET.get('class')
     payment_status = request.GET.get('payment_status', '')
-    selected_session = request.GET.get('session', '').strip() or profile_session
+    selected_session = profile_session
 
-    session_choices = get_academic_session_choices(
-        past_years=2, future_years=10,
-        session_start_month=profile.session_start_month,
-    )
+    # resolve month range for the configured session
+    session_record = SchoolSessionRecord.objects.filter(
+        school=school, academic_session=selected_session
+    ).first()
+    if session_record:
+        session_start_month = session_record.session_start_month
+        session_end_month   = session_record.session_end_month
+    else:
+        session_start_month = profile.session_start_month
+        session_end_month   = profile.session_end_month
 
-    students = Student.objects.filter(school=school, status=Student.STATUS_ACTIVE).select_related('school_class')
+    students = Student.objects.filter(
+        school=school,
+        status=Student.STATUS_ACTIVE,
+        academic_session=selected_session,
+    ).select_related('school_class')
     if q:
         students = students.filter(
             Q(name__icontains=q) | Q(father_name__icontains=q) | Q(roll_number__icontains=q)
@@ -1350,12 +1377,23 @@ def payment_dashboard(request):
     if class_id:
         students = students.filter(school_class_id=class_id)
 
-    session_months = get_session_months(profile.session_start_month, profile.session_end_month)
+    session_months = get_session_months(session_start_month, session_end_month)
     current_month_key = CAL_TO_MONTH[reference_date.month]
+
+    # Determine whether the session has actually started (guards against future sessions)
+    try:
+        _sess_start_year = int(selected_session.split('-')[0])
+    except (ValueError, IndexError):
+        _sess_start_year = reference_date.year
+    _sess_start_cal = MONTH_TO_CAL.get(session_start_month, 1)
+    _sess_start_date = date(_sess_start_year, _sess_start_cal, 1)
+    _session_started = reference_date >= _sess_start_date
 
     # Determine how many months are "due" for the selected session
     if selected_session == profile_session:
-        if current_month_key in session_months:
+        if not _session_started:
+            default_months_due = 0  # session is in the future
+        elif current_month_key in session_months:
             default_months_due = session_months.index(current_month_key) + 1
         else:
             default_months_due = len(session_months)
@@ -1445,24 +1483,35 @@ def payment_dashboard(request):
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # Fee data range label (e.g. "April 2026 → May 2026")
-    session_start_year = int(selected_session[:4]) if selected_session and len(selected_session) >= 4 else reference_date.year
-    session_start_cal = MONTH_TO_CAL[profile.session_start_month]
-    _range_start_key = session_months[0] if session_months else profile.session_start_month
-    _range_end_key   = session_months[default_months_due - 1] if default_months_due > 0 else session_months[0]
-    _sy = lambda key: session_start_year if MONTH_TO_CAL[key] >= session_start_cal else session_start_year + 1
-    fee_range_label = f"{_range_start_key.capitalize()} {_sy(_range_start_key)} → {_range_end_key.capitalize()} {_sy(_range_end_key)}"
+    if default_months_due == 0:
+        fee_range_label = '—'
+    else:
+        try:
+            _label_start_year = int(selected_session.split('-')[0])
+        except (ValueError, IndexError):
+            _label_start_year = reference_date.year
+        _label_start_cal = MONTH_TO_CAL.get(session_start_month, 1)
+        _range_start_key = session_months[0] if session_months else session_start_month
+        _range_end_key   = session_months[default_months_due - 1]
+        _sy = lambda key: _label_start_year if MONTH_TO_CAL[key] >= _label_start_cal else _label_start_year + 1
+        fee_range_label = f"{_range_start_key.capitalize()} {_sy(_range_start_key)} → {_range_end_key.capitalize()} {_sy(_range_end_key)}"
 
     wa_config, _ = WhatsAppConfig.objects.get_or_create(school=school)
-    has_filters = bool(
-        q or class_id or payment_status
-        or (selected_session and selected_session != profile_session)
-    )
+    has_filters = bool(q or class_id or payment_status)
+
+    # Only show classes configured for the current session in the filter dropdown
+    session_class_ids = FeeStructure.objects.filter(
+        fee_category__school=school,
+        academic_session=selected_session,
+        frequency=FeeStructure.FREQUENCY_MONTHLY,
+    ).values_list('school_class_id', flat=True)
+    session_classes = SchoolClass.objects.filter(school=school, pk__in=session_class_ids).order_by('name')
+
     return render(request, 'school/fees/payment_dashboard.html', {
         'payment_summary': page_obj,
         'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
-        'classes': SchoolClass.objects.filter(school=school),
-        'session_choices': session_choices,
+        'classes': session_classes,
         'selected_session': selected_session,
         'selected_class': class_id or '',
         'selected_q': q,
@@ -1489,7 +1538,21 @@ def _build_fee_dashboard_data(request):
     payment_status = request.GET.get('payment_status', '')
     selected_session = request.GET.get('session', '').strip() or profile_session
 
-    students = Student.objects.filter(school=school, status=Student.STATUS_ACTIVE).select_related('school_class')
+    session_record = SchoolSessionRecord.objects.filter(
+        school=school, academic_session=selected_session
+    ).first()
+    if session_record:
+        session_start_month = session_record.session_start_month
+        session_end_month   = session_record.session_end_month
+    else:
+        session_start_month = profile.session_start_month
+        session_end_month   = profile.session_end_month
+
+    students = Student.objects.filter(
+        school=school,
+        status=Student.STATUS_ACTIVE,
+        academic_session=selected_session,
+    ).select_related('school_class')
     if q:
         students = students.filter(
             Q(name__icontains=q) | Q(father_name__icontains=q) | Q(roll_number__icontains=q)
@@ -1497,11 +1560,21 @@ def _build_fee_dashboard_data(request):
     if class_id:
         students = students.filter(school_class_id=class_id)
 
-    session_months = get_session_months(profile.session_start_month, profile.session_end_month)
+    session_months = get_session_months(session_start_month, session_end_month)
     current_month_key = CAL_TO_MONTH[reference_date.month]
 
+    try:
+        _sess_start_year = int(selected_session.split('-')[0])
+    except (ValueError, IndexError):
+        _sess_start_year = reference_date.year
+    _sess_start_cal = MONTH_TO_CAL.get(session_start_month, 1)
+    _sess_start_date = date(_sess_start_year, _sess_start_cal, 1)
+    _session_started = reference_date >= _sess_start_date
+
     if selected_session == profile_session:
-        if current_month_key in session_months:
+        if not _session_started:
+            default_months_due = 0
+        elif current_month_key in session_months:
             default_months_due = session_months.index(current_month_key) + 1
         else:
             default_months_due = len(session_months)
@@ -1657,20 +1730,24 @@ def payment_dashboard_print(request):
 @school_only
 def payment_create(request):
     school = request.user.school
-    student_qs = Student.objects.filter(school=school, status=Student.STATUS_ACTIVE).select_related('school_class')
+    profile = SchoolProfile.get_for_school(school)
+    current_session = profile.current_academic_session
+
+    student_qs = Student.objects.filter(
+        school=school,
+        status=Student.STATUS_ACTIVE,
+        academic_session=current_session,
+    ).select_related('school_class')
 
     q = request.GET.get('q', '').strip()
     class_id = request.GET.get('class')
-    session = request.GET.get('session')
     filtered_qs = student_qs
     if q:
         filtered_qs = filtered_qs.filter(Q(name__icontains=q) | Q(roll_number__icontains=q) | Q(father_name__icontains=q))
     if class_id:
         filtered_qs = filtered_qs.filter(school_class_id=class_id)
-    if session:
-        filtered_qs = filtered_qs.filter(academic_session=session)
 
-    has_active_filters = bool(q or class_id or session)
+    has_active_filters = bool(q or class_id)
     paginator = Paginator(filtered_qs.order_by('name'), 10)
     filtered_page = paginator.get_page(request.GET.get('page'))
 
@@ -1683,7 +1760,7 @@ def payment_create(request):
                 payment = form.save(commit=False)
                 profile = SchoolProfile.get_for_school(school)
                 payment.school = school
-                payment.academic_session = profile.current_academic_session
+                payment.academic_session = payment.student.academic_session
                 payment.collected_by = request.user
 
                 if payment_mode == 'lump_sum':
@@ -1695,7 +1772,7 @@ def payment_create(request):
                     if cash_amount <= 0:
                         form.add_error(None, 'Enter a valid lump-sum amount greater than zero.')
                     else:
-                        advance_available = _get_available_advance(payment.student, profile.current_academic_session)
+                        advance_available = _get_available_advance(payment.student, payment.student.academic_session)
                         result = _distribute_lump_sum(payment.student, school, cash_amount, advance_available, profile)
 
                         if not result['paid_month_tokens'] and not result['exam_fee_items']:
@@ -1760,8 +1837,7 @@ def payment_create(request):
         try:
             selected_student = student_qs.get(pk=selected_student_id)
             payment_history = FeePayment.objects.filter(student=selected_student).select_related('student', 'student__school_class').order_by('-payment_date', '-id')
-            profile_for_advance = SchoolProfile.get_for_school(school)
-            advance_available = _get_available_advance(selected_student, profile_for_advance.current_academic_session)
+            advance_available = _get_available_advance(selected_student, selected_student.academic_session)
         except Student.DoesNotExist:
             pass
 
@@ -1772,10 +1848,18 @@ def payment_create(request):
 
     month_label_map = dict(MONTH_CHOICES)
 
+    # Classes configured for the current session
+    session_class_ids = FeeStructure.objects.filter(
+        fee_category__school=school,
+        academic_session=current_session,
+        frequency=FeeStructure.FREQUENCY_MONTHLY,
+    ).values_list('school_class_id', flat=True)
+    session_classes = SchoolClass.objects.filter(school=school, pk__in=session_class_ids).order_by('name')
+
     return render(request, 'school/fees/payment_form.html', {
         'form': form,
-        'classes': SchoolClass.objects.filter(school=school),
-        'session_choices': get_academic_session_choices(past_years=2, future_years=10),
+        'classes': session_classes,
+        'current_session': current_session,
         'filtered_students_page': filtered_page,
         'total_filtered_students': filtered_qs.count(),
         'has_active_filters': has_active_filters,
@@ -1880,11 +1964,12 @@ def student_fee_structure_ajax(request):
         return JsonResponse({'items': []})
     student = get_object_or_404(Student, pk=student_id, school=school, status=Student.STATUS_ACTIVE)
     profile = SchoolProfile.get_for_school(school)
+    student_session = student.academic_session
     structures = FeeStructure.objects.filter(
         school_class=student.school_class,
         fee_category__school=school,
         fee_category__is_active=True,
-        academic_session=profile.current_academic_session,
+        academic_session=student_session,
     ).select_related('fee_category')
     items = [{'category_name': r.fee_category.name, 'amount': str(r.amount), 'frequency': r.frequency, 'is_transport': False} for r in structures]
     if student.transport_opted and student.transport_amount:
@@ -1893,15 +1978,15 @@ def student_fee_structure_ajax(request):
         f'exam_{ef.pk}': float(ef.amount)
         for ef in ExamFee.objects.filter(
             school=school, school_class=student.school_class,
-            academic_session=profile.current_academic_session,
+            academic_session=student_session,
         )
     }
-    advance_available = _get_available_advance(student, profile.current_academic_session)
+    advance_available = _get_available_advance(student, student_session)
     return JsonResponse({
         'items': items,
         'due_month_options': _get_unpaid_month_options(student, school),
         'student_class': str(student.school_class),
-        'session': profile.current_academic_session,
+        'session': student_session,
         'has_transport': bool(student.transport_opted and student.transport_amount),
         'advance_available': float(advance_available),
         'exam_amounts': exam_amounts,
@@ -1927,7 +2012,7 @@ def lump_sum_preview_ajax(request):
 
     student = get_object_or_404(Student, pk=student_id, school=school, status=Student.STATUS_ACTIVE)
     profile = SchoolProfile.get_for_school(school)
-    session = profile.current_academic_session
+    session = student.academic_session
 
     advance_available = _get_available_advance(student, session)
     result = _distribute_lump_sum(student, school, cash_amount, advance_available, profile)
@@ -2398,10 +2483,14 @@ def super_settings(request):
 def config_view(request):
     school = request.user.school
     profile = SchoolProfile.get_for_school(school)
-    classes = SchoolClass.objects.filter(school=school).prefetch_related('fee_structures__fee_category')
+    classes = SchoolClass.objects.filter(school=school).order_by('name')
     session_choices = get_academic_session_choices(past_years=2, future_years=10)
+    cfg_url = reverse('config_view')
 
     if request.method == 'POST':
+        # Which session is being viewed/edited (carried as a hidden field from the form)
+        view_session = request.POST.get('view_session', profile.current_academic_session)
+
         if 'save_profile' in request.POST:
             session = request.POST.get('current_academic_session', '').strip()
             start_month = request.POST.get('session_start_month', '').strip()
@@ -2412,6 +2501,7 @@ def config_view(request):
             elif start_month not in valid_months or end_month not in valid_months:
                 messages.error(request, 'Invalid session month selection.')
             else:
+                old_session = profile.current_academic_session  # capture before overwriting
                 profile.current_academic_session = session
                 profile.session_start_month = start_month
                 profile.session_end_month = end_month
@@ -2427,6 +2517,7 @@ def config_view(request):
                     },
                 )
                 messages.success(request, 'School profile updated.')
+                view_session = session  # redirect into the newly saved session
 
         elif 'add_class' in request.POST:
             class_name = request.POST.get('class_name', '').strip()
@@ -2441,7 +2532,7 @@ def config_view(request):
                 klass = SchoolClass.objects.create(school=school, name=class_name)
                 category, _ = FeeCategory.objects.get_or_create(school=school, name='Monthly Fee', defaults={'is_active': True})
                 FeeStructure.objects.update_or_create(
-                    school_class=klass, fee_category=category, academic_session=profile.current_academic_session,
+                    school_class=klass, fee_category=category, academic_session=view_session,
                     defaults={'amount': amount, 'frequency': FeeStructure.FREQUENCY_MONTHLY},
                 )
                 messages.success(request, 'Class added.')
@@ -2462,22 +2553,23 @@ def config_view(request):
                 klass.save(update_fields=['name'])
                 category, _ = FeeCategory.objects.get_or_create(school=school, name='Monthly Fee', defaults={'is_active': True})
                 FeeStructure.objects.update_or_create(
-                    school_class=klass, fee_category=category, academic_session=profile.current_academic_session,
+                    school_class=klass, fee_category=category, academic_session=view_session,
                     defaults={'amount': amount, 'frequency': FeeStructure.FREQUENCY_MONTHLY},
                 )
                 messages.success(request, 'Class updated.')
 
         elif 'delete_class' in request.POST:
             klass = get_object_or_404(SchoolClass, pk=request.POST.get('class_id'), school=school)
-            student_count = Student.objects.filter(school_class=klass).count()
-            Student.objects.filter(school_class=klass).delete()
+            students = Student.objects.filter(school_class=klass)
+            student_count = students.count()
+            FeePayment.objects.filter(student__in=students).delete()
+            students.delete()
             klass.delete()
             messages.success(request, f'Class "{klass.name}" and {student_count} student(s) deleted.')
 
         elif 'add_exam_fee' in request.POST:
             class_id = request.POST.get('exam_class_id')
             exam_name = request.POST.get('exam_name', '').strip()
-            session = profile.current_academic_session
             try:
                 amount = Decimal(request.POST.get('exam_amount', ''))
                 assert amount >= 0
@@ -2487,26 +2579,25 @@ def config_view(request):
                 messages.error(request, 'All exam fee fields are required.')
             else:
                 klass = get_object_or_404(SchoolClass, pk=class_id, school=school)
-                ExamFee.objects.create(school=school, school_class=klass, exam_name=exam_name, academic_session=session, amount=amount)
+                ExamFee.objects.create(school=school, school_class=klass, exam_name=exam_name, academic_session=view_session, amount=amount)
                 messages.success(request, 'Exam fee added.')
 
         elif 'update_exam_fee' in request.POST:
             exam_id = request.POST.get('exam_fee_id')
             exam_name = request.POST.get('exam_name', '').strip()
-            session = request.POST.get('exam_session', '').strip()
             try:
                 amount = Decimal(request.POST.get('exam_amount', ''))
                 assert amount >= 0
             except (InvalidOperation, AssertionError):
                 amount = None
             class_id = request.POST.get('exam_class_id')
-            if not exam_id or not exam_name or not session or amount is None or not class_id:
+            if not exam_id or not exam_name or amount is None or not class_id:
                 messages.error(request, 'All exam fee fields are required.')
             else:
                 exam = get_object_or_404(ExamFee, pk=exam_id, school=school)
                 klass = get_object_or_404(SchoolClass, pk=class_id, school=school)
                 exam.exam_name = exam_name
-                exam.academic_session = session
+                exam.academic_session = view_session
                 exam.amount = amount
                 exam.school_class = klass
                 exam.save()
@@ -2530,18 +2621,36 @@ def config_view(request):
             wa_config.save()
             messages.success(request, 'WhatsApp configuration saved.')
 
-        return redirect('config_view')
+        return redirect(f'{cfg_url}?s={view_session}')
 
+    # ── GET ──────────────────────────────────────────────────────────────
+    view_session = request.GET.get('s', profile.current_academic_session)
     wa_config, _ = WhatsAppConfig.objects.get_or_create(school=school)
-    exam_fees = ExamFee.objects.filter(school=school).select_related('school_class')
+    fee_structures_qs = FeeStructure.objects.filter(
+        fee_category__school=school,
+        academic_session=view_session,
+        frequency=FeeStructure.FREQUENCY_MONTHLY,
+    )
+    fee_map = {fs.school_class_id: fs.amount for fs in fee_structures_qs}
+    exam_fees = ExamFee.objects.filter(
+        school=school, academic_session=view_session
+    ).select_related('school_class').order_by('school_class__name', 'exam_name')
+
+    # Only show classes that have been explicitly configured for this session
+    session_classes = classes.filter(pk__in=fee_map.keys())
+    session_exam_configured = exam_fees.exists()
+
     return render(request, 'school/config/config.html', {
         'object': profile,
         'school': school,
-        'classes': classes,
+        'classes': session_classes,
         'session_choices': session_choices,
         'month_choices': MONTH_CHOICES,
         'exam_fees': exam_fees,
         'wa_config': wa_config,
+        'current_session': view_session,
+        'fee_map': fee_map,
+        'session_exam_configured': session_exam_configured,
     })
 
 
@@ -2560,14 +2669,20 @@ def whatsapp_dashboard(request):
     # ── Build pending-fee student list ────────────────────────────────
     current_session = profile.current_academic_session if profile else ''
     students = Student.objects.filter(
-        school=school, status=Student.STATUS_ACTIVE
+        school=school, status=Student.STATUS_ACTIVE, academic_session=current_session,
     ).select_related('school_class').order_by('school_class', 'name')
+
+    # bulk-fetch total paid per student for the session (avoids N+1)
+    paid_by_student = dict(
+        FeePayment.objects.filter(school=school, academic_session=current_session)
+        .values('student_id')
+        .annotate(total=Sum('amount_paid'))
+        .values_list('student_id', 'total')
+    )
 
     pending_rows = []
     for student in students:
-        paid = FeePayment.objects.filter(
-            student=student, academic_session=current_session
-        ).aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
+        paid = paid_by_student.get(student.id) or Decimal('0')
 
         # total due so far (all active fee structures * months elapsed)
         structures = FeeStructure.objects.filter(
@@ -2601,16 +2716,12 @@ def whatsapp_dashboard(request):
             })
 
     classes = SchoolClass.objects.filter(school=school).order_by('name')
-    session_options = sorted({
-        s.academic_session for s in Student.objects.filter(school=school, status=Student.STATUS_ACTIVE)
-    })
     return render(request, 'school/whatsapp/dashboard.html', {
         'wa_config':       wa_config,
         'pending_rows':    pending_rows,
         'school':          school,
         'current_session': current_session,
         'classes':         classes,
-        'session_options': session_options,
     })
 
 
@@ -2701,20 +2812,21 @@ def whatsapp_send(request):
 def announcement_dashboard(request):
     """Dedicated Announcement page — send a custom message to any/all students."""
     school    = request.user.school
+    profile   = SchoolProfile.objects.filter(school=school).first()
     wa_config, _ = WhatsAppConfig.objects.get_or_create(school=school)
 
+    current_session = profile.current_academic_session if profile else ''
     all_students = Student.objects.filter(
-        school=school, status=Student.STATUS_ACTIVE
+        school=school, status=Student.STATUS_ACTIVE,
+        academic_session=current_session,
     ).select_related('school_class').order_by('school_class', 'name')
 
     classes = SchoolClass.objects.filter(school=school).order_by('name')
-    session_options = sorted({s.academic_session for s in all_students})
 
     return render(request, 'school/whatsapp/announcement.html', {
         'wa_config':       wa_config,
         'all_students':    all_students,
         'classes':         classes,
-        'session_options': session_options,
     })
 
 
@@ -2836,18 +2948,14 @@ def whatsapp_announce(request):
 def teacher_list(request):
     school = request.user.school
     profile = SchoolProfile.get_for_school(school)
-    session_choices = get_academic_session_choices(past_years=2, future_years=10)
+    selected_session = profile.current_academic_session
 
-    selected_session = request.GET.get('session', profile.current_academic_session)
     q = request.GET.get('q', '').strip()
     class_id = request.GET.get('class', '')
     status_filter = request.GET.get('status', '')
     employment_filter = request.GET.get('employment', '')
 
-    teachers = Teacher.objects.filter(school=school).select_related('class_teacher_of')
-
-    if selected_session:
-        teachers = teachers.filter(academic_session=selected_session)
+    teachers = Teacher.objects.filter(school=school, academic_session=selected_session).select_related('class_teacher_of')
     if q:
         teachers = teachers.filter(
             Q(name__icontains=q) | Q(employee_id__icontains=q) |
@@ -2871,8 +2979,6 @@ def teacher_list(request):
         'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
         'classes': SchoolClass.objects.filter(school=school),
-        'session_choices': session_choices,
-        'selected_session': selected_session,
         'selected_class': class_id,
         'selected_q': q,
         'selected_status': status_filter,
@@ -2888,11 +2994,13 @@ def teacher_list(request):
 @school_only
 def teacher_create(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     if request.method == 'POST':
         form = TeacherForm(request.POST, school=school)
         if form.is_valid():
             teacher = form.save(commit=False)
             teacher.school = school
+            teacher.academic_session = profile.current_academic_session
             teacher.save()
             messages.success(request, f'Teacher {teacher.name} ({teacher.employee_id}) added successfully.')
             return redirect('teacher_list')
@@ -2998,9 +3106,7 @@ def _compute_salary_total(teacher, months, session):
 def salary_dashboard(request):
     school = request.user.school
     profile = SchoolProfile.get_for_school(school)
-    session_choices = get_academic_session_choices(past_years=2, future_years=10)
-
-    selected_session = request.GET.get('session', profile.current_academic_session)
+    selected_session = profile.current_academic_session
     q = request.GET.get('q', '').strip()
     pay_status = request.GET.get('pay_status', '')
 
@@ -3098,8 +3204,6 @@ def salary_dashboard(request):
         'rows': page_obj,
         'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
-        'session_choices': session_choices,
-        'selected_session': selected_session,
         'selected_q': q,
         'selected_pay_status': pay_status,
         'total_teachers': total_teachers,
@@ -3115,41 +3219,33 @@ def salary_pay(request):
     profile = SchoolProfile.get_for_school(school)
     teacher_id = request.GET.get('teacher_id') or request.POST.get('teacher')
 
+    session = profile.current_academic_session
+
     if request.method == 'POST':
-        form = SalaryPaymentForm(request.POST, school=school)
+        form = SalaryPaymentForm(request.POST, school=school, session=session)
         if form.is_valid():
             payment = form.save(commit=False)
             payment.school = school
             payment.paid_by = request.user
+            payment.academic_session = session
             months = form.cleaned_data['payment_months']
             teacher = form.cleaned_data['teacher']
-            session_val = form.cleaned_data['academic_session']
-            payment.amount_paid = _compute_salary_total(teacher, months, session_val)
+            payment.amount_paid = _compute_salary_total(teacher, months, session)
             payment.save()
             messages.success(request, f'Salary paid for {teacher.name} — {payment.get_payment_months_display()}.')
             return redirect('salary_dashboard')
     else:
-        form = SalaryPaymentForm(school=school)
+        form = SalaryPaymentForm(school=school, session=session)
         if teacher_id:
             try:
                 form.fields['teacher'].initial = int(teacher_id)
             except (ValueError, TypeError):
                 pass
 
-    # Determine session and cutoff date
-    session = request.GET.get('session', profile.current_academic_session)
+    # Determine cutoff date (always current session)
     session_start_year = int(session[:4]) if session and len(session) >= 4 else date.today().year
     today = timezone.localdate()
-    profile_session = profile.current_academic_session
-
-    if session < profile_session:
-        end_cal = MONTH_TO_CAL[profile.session_end_month]
-        end_year = session_start_year if end_cal >= 4 else session_start_year + 1
-        cutoff_date = date(end_year, end_cal, 1)
-    elif session == profile_session:
-        cutoff_date = date(today.year, today.month, 1)
-    else:
-        cutoff_date = None  # future session — nothing payable
+    cutoff_date = date(today.year, today.month, 1)
 
     # Build available month choices limited to cutoff (used when no teacher is selected)
     available_month_choices = []
@@ -3257,30 +3353,22 @@ def report_dashboard(request):
     school = request.user.school
     profile = SchoolProfile.get_for_school(school)
     classes = SchoolClass.objects.filter(school=school).order_by('name')
-    session_choices = get_academic_session_choices(
-        past_years=2, future_years=10,
-        session_start_month=profile.session_start_month,
-    )
-    default_session = profile.current_academic_session
     return render(request, 'school/reports/report.html', {
         'profile': profile,
         'classes': classes,
-        'session_choices': session_choices,
-        'default_session': default_session,
     })
 
 
 @school_only
 def report_admissions_export(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str = request.GET.get('date_to', '').strip()
     class_id = request.GET.get('class_id', '').strip()
-    session = request.GET.get('session', '').strip()
+    session = profile.current_academic_session
 
-    qs = Student.objects.filter(school=school).select_related('school_class').order_by('admission_date', 'name')
-    if session:
-        qs = qs.filter(academic_session=session)
+    qs = Student.objects.filter(school=school, academic_session=session).select_related('school_class').order_by('admission_date', 'name')
 
     if date_from_str:
         try:
@@ -3374,19 +3462,15 @@ def report_admissions_export(request):
 @school_only
 def report_fees_export(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str = request.GET.get('date_to', '').strip()
     class_id = request.GET.get('class_id', '').strip()
-    session = request.GET.get('session', '').strip()
+    session = profile.current_academic_session
 
     qs = (
         FeePayment.objects
-        .filter(school=school)
-    )
-    if session:
-        qs = qs.filter(academic_session=session)
-    qs = (
-        qs
+        .filter(school=school, academic_session=session)
         .select_related('student', 'student__school_class', 'collected_by')
         .order_by('payment_date', 'student__name')
     )
@@ -3470,14 +3554,13 @@ def report_fees_export(request):
 
 def _get_admission_qs(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str   = request.GET.get('date_to', '').strip()
     class_id      = request.GET.get('class_id', '').strip()
-    session       = request.GET.get('session', '').strip()
+    session       = profile.current_academic_session
 
-    qs = Student.objects.filter(school=school).select_related('school_class').order_by('admission_date', 'name')
-    if session:
-        qs = qs.filter(academic_session=session)
+    qs = Student.objects.filter(school=school, academic_session=session).select_related('school_class').order_by('admission_date', 'name')
     if date_from_str:
         try: qs = qs.filter(admission_date__gte=date.fromisoformat(date_from_str))
         except ValueError: pass
@@ -3491,14 +3574,13 @@ def _get_admission_qs(request):
 
 def _get_fees_qs(request):
     school = request.user.school
+    profile = SchoolProfile.get_for_school(school)
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str   = request.GET.get('date_to', '').strip()
     class_id      = request.GET.get('class_id', '').strip()
-    session       = request.GET.get('session', '').strip()
+    session       = profile.current_academic_session
 
-    qs = FeePayment.objects.filter(school=school).select_related('student', 'student__school_class', 'collected_by')
-    if session:
-        qs = qs.filter(academic_session=session)
+    qs = FeePayment.objects.filter(school=school, academic_session=session).select_related('student', 'student__school_class', 'collected_by')
     if date_from_str:
         try: qs = qs.filter(payment_date__gte=date.fromisoformat(date_from_str))
         except ValueError: pass

@@ -1,7 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Student, Teacher, SalaryPayment, FeePayment, MONTH_CHOICES, SchoolClass, SchoolProfile, SuperUserSettings
-from .session_utils import get_academic_session_choices, get_current_academic_session
+from .models import Student, Teacher, SalaryPayment, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings
 
 
 def to_title_case(name: str) -> str:
@@ -35,8 +34,6 @@ _CASTE_VALUES    = {c[0] for c in CASTE_CHOICES    if c[0]}
 
 
 class StudentForm(forms.ModelForm):
-    academic_session = forms.ChoiceField(choices=(), widget=forms.Select(attrs={'class': 'form-select'}))
-
     religion = forms.ChoiceField(
         choices=RELIGION_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -57,7 +54,7 @@ class StudentForm(forms.ModelForm):
 
     class Meta:
         model = Student
-        fields = ['name', 'date_of_birth', 'school_class', 'academic_session',
+        fields = ['name', 'date_of_birth', 'school_class',
                   'father_name', 'mother_name', 'father_phone', 'address',
                   'religion', 'caste',
                   'blood_group', 'previous_school', 'aadhaar_number', 'pen_number',
@@ -86,11 +83,10 @@ class StudentForm(forms.ModelForm):
             'discount_months': forms.Select(choices=[(0, 'None')] + [(i, f'{i} Month{"s" if i > 1 else ""}') for i in range(1, 13)], attrs={'class': 'form-select', 'id': 'id_discount_months'}),
         }
 
-    def __init__(self, *args, school=None, **kwargs):
+    def __init__(self, *args, school=None, session=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.school = school
-        session_choices = get_academic_session_choices(past_years=2, future_years=10)
-        self.fields['academic_session'].choices = session_choices
+        self.session = session
 
         if school:
             qs = SchoolClass.objects.filter(school=school)
@@ -101,10 +97,7 @@ class StudentForm(forms.ModelForm):
 
         self.fields['school_class'].empty_label = None
 
-        profile = SchoolProfile.objects.filter(school=school).first() if school else None
-        default_session = profile.current_academic_session if profile else get_current_academic_session()
         if not self.instance.pk:
-            self.initial['academic_session'] = default_session
             self.initial['religion'] = 'Hindu'
             self.initial['caste'] = 'General'
             self.initial['blood_group'] = 'O+'
@@ -173,7 +166,7 @@ class StudentForm(forms.ModelForm):
         name = cleaned_data.get('name', '').strip()
         father_name = cleaned_data.get('father_name', '').strip()
         school_class = cleaned_data.get('school_class')
-        academic_session = cleaned_data.get('academic_session')
+        academic_session = self.session
         date_of_birth = cleaned_data.get('date_of_birth')
 
         if self.school and name and father_name and school_class and academic_session and date_of_birth:
@@ -205,7 +198,6 @@ class StudentForm(forms.ModelForm):
 # ── Teachers ──────────────────────────────────────────────────────────────────
 
 class TeacherForm(forms.ModelForm):
-    academic_session = forms.ChoiceField(choices=(), widget=forms.Select(attrs={'class': 'form-select'}))
     gender = forms.ChoiceField(
         choices=Teacher.GENDER_CHOICES,
         initial=Teacher.GENDER_MALE,
@@ -217,7 +209,7 @@ class TeacherForm(forms.ModelForm):
         fields = [
             'name', 'gender', 'date_of_birth', 'phone', 'email',
             'address', 'qualification',
-            'joining_date', 'monthly_salary', 'status', 'academic_session',
+            'joining_date', 'monthly_salary', 'status',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Teacher's full name"}),
@@ -238,13 +230,6 @@ class TeacherForm(forms.ModelForm):
     def __init__(self, *args, school=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.school = school
-        session_choices = get_academic_session_choices(past_years=2, future_years=10)
-        self.fields['academic_session'].choices = session_choices
-
-        profile = SchoolProfile.objects.filter(school=school).first() if school else None
-        default_session = profile.current_academic_session if profile else get_current_academic_session()
-        if not self.instance.pk:
-            self.initial['academic_session'] = default_session
 
     def clean_phone(self):
         phone = (self.cleaned_data.get('phone') or '').strip()
@@ -265,31 +250,22 @@ class SalaryPaymentForm(forms.ModelForm):
 
     class Meta:
         model = SalaryPayment
-        fields = ['teacher', 'payment_date', 'payment_months', 'amount_paid', 'remarks', 'academic_session']
+        fields = ['teacher', 'payment_date', 'payment_months', 'amount_paid', 'remarks']
         widgets = {
             'teacher': forms.Select(attrs={'class': 'form-select'}),
             'payment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'readonly': 'readonly'}),
             'remarks': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional note…'}),
-            'academic_session': forms.Select(attrs={'class': 'form-select'}),
         }
 
-    def __init__(self, *args, school=None, **kwargs):
+    def __init__(self, *args, school=None, session=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.school = school
-        session_choices = get_academic_session_choices(past_years=2, future_years=10)
-        self.fields['academic_session'] = forms.ChoiceField(
-            choices=session_choices,
-            widget=forms.Select(attrs={'class': 'form-select'}),
-        )
+        self.session = session
         if school:
             self.fields['teacher'].queryset = Teacher.objects.filter(school=school, status=Teacher.STATUS_ACTIVE)
         else:
             self.fields['teacher'].queryset = Teacher.objects.none()
-
-        profile = SchoolProfile.objects.filter(school=school).first() if school else None
-        if not self.instance.pk:
-            self.initial['academic_session'] = profile.current_academic_session if profile else get_current_academic_session()
 
     def clean_payment_months(self):
         months = list(dict.fromkeys(self.cleaned_data.get('payment_months', [])))
@@ -303,7 +279,7 @@ class SalaryPaymentForm(forms.ModelForm):
         cleaned_data = super().clean()
         teacher = cleaned_data.get('teacher')
         months = cleaned_data.get('payment_months', [])
-        session = cleaned_data.get('academic_session')
+        session = self.session
         if teacher and months and session and self.school:
             already_paid = SalaryPayment.objects.filter(
                 school=self.school, teacher=teacher, academic_session=session,

@@ -84,12 +84,6 @@
       <option value="{{ cls.name|lower }}">{{ cls.name }}</option>
     {% endfor %}
   </select>
-  <select class="form-select form-select-sm flex-grow-1" id="filter-session" onchange="filterTable()" style="min-width:0;">
-    <option value="">All Sessions</option>
-    {% for s in session_options %}
-      <option value="{{ s }}">{{ s }}</option>
-    {% endfor %}
-  </select>
   <button class="btn btn-primary btn-sm px-3" onclick="filterTable()">Filter</button>
 </div>
 
@@ -114,8 +108,7 @@
       <tr data-name="{{ r.student.name|lower }}"
           data-father="{{ r.student.father_name|lower }}"
           data-phone="{{ r.phone|lower }}"
-          data-class="{{ r.student.school_class|lower }}"
-          data-session="{{ r.student.academic_session }}">
+          data-class="{{ r.student.school_class|lower }}">
         <td class="ps-3 text-muted">{{ forloop.counter }}</td>
         <td>
           <strong>{{ r.student.name }}</strong>
@@ -232,24 +225,22 @@ async function sendAll() {
 }
 
 function filterTable() {
-  const name    = document.getElementById('filter-name').value.trim().toLowerCase();
-  const father  = document.getElementById('filter-father').value.trim().toLowerCase();
-  const phone   = document.getElementById('filter-phone').value.trim().toLowerCase();
-  const cls     = document.getElementById('filter-class').value.toLowerCase();
-  const session = document.getElementById('filter-session').value;
-  const rows    = document.querySelectorAll('#wa-tbody tr[data-name]');
-  let visible   = 0;
+  const name   = document.getElementById('filter-name').value.trim().toLowerCase();
+  const father = document.getElementById('filter-father').value.trim().toLowerCase();
+  const phone  = document.getElementById('filter-phone').value.trim().toLowerCase();
+  const cls    = document.getElementById('filter-class').value.toLowerCase();
+  const rows   = document.querySelectorAll('#wa-tbody tr[data-name]');
+  let visible  = 0;
   rows.forEach(row => {
-    const show = (!name    || row.dataset.name.includes(name))
-              && (!father  || row.dataset.father.includes(father))
-              && (!phone   || row.dataset.phone.includes(phone))
-              && (!cls     || row.dataset.class === cls)
-              && (!session || row.dataset.session === session);
+    const show = (!name   || row.dataset.name.includes(name))
+              && (!father || row.dataset.father.includes(father))
+              && (!phone  || row.dataset.phone.includes(phone))
+              && (!cls    || row.dataset.class === cls);
     row.style.display = show ? '' : 'none';
     if (show) visible++;
   });
   document.getElementById('no-results').style.display =
-    (visible === 0 && (name || father || phone || cls || session)) ? 'block' : 'none';
+    (visible === 0 && (name || father || phone || cls)) ? 'block' : 'none';
   const c = document.getElementById('wa-count');
   if (c) c.textContent = visible + (visible === 1 ? ' student pending' : ' students pending');
 }

@@ -142,16 +142,6 @@
             {% if form.teacher.errors %}<div class="field-error">{{ form.teacher.errors|join:", " }}</div>{% endif %}
           </div>
           <div class="col-md-6">
-            <label class="form-label">Academic Session <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              </span>
-              {{ form.academic_session }}
-            </div>
-            {% if form.academic_session.errors %}<div class="field-error">{{ form.academic_session.errors|join:", " }}</div>{% endif %}
-          </div>
-          <div class="col-md-6">
             <label class="form-label">Payment Date <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">
@@ -396,22 +386,18 @@ if (Array.isArray(preSelected)) {
 }
 {% endif %}
 
-// Auto-reload with teacher details when teacher or session changes
+// Auto-reload with teacher details when teacher changes
 (function() {
-  var teacherSel  = document.querySelector('select[name="teacher"]');
-  var sessionSel  = document.querySelector('select[name="academic_session"]');
+  var teacherSel = document.querySelector('select[name="teacher"]');
 
   function reload() {
     var tid = teacherSel ? teacherSel.value : '';
-    var sess = sessionSel ? sessionSel.value : '';
-    var url = window.location.pathname + '?';
-    if (tid)  url += 'teacher_id=' + encodeURIComponent(tid) + '&';
-    if (sess) url += 'session='    + encodeURIComponent(sess);
+    var url = window.location.pathname;
+    if (tid) url += '?teacher_id=' + encodeURIComponent(tid);
     window.location.href = url;
   }
 
-  if (teacherSel)  teacherSel.addEventListener('change', reload);
-  if (sessionSel)  sessionSel.addEventListener('change', reload);
+  if (teacherSel) teacherSel.addEventListener('change', reload);
 })();
 </script>
 {% endblock %}

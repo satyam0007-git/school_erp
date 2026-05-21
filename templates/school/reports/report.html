@@ -159,14 +159,9 @@
 
 {% block content %}
 
-<!-- Single shared filter -->
+<!-- Shared filter (date range + class only — session is set globally in Settings) -->
 <div class="rpt-filter-card">
   <div class="d-flex flex-wrap gap-2 align-items-center">
-    <select class="form-select form-select-sm" style="min-width:130px;flex:1 1 130px;border:1.5px solid #94a3b8;" id="shared-session">
-      {% for val, label in session_choices %}
-      <option value="{{ val }}" {% if val == default_session %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
     <input type="date" class="form-control form-control-sm" style="min-width:130px;flex:1 1 130px;border:1.5px solid #94a3b8;" id="shared-from" placeholder="From Date">
     <input type="date" class="form-control form-control-sm" style="min-width:130px;flex:1 1 130px;border:1.5px solid #94a3b8;" id="shared-to">
     <select class="form-select form-select-sm" style="min-width:120px;flex:1 1 120px;border:1.5px solid #94a3b8;" id="shared-class">
@@ -203,7 +198,6 @@
         </button>
         <div class="rpt-dropdown-menu">
           <form id="form-admissions" method="get" action="{% url 'report_admissions_export' %}">
-            <input type="hidden" name="session"   id="adm-session">
             <input type="hidden" name="date_from" id="adm-from">
             <input type="hidden" name="date_to"   id="adm-to">
             <input type="hidden" name="class_id"  id="adm-class">
@@ -216,7 +210,6 @@
           </form>
           <div class="dd-divider"></div>
           <form id="form-admissions-print" method="get" action="{% url 'report_admissions_print' %}" target="_blank">
-            <input type="hidden" name="session"   id="adm-print-session">
             <input type="hidden" name="date_from" id="adm-print-from">
             <input type="hidden" name="date_to"   id="adm-print-to">
             <input type="hidden" name="class_id"  id="adm-print-class">
@@ -252,7 +245,6 @@
         </button>
         <div class="rpt-dropdown-menu">
           <form id="form-fees" method="get" action="{% url 'report_fees_export' %}">
-            <input type="hidden" name="session"   id="fee-session">
             <input type="hidden" name="date_from" id="fee-from">
             <input type="hidden" name="date_to"   id="fee-to">
             <input type="hidden" name="class_id"  id="fee-class">
@@ -265,7 +257,6 @@
           </form>
           <div class="dd-divider"></div>
           <form id="form-fees-print" method="get" action="{% url 'report_fees_print' %}" target="_blank">
-            <input type="hidden" name="session"   id="fee-print-session">
             <input type="hidden" name="date_from" id="fee-print-from">
             <input type="hidden" name="date_to"   id="fee-print-to">
             <input type="hidden" name="class_id"  id="fee-print-class">
@@ -314,19 +305,17 @@
   document.getElementById('shared-to').value = today;
 
   function syncFilters() {
-    const session = document.getElementById('shared-session').value;
-    const from    = document.getElementById('shared-from').value;
-    const to      = document.getElementById('shared-to').value;
-    const cls     = document.getElementById('shared-class').value;
+    const from = document.getElementById('shared-from').value;
+    const to   = document.getElementById('shared-to').value;
+    const cls  = document.getElementById('shared-class').value;
     ['adm', 'adm-print', 'fee', 'fee-print'].forEach(function(p) {
-      document.getElementById(p + '-session').value = session;
-      document.getElementById(p + '-from').value    = from;
-      document.getElementById(p + '-to').value      = to;
-      document.getElementById(p + '-class').value   = cls;
+      document.getElementById(p + '-from').value  = from;
+      document.getElementById(p + '-to').value    = to;
+      document.getElementById(p + '-class').value = cls;
     });
   }
 
-  ['shared-session','shared-from','shared-to','shared-class'].forEach(function(id) {
+  ['shared-from','shared-to','shared-class'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', syncFilters);
   });
 
