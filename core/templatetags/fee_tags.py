@@ -38,6 +38,12 @@ def format_month_token(token):
     return str(token).capitalize()
 
 
+@register.filter
+def get_item(dictionary, key):
+    """Lookup dictionary[key] in a template, e.g. {{ my_dict|get_item:key }}."""
+    return dictionary.get(key)
+
+
 @register.simple_tag
 def smart_page_range(page_obj, window=3, end_pages=3):
     """

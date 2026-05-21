@@ -364,7 +364,19 @@
   {% if upload_result.fee_skipped and upload_result.fee_skipped > 0 %}
   <div class="skipped-notice">
     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    {{ upload_result.fee_skipped }} fee record{{ upload_result.fee_skipped|pluralize }} skipped — no fee structure configured for that class/session.
+    <div>
+      {{ upload_result.fee_skipped }} fee record{{ upload_result.fee_skipped|pluralize }} skipped — fee structure not configured or an error occurred.
+      {% if upload_result.fee_last_error %}
+        <br><strong>Error detail:</strong> {{ upload_result.fee_last_error }}
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if upload_result.fee_provided == 0 and upload_result.success > 0 %}
+  <div class="skipped-notice">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    No fee amounts were detected in your file. Make sure columns <strong>R (Paid Amount)</strong> and <strong>S (Payment Date)</strong> are filled in the template.
   </div>
   {% endif %}
 
@@ -434,6 +446,15 @@
           <div class="step-label">Review</div>
           <div class="step-desc">See results &amp; fix failed rows</div>
         </div>
+      </div>
+
+      <!-- Session notice -->
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:10px;background:#eff6ff;border:1.5px solid #bfdbfe;margin-bottom:22px;">
+        <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:13px;color:#1d4ed8;">
+          All imported students will be enrolled in session <strong>{{ current_session }}</strong> — set in Configuration.
+          The template no longer has an Academic Session column.
+        </span>
       </div>
 
       <!-- Upload form -->

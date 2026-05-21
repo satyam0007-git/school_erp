@@ -62,14 +62,6 @@
         {% endfor %}
       </select>
 
-      <select class="form-select form-select-sm" style="min-width:130px;flex:1 1 130px;border:1.5px solid #94a3b8;" name="session"
-              onchange="document.getElementById('filterForm').submit()">
-        <option value="" {% if not selected_session %}selected{% endif %}>All Sessions</option>
-        {% for val, label in session_choices %}
-          <option value="{{ val }}" {% if val == selected_session %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-
       {% if has_filters %}
       <a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-sm" style="white-space:nowrap;">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -252,12 +244,15 @@
                 </button>
 
                 <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
-                <a class="act-item" href="{% url 'student_delete' s.pk %}"
-                   onclick="return confirm('Delete {{ s.name|escapejs }}? This cannot be undone.')"
-                   style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#ef4444;text-decoration:none;">
-                  <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                  Delete
-                </a>
+                <form method="post" action="{% url 'student_delete' s.pk %}" style="margin:0;padding:0;">
+                  {% csrf_token %}
+                  <button type="submit" class="act-item"
+                          onclick="return confirm('Delete {{ s.name|escapejs }}? This cannot be undone.')"
+                          style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#ef4444;background:none;border:none;cursor:pointer;width:100%;">
+                    <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Delete
+                  </button>
+                </form>
 
               </div>
             </div>

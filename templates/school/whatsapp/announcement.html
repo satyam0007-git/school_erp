@@ -120,12 +120,6 @@
       <option value="{{ cls.name|lower }}">{{ cls.name }}</option>
     {% endfor %}
   </select>
-  <select class="form-select form-select-sm flex-grow-1" id="f-session" onchange="doFilter()" style="min-width:0;">
-    <option value="">All Sessions</option>
-    {% for s in session_options %}
-      <option value="{{ s }}">{{ s }}</option>
-    {% endfor %}
-  </select>
   <button class="btn btn-primary btn-sm px-3" onclick="doFilter()">Filter</button>
 </div>
 
@@ -139,7 +133,6 @@
         <th>Father Name</th>
         <th>Roll No</th>
         <th>Class</th>
-        <th>Session</th>
         <th>Parent Phone</th>
         <th class="text-center pe-3">Send</th>
       </tr>
@@ -149,8 +142,7 @@
       <tr data-name="{{ s.name|lower }}"
           data-father="{{ s.father_name|lower }}"
           data-phone="{{ s.father_phone|lower }}"
-          data-class="{{ s.school_class|lower }}"
-          data-session="{{ s.academic_session }}">
+          data-class="{{ s.school_class|lower }}">
         <td class="ps-3 text-muted">{{ forloop.counter }}</td>
         <td><strong>{{ s.name }}</strong></td>
         <td>{{ s.father_name|default:"—" }}</td>
@@ -158,7 +150,6 @@
         <td>
           <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;">{{ s.school_class }}</span>
         </td>
-        <td><span class="text-muted" style="font-size:12px;">{{ s.academic_session }}</span></td>
         <td>
           {% if s.father_phone %}
             <span style="font-family:monospace;font-size:13px;">{{ s.father_phone }}</span>
@@ -180,7 +171,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8" class="text-center py-5 text-muted">No active students found.</td>
+        <td colspan="7" class="text-center py-5 text-muted">No active students found.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -276,26 +267,24 @@ async function sendAll() {
 
 // ── Filter ────────────────────────────────────────────────────────────────────
 function doFilter() {
-  const name    = document.getElementById('f-name').value.trim().toLowerCase();
-  const father  = document.getElementById('f-father').value.trim().toLowerCase();
-  const phone   = document.getElementById('f-phone').value.trim().toLowerCase();
-  const cls     = document.getElementById('f-class').value.toLowerCase();
-  const session = document.getElementById('f-session').value;
-  const rows    = document.querySelectorAll('#ann-tbody tr[data-name]');
-  let visible   = 0;
+  const name   = document.getElementById('f-name').value.trim().toLowerCase();
+  const father = document.getElementById('f-father').value.trim().toLowerCase();
+  const phone  = document.getElementById('f-phone').value.trim().toLowerCase();
+  const cls    = document.getElementById('f-class').value.toLowerCase();
+  const rows   = document.querySelectorAll('#ann-tbody tr[data-name]');
+  let visible  = 0;
 
   rows.forEach(row => {
-    const show = (!name    || row.dataset.name.includes(name))
-              && (!father  || row.dataset.father.includes(father))
-              && (!phone   || row.dataset.phone.includes(phone))
-              && (!cls     || row.dataset.class === cls)
-              && (!session || row.dataset.session === session);
+    const show = (!name   || row.dataset.name.includes(name))
+              && (!father || row.dataset.father.includes(father))
+              && (!phone  || row.dataset.phone.includes(phone))
+              && (!cls    || row.dataset.class === cls);
     row.style.display = show ? '' : 'none';
     if (show) visible++;
   });
 
   document.getElementById('no-results').style.display =
-    (visible === 0 && (name || father || phone || cls || session)) ? 'block' : 'none';
+    (visible === 0 && (name || father || phone || cls)) ? 'block' : 'none';
 
   const c = document.getElementById('ann-count');
   if (c) c.textContent = visible + (visible === 1 ? ' student' : ' students');

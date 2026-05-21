@@ -85,7 +85,7 @@ class User(AbstractUser):
     school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True)
 
     def is_super(self):
-        return self.role == self.SUPERUSER
+        return self.role == self.SUPERUSER or self.is_superuser
 
 
 class SuperUserSettings(models.Model):
@@ -415,6 +415,7 @@ class FeePayment(models.Model):
     advance_balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     advance_used = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     is_lump_sum = models.BooleanField(default=False)
+    is_admission_discount = models.BooleanField(default=False)
     collected_by = models.ForeignKey('core.User', on_delete=models.PROTECT, related_name='collected_payments')
     created_at = models.DateTimeField(auto_now_add=True)
 
