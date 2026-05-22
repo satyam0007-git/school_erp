@@ -35,16 +35,15 @@
 {% load fee_tags %}
 {% block content %}
 
+
 {# ── Filter Bar ────────────────────────────────────────────────────────── #}
 <div class="filter-bar">
   <div class="d-flex gap-2 align-items-center w-100">
+    <div class="d-flex align-items-center gap-1 px-2 py-1 flex-shrink-0" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;white-space:nowrap;">
+      <span style="font-size:11px;color:#64748b;font-weight:600;">Session</span>
+      <span style="font-size:13px;font-weight:700;color:#1d4ed8;">{{ default_session }}</span>
+    </div>
     <input class="form-control form-control-sm flex-grow-1" id="filter-name" placeholder="Search by school name…" oninput="applyFilters()">
-    <select class="form-select form-select-sm flex-grow-1" id="filter-session" onchange="applyFilters()">
-      <option value="">All Sessions</option>
-      {% for s in session_options %}
-        <option value="{{ s }}">{{ s }}</option>
-      {% endfor %}
-    </select>
     <select class="form-select form-select-sm flex-grow-1" id="filter-status" onchange="applyFilters()">
       <option value="">All Status</option>
       <option value="paid">Paid Up</option>
@@ -162,7 +161,7 @@ var DEFAULT_SESSION = "{{ default_session|escapejs }}";
 
 function applyFilters() {
   const name    = document.getElementById('filter-name').value.trim().toLowerCase();
-  const session = document.getElementById('filter-session').value;
+  const session = DEFAULT_SESSION;
   const status  = document.getElementById('filter-status').value;
   const rows    = document.querySelectorAll('#fee-tbody tr[data-name]');
   let visible   = 0;
@@ -210,23 +209,18 @@ function applyFilters() {
   if (elCollected) elCollected.textContent = indianNumber(collectedTotal);
   if (elPending) elPending.textContent = indianNumber(pendingTotal);
 
-  // Only show Clear when user has changed something away from the default state
-  const isDirty = name || status || (session !== DEFAULT_SESSION);
+  const isDirty = name || status;
   document.getElementById('no-results').style.display = (visible === 0 && isDirty) ? 'block' : 'none';
   document.getElementById('clear-btn').style.display = isDirty ? '' : 'none';
 }
 
 function clearFilters() {
-  document.getElementById('filter-name').value    = '';
-  document.getElementById('filter-session').value = DEFAULT_SESSION;
-  document.getElementById('filter-status').value  = '';
+  document.getElementById('filter-name').value   = '';
+  document.getElementById('filter-status').value = '';
   applyFilters();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  if (DEFAULT_SESSION) {
-    document.getElementById('filter-session').value = DEFAULT_SESSION;
-  }
   applyFilters();
 });
 </script>
