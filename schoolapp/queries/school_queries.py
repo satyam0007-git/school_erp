@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db.models import Max, Sum
 
 from ..models import (
-    ExamFee, FeePayment, FeeStructure, SchoolClass, SchoolSessionRecord, Student, Teacher,
+    ExamFee, FeePayment, FeeStructure, SchoolClass, SchoolSessionRecord, Student,
 )
 
 
@@ -67,10 +67,6 @@ def get_total_paid_per_student(school, session):
 
 def get_session_record(school, session):
     return SchoolSessionRecord.objects.filter(school=school, academic_session=session).first()
-
-
-def get_teachers_for_session(school, session):
-    return Teacher.objects.filter(school=school, academic_session=session).select_related('class_teacher_of')
 
 
 def get_student_total_paid(student, session):

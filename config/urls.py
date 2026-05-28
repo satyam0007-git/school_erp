@@ -57,18 +57,6 @@ urlpatterns = [
     # Announcement
     path('school/announcement/', views.announcement_dashboard, name='announcement_dashboard'),
 
-    # Teachers
-    path('school/teachers/', views.teacher_list, name='teacher_list'),
-    path('school/teachers/add/', views.teacher_create, name='teacher_create'),
-    path('school/teachers/<int:pk>/edit/', views.teacher_edit, name='teacher_edit'),
-    path('school/teachers/<int:pk>/delete/', views.teacher_delete, name='teacher_delete'),
-    path('school/teachers/<int:pk>/promote/', views.teacher_promote, name='teacher_promote'),
-
-    # Salary
-    path('school/salary/', views.salary_dashboard, name='salary_dashboard'),
-    path('school/salary/pay/', views.salary_pay, name='salary_pay'),
-    path('school/salary/<int:pk>/', views.salary_detail, name='salary_detail'),
-
     # Reports
     path('school/reports/', views.report_dashboard, name='report_dashboard'),
     path('school/reports/admissions/export/', views.report_admissions_export, name='report_admissions_export'),

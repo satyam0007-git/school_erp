@@ -8,17 +8,6 @@ from ..models import (
 )
 
 
-def generate_unique_username(name):
-    base = re.sub(r'[^\w]', '_', name.strip().lower())
-    base = re.sub(r'_+', '_', base).strip('_')
-    username = base
-    counter = 2
-    while User.objects.filter(username=username).exists():
-        username = f'{base}_{counter}'
-        counter += 1
-    return username
-
-
 def get_all_school_profiles():
     return {p.school_id: p for p in SchoolProfile.objects.all()}
 

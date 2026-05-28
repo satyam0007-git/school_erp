@@ -1,33 +1,3 @@
 # Claude Code internals
 .claude/
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg-info/
-dist/
-build/
-
-# Django
-*.sqlite3
-*.log
-local_settings.py
-media/
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# Environment variables
-.env
-.env.*
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
+db.sqlite3

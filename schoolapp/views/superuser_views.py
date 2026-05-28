@@ -13,7 +13,6 @@ from ..models import (
     SchoolSessionRecord, Student, SuperUserSettings, User, MONTH_CHOICES,
 )
 from ..queries.superuser_queries import (
-    generate_unique_username,
     get_active_student_counts_by_school_session,
     get_all_school_profiles,
     get_all_session_records,

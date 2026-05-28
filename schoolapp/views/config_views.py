@@ -17,7 +17,7 @@ def config_view(request):
     school = request.user.school
     profile = SchoolProfile.get_for_school(school)
     classes = SchoolClass.objects.filter(school=school).order_by('name')
-    session_choices = get_academic_session_choices(past_years=2, future_years=10)
+    session_choices = get_academic_session_choices(past_years=5, future_years=10)
     cfg_url = reverse('config_view')
 
     if request.method == 'POST':

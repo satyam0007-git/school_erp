@@ -230,31 +230,6 @@
         <span class="ni ni-amber"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
         Fee Submission
       </a>
-      {% if 'teacher' in request.resolver_match.url_name or 'salary' in request.resolver_match.url_name %}
-      <div class="nav-group-toggle active open" onclick="toggleNavGroup(this)">
-        <div class="toggle-left">
-          <span class="ni ni-sky"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-          Teachers
-        </div>
-        <svg class="chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="nav-sub open">
-        <a href="{% url 'teacher_list' %}" {% if 'teacher' in request.resolver_match.url_name %}class="active"{% endif %}><span class="ni ni-sky"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Teacher List</a>
-        <a href="{% url 'salary_dashboard' %}" {% if 'salary' in request.resolver_match.url_name %}class="active"{% endif %}><span class="ni ni-green"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Salary</a>
-      </div>
-      {% else %}
-      <div class="nav-group-toggle" onclick="toggleNavGroup(this)">
-        <div class="toggle-left">
-          <span class="ni ni-sky"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-          Teachers
-        </div>
-        <svg class="chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="nav-sub">
-        <a href="{% url 'teacher_list' %}"><span class="ni ni-sky"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Teacher List</a>
-        <a href="{% url 'salary_dashboard' %}"><span class="ni ni-green"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Salary</a>
-      </div>
-      {% endif %}
       {% if request.resolver_match.url_name == 'whatsapp_dashboard' or request.resolver_match.url_name == 'announcement_dashboard' %}
       <div class="nav-group-toggle active open" onclick="toggleNavGroup(this)">
         <div class="toggle-left">
