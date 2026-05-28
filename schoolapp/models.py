@@ -296,89 +296,6 @@ class Student(models.Model):
         super().save(*args, **kwargs)
 
 
-# ── Teachers ──────────────────────────────────────────────────────────────────
-
-class Teacher(models.Model):
-    GENDER_MALE = 'male'
-    GENDER_FEMALE = 'female'
-    GENDER_OTHER = 'other'
-    GENDER_CHOICES = [
-        (GENDER_MALE, 'Male'),
-        (GENDER_FEMALE, 'Female'),
-        (GENDER_OTHER, 'Other'),
-    ]
-
-    EMPLOYMENT_FULL = 'full_time'
-    EMPLOYMENT_PART = 'part_time'
-    EMPLOYMENT_CONTRACT = 'contract'
-    EMPLOYMENT_CHOICES = [
-        (EMPLOYMENT_FULL, 'Full-time'),
-        (EMPLOYMENT_PART, 'Part-time'),
-        (EMPLOYMENT_CONTRACT, 'Contract'),
-    ]
-
-    STATUS_ACTIVE = 'active'
-    STATUS_INACTIVE = 'inactive'
-    STATUS_RESIGNED = 'resigned'
-    STATUS_CHOICES = [
-        (STATUS_ACTIVE, 'Active'),
-        (STATUS_INACTIVE, 'Inactive'),
-        (STATUS_RESIGNED, 'Resigned'),
-    ]
-
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='teachers')
-    employee_id = models.CharField(max_length=20, editable=False, blank=True)
-    name = models.CharField(max_length=150)
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
-    date_of_birth = models.DateField()
-    phone = models.CharField(
-        max_length=20,
-        validators=[RegexValidator(r'^\d{10}$', message='Phone must be exactly 10 digits.')],
-    )
-    email = models.EmailField(blank=True)
-    address = models.TextField(blank=True)
-    qualification = models.CharField(max_length=150, help_text='e.g. B.Ed, M.Sc, M.Ed')
-    subjects_taught = models.CharField(max_length=255, blank=True, help_text='Comma-separated subjects, e.g. Maths, Science')
-    class_teacher_of = models.ForeignKey(
-        SchoolClass, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='class_teacher', help_text='Leave blank if not a class teacher',
-    )
-    joining_date = models.DateField(default=timezone.localdate)
-    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_CHOICES, default=EMPLOYMENT_FULL)
-    monthly_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
-    academic_session = models.CharField(
-        max_length=20,
-        default=default_current_academic_session,
-        validators=[validate_academic_session],
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['name']
-
-    def __str__(self):
-        return f"{self.employee_id} - {self.name}"
-
-    def _generate_employee_id(self):
-        year = timezone.now().year
-        prefix = f"TCH-{year}-"
-        last = Teacher.objects.filter(school=self.school, employee_id__startswith=prefix).order_by('-id').first()
-        next_number = 1
-        if last and last.employee_id:
-            try:
-                next_number = int(last.employee_id.split('-')[-1]) + 1
-            except (ValueError, IndexError):
-                next_number = Teacher.objects.filter(school=self.school).count() + 1
-        return f"{prefix}{next_number:04d}"
-
-    def save(self, *args, **kwargs):
-        if not self.employee_id:
-            self.employee_id = self._generate_employee_id()
-        super().save(*args, **kwargs)
-
-
 # ── Fees ──────────────────────────────────────────────────────────────────────
 
 
@@ -435,38 +352,6 @@ class FeePayment(models.Model):
         if not self.receipt_number:
             self.receipt_number = _make_receipt_number(FeePayment, 'FEE', student=self.student)
         self.balance_due = self.gross_amount - self.amount_paid
-        super().save(*args, **kwargs)
-
-
-class SalaryPayment(models.Model):
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='salary_payments')
-    teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, related_name='salary_payments')
-    receipt_number = models.CharField(max_length=20, editable=False, blank=True)
-    academic_session = models.CharField(
-        max_length=20,
-        default=default_current_academic_session,
-        validators=[validate_academic_session],
-    )
-    payment_date = models.DateField(default=timezone.localdate)
-    payment_months = models.JSONField(default=list)
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    remarks = models.CharField(max_length=255, blank=True)
-    paid_by = models.ForeignKey('schoolapp.User', on_delete=models.PROTECT, related_name='salary_payments_made')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-payment_date', '-id']
-
-    def __str__(self):
-        return self.receipt_number
-
-    def get_payment_months_display(self):
-        month_map = dict(MONTH_CHOICES)
-        return ', '.join(month_map.get(m, m) for m in self.payment_months)
-
-    def save(self, *args, **kwargs):
-        if not self.receipt_number:
-            self.receipt_number = _make_receipt_number(SalaryPayment, 'SAL', school=self.school)
         super().save(*args, **kwargs)
 
 

@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Student, Teacher, SalaryPayment, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings
+from .models import Student, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings
 
 
 def to_title_case(name: str) -> str:
@@ -193,106 +193,6 @@ class StudentForm(forms.ModelForm):
         if not phone.isdigit() or len(phone) != 10:
             raise ValidationError('Father phone must be exactly 10 digits.')
         return phone
-
-
-# ── Teachers ──────────────────────────────────────────────────────────────────
-
-class TeacherForm(forms.ModelForm):
-    gender = forms.ChoiceField(
-        choices=Teacher.GENDER_CHOICES,
-        initial=Teacher.GENDER_MALE,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
-
-    class Meta:
-        model = Teacher
-        fields = [
-            'name', 'gender', 'date_of_birth', 'phone', 'email',
-            'address', 'qualification',
-            'joining_date', 'monthly_salary', 'status',
-        ]
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Teacher's full name"}),
-            'gender': forms.Select(attrs={'class': 'form-select'}),
-            'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'inputmode': 'numeric', 'maxlength': '10', 'placeholder': '10-digit mobile number'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'teacher@example.com'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Residential address'}),
-            'qualification': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. B.Ed, M.Sc, M.Ed'}),
-            'subjects_taught': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Maths, Science, English'}),
-            'class_teacher_of': forms.Select(attrs={'class': 'form-select'}),
-            'joining_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'employment_type': forms.Select(attrs={'class': 'form-select'}),
-            'monthly_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-        }
-
-    def __init__(self, *args, school=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.school = school
-
-    def clean_phone(self):
-        phone = (self.cleaned_data.get('phone') or '').strip()
-        if not phone.isdigit() or len(phone) != 10:
-            raise forms.ValidationError('Phone must be exactly 10 digits.')
-        return phone
-
-
-# ── Salary Submission ─────────────────────────────────────────────────────────
-
-class SalaryPaymentForm(forms.ModelForm):
-    payment_months = forms.MultipleChoiceField(
-        choices=MONTH_CHOICES,
-        widget=forms.CheckboxSelectMultiple(),
-        required=True,
-        label='Select Month(s)',
-    )
-
-    class Meta:
-        model = SalaryPayment
-        fields = ['teacher', 'payment_date', 'payment_months', 'amount_paid', 'remarks']
-        widgets = {
-            'teacher': forms.Select(attrs={'class': 'form-select'}),
-            'payment_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'readonly': 'readonly'}),
-            'remarks': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional note…'}),
-        }
-
-    def __init__(self, *args, school=None, session=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.school = school
-        self.session = session
-        if school:
-            self.fields['teacher'].queryset = Teacher.objects.filter(school=school, status=Teacher.STATUS_ACTIVE)
-        else:
-            self.fields['teacher'].queryset = Teacher.objects.none()
-
-    def clean_payment_months(self):
-        months = list(dict.fromkeys(self.cleaned_data.get('payment_months', [])))
-        valid = {v for v, _ in MONTH_CHOICES}
-        invalid = [m for m in months if m not in valid]
-        if invalid:
-            raise forms.ValidationError('Invalid month selection.')
-        return months
-
-    def clean(self):
-        cleaned_data = super().clean()
-        teacher = cleaned_data.get('teacher')
-        months = cleaned_data.get('payment_months', [])
-        session = self.session
-        if teacher and months and session and self.school:
-            already_paid = SalaryPayment.objects.filter(
-                school=self.school, teacher=teacher, academic_session=session,
-            ).values_list('payment_months', flat=True)
-            paid_set = set()
-            for m_list in already_paid:
-                paid_set.update(m_list)
-            duplicates = [m for m in months if m in paid_set]
-            if duplicates:
-                month_map = dict(MONTH_CHOICES)
-                dup_labels = ', '.join(month_map.get(m, m) for m in duplicates)
-                raise forms.ValidationError(f'Salary already paid for: {dup_labels}')
-        return cleaned_data
 
 
 # ── Fee Submission ────────────────────────────────────────────────────────────
