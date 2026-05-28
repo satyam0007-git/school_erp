@@ -69,11 +69,18 @@
       </a>
       {% endif %}
       </div>{# end filters group #}
-      <a href="{% url 'student_create' %}" class="btn btn-sm d-flex align-items-center gap-1 flex-shrink-0"
-         style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:600;border:none;border-radius:8px;padding:7px 14px;box-shadow:0 2px 8px rgba(34,197,94,.25);white-space:nowrap;">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Admission
-      </a>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <a href="{% url 'admission_bulk_upload' %}" class="btn btn-sm d-flex align-items-center gap-1"
+           style="background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#fff;font-weight:600;border:none;border-radius:8px;padding:7px 14px;box-shadow:0 2px 8px rgba(59,130,246,.25);white-space:nowrap;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+          Bulk Admission
+        </a>
+        <a href="{% url 'student_create' %}" class="btn btn-sm d-flex align-items-center gap-1"
+           style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:600;border:none;border-radius:8px;padding:7px 14px;box-shadow:0 2px 8px rgba(34,197,94,.25);white-space:nowrap;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Admission
+        </a>
+      </div>
     </div>
   </form>
 </div>
