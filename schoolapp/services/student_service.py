@@ -21,6 +21,18 @@ BULK_UPLOAD_HEADERS = [
 
 VALID_BLOOD_GROUPS = {'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'}
 
+BULK_MAX_LENGTHS = {
+    'Student Name': ('name', 150),
+    'Father Name': ('father_name', 120),
+    'Mother Name': ('mother_name', 120),
+    'Father WhatsApp': ('father_phone', 20),
+    'Blood Group': ('blood_group', 10),
+    'Previous School': ('prev_school', 200),
+    'PEN Number': ('pen', 20),
+    'Religion': ('religion', 100),
+    'Caste': ('caste', 100),
+}
+
 BULK_FIELD_INFO = [
     {'name': 'Student Name',     'required': True},
     {'name': 'Date of Birth',    'required': True},
@@ -158,6 +170,12 @@ def _parse_bulk_row(row, class_map, session, batch_keys, school):
     elif father_phone:
         father_phone = phone_digits
 
+    aadhaar_digits = re.sub(r'\D', '', aadhaar) if aadhaar else ''
+    if aadhaar and len(aadhaar_digits) != 12:
+        errors.append('Aadhaar Number must be exactly 12 digits')
+    elif aadhaar:
+        aadhaar = aadhaar_digits
+
     if blood_group and blood_group.upper() not in VALID_BLOOD_GROUPS:
         errors.append(f'Invalid Blood Group "{blood_group}"')
         blood_group = ''
@@ -211,6 +229,22 @@ def _parse_bulk_row(row, class_map, session, batch_keys, school):
             errors.append('Duplicate: student already exists in the system')
         else:
             batch_keys.add(batch_key)
+
+    field_values = {
+        'name': name,
+        'father_name': father_name,
+        'mother_name': mother_name,
+        'father_phone': father_phone,
+        'blood_group': blood_group,
+        'prev_school': prev_school,
+        'pen': pen,
+        'religion': religion,
+        'caste': caste,
+    }
+    for label, (field_name, max_length) in BULK_MAX_LENGTHS.items():
+        value = field_values.get(field_name) or ''
+        if len(value) > max_length:
+            errors.append(f'{label} must be {max_length} characters or fewer')
 
     if errors:
         return None, errors
