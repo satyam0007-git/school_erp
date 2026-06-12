@@ -137,7 +137,6 @@ class SchoolProfile(models.Model):
         )
         return obj
 
-
 class SchoolSessionRecord(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='session_records')
     academic_session = models.CharField(
@@ -243,6 +242,13 @@ class Student(models.Model):
     transport_opted = models.BooleanField(default=False)
     transport_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     discount_months = models.PositiveSmallIntegerField(blank=True, null=True)
+    bulk_upload_history = models.ForeignKey(
+        'schoolapp.AdmissionBulkUploadHistory',
+        on_delete=models.SET_NULL,
+        related_name='successful_students',
+        blank=True,
+        null=True,
+    )
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -294,6 +300,25 @@ class Student(models.Model):
         if not self.roll_number:
             self.roll_number = self._generate_roll_number()
         super().save(*args, **kwargs)
+
+
+class AdmissionBulkUploadHistory(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='admission_bulk_uploads')
+    uploaded_by = models.ForeignKey('schoolapp.User', on_delete=models.PROTECT, related_name='admission_bulk_uploads')
+    academic_session = models.CharField(max_length=20, blank=True, default='')
+    file_name = models.CharField(max_length=255, blank=True)
+    total_records = models.PositiveIntegerField(default=0)
+    admissions_created = models.PositiveIntegerField(default=0)
+    fee_submissions = models.PositiveIntegerField(default=0)
+    failed_records = models.PositiveIntegerField(default=0)
+    fee_skipped = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at', '-id']
+
+    def __str__(self):
+        return f'{self.school.name} bulk upload — {self.uploaded_at:%d %b %Y %H:%M}'
 
 
 # ── Fees ──────────────────────────────────────────────────────────────────────

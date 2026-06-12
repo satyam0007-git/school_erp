@@ -1,4 +1,5 @@
 import io
+import re
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -13,7 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from ..decorators import school_only
 from ..forms import StudentForm
-from ..models import SchoolClass, SchoolProfile, Student
+from ..models import AdmissionBulkUploadHistory, SchoolClass, SchoolProfile, Student
 from ..services.student_service import (
     BULK_FIELD_INFO, BULK_UPLOAD_HEADERS,
     fail_student, process_bulk_upload, promote_student,
@@ -164,7 +165,22 @@ def student_transfer(request, pk):
 @school_only
 def admission_bulk_template(request):
     school = request.user.school
-    classes = list(SchoolClass.objects.filter(school=school).order_by('name'))
+    profile = SchoolProfile.get_for_school(school)
+    session = profile.current_academic_session
+    
+    # Get classes that have students in the current session
+    classes_with_students = list(
+        SchoolClass.objects
+        .filter(students__school=school, students__academic_session=session)
+        .distinct()
+        .order_by('name')
+    )
+    
+    # If no students in session, get all classes for school
+    if not classes_with_students:
+        classes_with_students = list(SchoolClass.objects.filter(school=school).order_by('name'))
+    
+    classes = classes_with_students
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -226,6 +242,21 @@ def admission_bulk_upload(request):
             try:
                 wb = openpyxl.load_workbook(uploaded_file, data_only=True)
                 upload_result, failed_rows = process_bulk_upload(wb, school, profile, request.user)
+                history = AdmissionBulkUploadHistory.objects.create(
+                    school=school,
+                    uploaded_by=request.user,
+                    academic_session=profile.current_academic_session,
+                    file_name=uploaded_file.name[:255],
+                    total_records=upload_result['total'],
+                    admissions_created=upload_result['success'],
+                    fee_submissions=upload_result['fee_success'],
+                    failed_records=upload_result['failed'],
+                    fee_skipped=upload_result['fee_skipped'],
+                )
+                Student.objects.filter(
+                    school=school,
+                    pk__in=upload_result.get('successful_student_ids', []),
+                ).update(bulk_upload_history=history)
                 if failed_rows:
                     request.session['bulk_upload_failed'] = failed_rows
                 else:
@@ -233,13 +264,84 @@ def admission_bulk_upload(request):
             except Exception as exc:
                 messages.error(request, f'Failed to process file: {exc}')
 
+    upload_history = AdmissionBulkUploadHistory.objects.filter(
+        school=school,
+        academic_session=profile.current_academic_session,
+    ).select_related('uploaded_by')[:20]
+
     return render(request, 'school/admission/bulk_upload.html', {
         'classes': classes,
         'field_info': BULK_FIELD_INFO,
         'upload_result': upload_result,
+        'upload_history': upload_history,
         'has_pending_errors': bool(request.session.get('bulk_upload_failed')),
         'current_session': profile.current_academic_session,
     })
+
+
+@school_only
+def admission_bulk_success_download(request, pk):
+    school = request.user.school
+    history = get_object_or_404(AdmissionBulkUploadHistory, pk=pk, school=school)
+    students = (
+        Student.objects
+        .filter(school=school, bulk_upload_history=history)
+        .select_related('school_class')
+        .order_by('school_class__name', 'name')
+    )
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Successful Admissions'
+    ws.row_dimensions[1].height = 30
+
+    headers = [
+        'Roll No.', 'Student Name', 'Date of Birth', 'Class', 'Academic Session',
+        'Religion', 'Caste', 'Address', 'Admission Date',
+        'Father Name', 'Mother Name', 'WhatsApp Number',
+        'Blood Group', 'Previous School', 'Aadhaar No.', 'PEN No.',
+        'Transport Opted', 'Transport Amount',
+    ]
+    ws.append(headers)
+    for cell in ws[1]:
+        style_header_cell(cell, '15803D')
+
+    for row_idx, student in enumerate(students, start=2):
+        ws.row_dimensions[row_idx].height = 18
+        ws.append([
+            student.roll_number,
+            student.name,
+            student.date_of_birth.strftime('%d-%m-%Y') if student.date_of_birth else '',
+            student.school_class.name,
+            student.academic_session,
+            student.religion or '',
+            student.caste or '',
+            student.address or '',
+            student.admission_date.strftime('%d-%m-%Y') if student.admission_date else '',
+            student.father_name,
+            student.mother_name,
+            student.father_phone,
+            student.blood_group or '',
+            student.previous_school or '',
+            student.aadhaar_number or '',
+            student.pen_number or '',
+            'Yes' if student.transport_opted else 'No',
+            float(student.transport_amount) if student.transport_amount else '',
+        ])
+        for cell in ws[row_idx]:
+            style_data_cell(cell, row_idx)
+
+    set_column_widths(ws)
+    ws.freeze_panes = 'A2'
+
+    safe_file = re.sub(r'[^\w.-]+', '_', history.file_name or 'bulk_upload').strip('._')
+    filename = f"successful_admissions_{history.pk}_{safe_file or 'bulk_upload'}.xlsx"
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    response = HttpResponse(buf.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @school_only

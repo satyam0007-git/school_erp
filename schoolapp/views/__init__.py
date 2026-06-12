@@ -19,6 +19,7 @@ from .report_views import (
 )
 from .student_views import (
     admission_bulk_errors_download,
+    admission_bulk_success_download,
     admission_bulk_template,
     admission_bulk_upload,
     student_create,
@@ -57,7 +58,8 @@ __all__ = [
     'payment_edit', 'student_fee_structure_ajax',
     'report_admissions_export', 'report_admissions_print', 'report_dashboard',
     'report_fees_export', 'report_fees_print',
-    'admission_bulk_errors_download', 'admission_bulk_template', 'admission_bulk_upload',
+    'admission_bulk_errors_download', 'admission_bulk_success_download',
+    'admission_bulk_template', 'admission_bulk_upload',
     'student_create', 'student_delete', 'student_edit', 'student_fail',
     'student_list', 'student_promote', 'student_transfer',
     'school_add', 'school_delete', 'school_edit', 'super_collect_fee',
