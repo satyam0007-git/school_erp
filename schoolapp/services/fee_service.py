@@ -25,6 +25,41 @@ def get_transport_fee(student):
     return Decimal('0.00')
 
 
+def get_unpaid_exam_fees(student, school, session=None):
+    """Calculate total unpaid exam fees for a student."""
+    if session is None:
+        session = SchoolProfile.get_for_school(school).current_academic_session
+    
+    # Get all exam fees for this student's class and session
+    exam_fees = ExamFee.objects.filter(
+        school=school,
+        school_class=student.school_class,
+        academic_session=session,
+    ).aggregate(total=Sum('amount'))
+    total_exam_fees = exam_fees['total'] or Decimal('0.00')
+    
+    # Get already paid exam fees
+    paid_exam_names = set()
+    payments = FeePayment.objects.filter(student=student, academic_session=session)
+    for items in payments.values_list('exam_fee_items', flat=True):
+        for item in (items or []):
+            name = item.get('name') or item.get('exam_name') or str(item)
+            paid_exam_names.add(name)
+    
+    # Calculate unpaid exam fees
+    unpaid_fees = Decimal('0.00')
+    exam_list = ExamFee.objects.filter(
+        school=school,
+        school_class=student.school_class,
+        academic_session=session,
+    )
+    for exam in exam_list:
+        if exam.exam_name not in paid_exam_names:
+            unpaid_fees += exam.amount
+    
+    return unpaid_fees
+
+
 def get_available_advance(student, session):
     result = FeePayment.objects.filter(
         student=student, academic_session=session,

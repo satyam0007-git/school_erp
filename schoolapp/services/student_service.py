@@ -271,6 +271,7 @@ def process_bulk_upload(workbook, school, profile, user):
     fee_last_error = ''
     failed_rows = []
     batch_keys = set()
+    successful_student_ids = []
 
     for row in workbook.active.iter_rows(min_row=2, values_only=True):
         first_val = str(row[0] or '').strip() if row else ''
@@ -306,6 +307,7 @@ def process_bulk_upload(workbook, school, profile, user):
                     discount_months=data['discount_months'], admission_date=data['admission_dt'],
                 )
             success += 1
+            successful_student_ids.append(student.pk)
 
             if data['paid_amount'] and data['paid_amount'] > 0 and data['fee_date']:
                 try:
@@ -338,4 +340,5 @@ def process_bulk_upload(workbook, school, profile, user):
         'fee_success': fee_success, 'fee_skipped': fee_skipped,
         'fee_provided': fee_provided, 'fee_last_error': fee_last_error,
         'failed': len(failed_rows), 'has_errors': bool(failed_rows),
+        'successful_student_ids': successful_student_ids,
     }, failed_rows

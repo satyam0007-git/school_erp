@@ -25,6 +25,7 @@ from ..models import (
 from ..services.fee_service import (
     distribute_lump_sum, get_available_advance, get_editable_fee_options,
     get_monthly_tuition_fee, get_transport_fee, get_unpaid_fee_options,
+    get_unpaid_exam_fees,
 )
 from ..services.report_service import build_fee_dashboard_data
 from ..session_utils import CAL_TO_MONTH, MONTH_TO_CAL, get_session_months
@@ -118,7 +119,8 @@ def payment_dashboard(request):
     for student in students.order_by('school_class__name', 'name'):
         monthly_fee = get_monthly_tuition_fee(student, school, session=selected_session)
         transport_fee = get_transport_fee(student)
-        total_needed = (monthly_fee + transport_fee) * months_due
+        exam_fees = get_unpaid_exam_fees(student, school, session=selected_session)
+        total_needed = (monthly_fee + transport_fee) * months_due + exam_fees
         total_paid = FeePayment.objects.filter(
             student=student, academic_session=selected_session,
         ).aggregate(t=Sum('amount_paid'))['t'] or Decimal('0.00')

@@ -250,6 +250,46 @@
     margin-bottom: 20px;
   }
 
+  /* ── Upload history ─────────────────────────────────────── */
+  .history-card {
+    background:#fff; border-radius:10px; padding:24px; margin-top:24px;
+    box-shadow:0 1px 4px rgba(0,0,0,.08);
+  }
+  .history-table {
+    border-collapse:separate; border-spacing:0; border:1.5px solid #cbd5e1;
+    border-radius:10px; overflow:hidden; width:100%;
+  }
+  .history-table thead th {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+    color:#374151; background:#f1f5f9; border-bottom:2px solid #cbd5e1;
+    border-right:1px solid #e2e8f0; padding:10px 14px; white-space:nowrap;
+  }
+  .history-table thead th:last-child { border-right:none; }
+  .history-table tbody td {
+    font-size:13px; padding:10px 14px; border-bottom:1px solid #e2e8f0;
+    border-right:1px solid #f1f5f9; vertical-align:middle;
+  }
+  .history-table tbody td:last-child { border-right:none; }
+  .history-table tbody tr:last-child td { border-bottom:none; }
+  .history-table tbody tr:hover td { background:#f8fafc; }
+  .hist-badge {
+    display:inline-flex; align-items:center; border-radius:999px; padding:3px 9px;
+    font-size:11px; font-weight:700; white-space:nowrap;
+  }
+  .hist-badge-ok { background:#dcfce7; color:#15803d; }
+  .hist-badge-warn { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+  .hist-file {
+    display:block; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-weight:600; color:#1e293b;
+  }
+  .hist-file-link {
+    display:inline-flex; align-items:center; gap:6px; max-width:260px;
+    color:#0f172a; font-weight:800; text-decoration:none;
+  }
+  .hist-file-link:hover { color:#2563eb; text-decoration:underline; }
+  .hist-file-link .hist-file { color:inherit; }
+  .hist-file-link svg { flex-shrink:0; color:#16a34a; }
+
   /* ── Loading overlay ─────────────────────────────────────── */
   #upload-overlay {
     display: none; position: fixed; inset: 0;
@@ -489,6 +529,60 @@
     </div>
   </div>
 </div>
+
+{% if upload_history %}
+<div class="history-card">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h5 class="fw-bold mb-0" style="color:#475569;">Upload History</h5>
+    <span style="font-size:12px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:20px;padding:4px 12px;">
+      Session: {{ current_session }}
+    </span>
+  </div>
+  <div class="table-responsive" style="max-height:420px;overflow-y:auto;border-radius:10px;">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>S.N</th>
+          <th>Uploaded On</th>
+          <th>File</th>
+          <th>Uploaded By</th>
+          <th>Total</th>
+          <th>Admissions</th>
+          <th>Fee Submissions</th>
+          <th>Failed</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in upload_history %}
+        <tr>
+          <td style="color:#94a3b8;">{{ forloop.counter }}</td>
+          <td style="color:#64748b;">{{ item.uploaded_at|date:"d M Y, h:i A" }}</td>
+          <td>
+            <a href="{% url 'admission_bulk_success_download' item.pk %}" class="hist-file-link" title="Download successful admissions from {{ item.file_name|default:'this upload' }}">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span class="hist-file">{{ item.file_name|default:"Download successful admissions" }}</span>
+            </a>
+          </td>
+          <td>{{ item.uploaded_by.get_full_name|default:item.uploaded_by.username }}</td>
+          <td>{{ item.total_records }}</td>
+          <td class="fw-semibold text-success">{{ item.admissions_created }}</td>
+          <td class="fw-semibold" style="color:#4338ca;">{{ item.fee_submissions }}</td>
+          <td class="{% if item.failed_records %}text-danger fw-semibold{% else %}text-muted{% endif %}">{{ item.failed_records }}</td>
+          <td>
+            {% if item.failed_records %}
+              <span class="hist-badge hist-badge-warn">Partial</span>
+            {% else %}
+              <span class="hist-badge hist-badge-ok">Success</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}
 

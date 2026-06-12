@@ -20,9 +20,11 @@
   .sidebar .brand-trigger:focus-visible { outline:2px solid #38bdf8; outline-offset:-2px; }
   .sidebar .brand-logo { width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,.35); border:2px solid #334155; }
   .sidebar .brand-logo-fallback { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#0ea5e9,#6366f1); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  .sidebar .brand-logo-fallback.is-hidden,
+  .topbar-school .school-logo-fallback.is-hidden { display:none; }
   .sidebar .brand-text { min-width:0; flex:1; }
   .sidebar .brand-name { font-size:14px; font-weight:700; color:#fff; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sidebar .brand-sub { font-size:10px; color:#38bdf8; text-transform:uppercase; letter-spacing:.07em; font-weight:600; }
+  .sidebar .brand-sub { font-size:10px; background: linear-gradient(90deg, #38bdf8, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-transform:uppercase; letter-spacing:.07em; font-weight:700; }
   .sidebar .brand-chevron { color:#64748b; transition:transform .18s,color .18s; flex-shrink:0; }
   .sidebar .brand.open .brand-chevron { transform:rotate(180deg); color:#cbd5e1; }
   .sidebar .brand-menu {
@@ -128,11 +130,12 @@
   .topbar .page-title-icon.settings { background:linear-gradient(135deg,#64748b,#475569); }
   .topbar .page-title-icon.dashboard { background:linear-gradient(135deg,#3b82f6,#6366f1); }
   .topbar-right { display:flex; align-items:center; gap:16px; }
-  .topbar-school { display:flex; align-items:center; gap:9px; background:#f1f5f9; border-radius:9px; padding:6px 13px 6px 7px; border:1px solid #e2e8f0; }
-  .topbar-school .school-logo-img { width:30px; height:30px; border-radius:7px; object-fit:cover; border:1px solid #cbd5e1; }
-  .topbar-school .school-logo-fallback { width:30px; height:30px; background:linear-gradient(135deg,#0ea5e9,#6366f1); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .topbar-school .school-name { font-size:13px; font-weight:600; color:#1e293b; line-height:1.2; }
-  .topbar-school .school-label { font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; }
+  .topbar-school { display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius:12px; padding:8px 16px; border:2px solid rgba(255,255,255,0.2); box-shadow:0 8px 24px rgba(102,126,234,0.2); transition:all .3s ease; }
+  .topbar-school:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(102,126,234,0.3); }
+  .topbar-school .school-logo-img { width:36px; height:36px; border-radius:10px; object-fit:cover; border:2px solid rgba(255,255,255,0.3); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+  .topbar-school .school-logo-fallback { width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid rgba(255,255,255,0.3); backdrop-filter:blur(10px); }
+  .topbar-school .school-name { font-size:13px; font-weight:700; color:#fff; line-height:1.3; letter-spacing:0.3px; text-shadow:0 2px 4px rgba(0,0,0,0.1); }
+  .topbar-school .school-label { font-size:10px; color:rgba(255,255,255,0.8); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
   .topbar-logout {
     display:flex;
     align-items:center;
@@ -186,7 +189,10 @@
     <button type="button" class="brand-trigger" onclick="toggleBrandProfile(event)" aria-expanded="false" aria-controls="brand-profile-menu">
       <div class="brand-inner">
         {% if app_settings and app_settings.logo %}
-          <img src="{{ app_settings.logo.url }}" alt="{{ app_settings.software_name|default:'SchoolERP' }}" class="brand-logo">
+          <img src="{{ app_settings.logo.url }}" alt="" class="brand-logo" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('is-hidden');">
+          <div class="brand-logo-fallback is-hidden" aria-label="{{ app_settings.software_name|default:'SchoolERP' }}">
+            <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
         {% else %}
           <div class="brand-logo-fallback">
             <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -338,7 +344,10 @@
       {% if not user.is_super and user.school %}
       <div class="topbar-school">
         {% if user.school.logo %}
-          <img src="{{ user.school.logo.url }}" alt="{{ user.school.name }}" class="school-logo-img">
+          <img src="{{ user.school.logo.url }}" alt="" class="school-logo-img" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('is-hidden');">
+          <div class="school-logo-fallback is-hidden" aria-label="{{ user.school.name }}">
+            <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
         {% else %}
           <div class="school-logo-fallback">
             <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>

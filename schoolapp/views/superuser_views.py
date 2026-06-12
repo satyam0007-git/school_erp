@@ -39,7 +39,7 @@ def super_dashboard(request):
 
     profiles = get_all_school_profiles()
     session_records = get_all_session_records()
-    student_counts = get_active_student_counts_by_school_session()
+    student_counts = get_all_student_counts_by_school_session()
 
     rows = build_superuser_dashboard_rows(
         School.objects.all(), profiles, session_records, student_counts, system_session,
