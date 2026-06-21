@@ -51,7 +51,7 @@ def config_view(request):
                 view_session = session
 
         elif 'add_class' in request.POST:
-            class_name = request.POST.get('class_name', '').strip()
+            class_name = ' '.join(request.POST.get('class_name', '').split()).upper()
             try:
                 amount = Decimal(request.POST.get('monthly_fee', ''))
                 assert amount >= 0
@@ -70,7 +70,7 @@ def config_view(request):
 
         elif 'update_class' in request.POST:
             class_id = request.POST.get('class_id')
-            class_name = request.POST.get('class_name', '').strip()
+            class_name = request.POST.get('class_name', '').strip().upper()
             try:
                 amount = Decimal(request.POST.get('monthly_fee', ''))
                 assert amount >= 0
