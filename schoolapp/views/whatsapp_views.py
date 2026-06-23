@@ -108,7 +108,7 @@ def whatsapp_send(request):
             "language": {"code": (wa_config.template_language or '').strip() or 'en'},
             "components": [{"type": "body", "parameters": [
                 {"type": "text", "text": student.name},
-                {"type": "text", "text": student.roll_number},
+                {"type": "text", "text": student.father_name},
                 {"type": "text", "text": f"Rs.{balance}"},
                 {"type": "text", "text": school.name},
             ]}],
