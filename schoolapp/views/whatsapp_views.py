@@ -153,7 +153,8 @@ def whatsapp_announce(request):
             "name": ann_template_name,
             "language": {"code": (wa_config.announcement_template_language or '').strip() or 'en'},
             "components": [{"type": "body", "parameters": [
-                {"type": "text", "parameter_name": "announcement", "text": message},
+                {"type": "text", "text": message},
+                {"type": "text", "text": school.name},
             ]}],
         },
     }
