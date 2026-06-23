@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign In — {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -484,6 +484,11 @@ body::before {
 
 /* ── responsive ── */
 @media (max-width: 680px) {
+  body {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 16px;
+  }
   .login-shell {
     grid-template-columns: 1fr;
     max-width: 420px;
@@ -495,6 +500,11 @@ body::before {
   }
   .brand-stats { display: none; }
   .form-panel { padding: 40px 32px; }
+}
+
+@media (max-width: 420px) {
+  .brand-panel { padding: 28px 22px; min-height: 200px; }
+  .form-panel { padding: 30px 22px; }
 }
 </style>
 </head>
