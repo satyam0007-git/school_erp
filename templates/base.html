@@ -8,15 +8,7 @@
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 {% block extra_head %}{% endblock %}
-<script>
-  (function () {
-    try {
-      if (localStorage.getItem('erpViewMode') === 'desktop') {
-        document.documentElement.classList.add('force-desktop-view');
-      }
-    } catch (e) {}
-  })();
-</script>
+
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
   .sidebar { position:fixed; top:0; left:0; height:100vh; width:230px; background:#1e293b; color:#cbd5e1; display:flex; flex-direction:column; z-index:100; }
@@ -172,22 +164,7 @@
     outline:2px solid #22c55e;
     outline-offset:2px;
   }
-  .view-mode-toggle {
-    display:none;
-    align-items:center;
-    gap:6px;
-    min-height:38px;
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid #cbd5e1;
-    background:#fff;
-    color:#334155;
-    font-size:12px;
-    font-weight:700;
-    white-space:nowrap;
-  }
-  .view-mode-toggle:hover { background:#f8fafc; }
-  .view-mode-toggle:focus-visible { outline:2px solid #38bdf8; outline-offset:2px; }
+
   .content { padding:28px; }
   .alert-success { background:#dcfce7; color:#166534; border:none; }
   .alert-error, .alert-danger { background:#fee2e2; color:#991b1b; border:none; }
@@ -296,7 +273,6 @@
     .topbar-logout svg { width:18px; height:18px; }
     .topbar-logout svg + text,
     .topbar-logout { font-size:0; }
-    .view-mode-toggle { display:inline-flex; }
     .content { padding:14px; }
     .card, .form-wrap, .table-wrap, .confirm-box { border-radius:10px; padding:16px; }
     .stats { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-bottom:18px; }
@@ -488,115 +464,10 @@
       text-align:center;
     }
 
-    html.force-desktop-view body {
-      min-width:1024px;
-      overflow-x:auto;
-    }
-    html.force-desktop-view body.mobile-nav-open { overflow:auto; }
-    html.force-desktop-view .sidebar {
-      width:230px;
-      max-width:none;
-      transform:none;
-      transition:none;
-      z-index:100;
-      box-shadow:none;
-    }
-    html.force-desktop-view .sidebar-overlay { display:none !important; }
-    html.force-desktop-view .main {
-      margin-left:230px;
-      min-width:0;
-    }
-    html.force-desktop-view .topbar {
-      position:static;
-      padding:12px 28px;
-      gap:16px;
-      align-items:center;
-    }
-    html.force-desktop-view .mobile-menu-btn { display:none; }
-    html.force-desktop-view .topbar h1 { font-size:19px; }
-    html.force-desktop-view .topbar .page-title > span:last-child {
-      overflow:visible;
-      text-overflow:clip;
-      white-space:normal;
-    }
-    html.force-desktop-view .topbar-school {
-      display:flex;
-      max-width:none;
-      padding:6px 13px 6px 7px;
-    }
-    html.force-desktop-view .topbar-school .school-name {
-      max-width:none;
-      overflow:visible;
-      text-overflow:clip;
-    }
-    html.force-desktop-view .topbar-logout {
-      width:auto;
-      height:auto;
-      padding:8px 14px;
-      border-radius:999px;
-      font-size:13px;
-    }
-    html.force-desktop-view .topbar-logout svg { width:14px; height:14px; }
-    html.force-desktop-view .view-mode-toggle {
-      display:inline-flex;
-      position:fixed;
-      right:14px;
-      bottom:14px;
-      z-index:1200;
-      box-shadow:0 10px 24px rgba(15,23,42,.2);
-    }
-    html.force-desktop-view .content { padding:28px; }
-    html.force-desktop-view .card,
-    html.force-desktop-view .form-wrap,
-    html.force-desktop-view .table-wrap,
-    html.force-desktop-view .confirm-box {
-      padding:20px;
-    }
-    html.force-desktop-view .filter-bar > .d-flex,
-    html.force-desktop-view .filter-card .d-flex,
-    html.force-desktop-view .rpt-filter-card .d-flex {
-      flex-wrap:nowrap !important;
-      align-items:center !important;
-    }
-    html.force-desktop-view .filter-bar input,
-    html.force-desktop-view .filter-bar select,
-    html.force-desktop-view .filter-card input,
-    html.force-desktop-view .filter-card select,
-    html.force-desktop-view .rpt-filter-card input,
-    html.force-desktop-view .rpt-filter-card select {
-      flex:1 1 auto !important;
-    }
-    html.force-desktop-view .form-control,
-    html.force-desktop-view .form-select {
-      min-height:38px;
-      font-size:14px;
-    }
-    html.force-desktop-view .btn { min-height:38px; }
-    html.force-desktop-view .rpt-row {
-      flex-wrap:nowrap;
-      align-items:center !important;
-      padding:22px 28px !important;
-    }
-    html.force-desktop-view .rpt-row-actions,
-    html.force-desktop-view .rpt-dropdown,
-    html.force-desktop-view .btn-actions-trigger,
-    html.force-desktop-view .btn-bulk-upload {
-      width:auto;
-    }
-    html.force-desktop-view .rpt-dropdown-menu {
-      position:absolute !important;
-      right:0;
-      width:auto;
-      min-width:190px !important;
-    }
-  }
-
   @media (max-width: 420px) {
     .topbar-school { display:none; }
-    html.force-desktop-view .topbar-school { display:flex; }
     .stats { grid-template-columns:1fr; }
     .content { padding:12px; }
-    html.force-desktop-view .content { padding:28px; }
   }
 </style>
 </head>
@@ -762,11 +633,6 @@
       <span>{% block page_title %}Dashboard{% endblock %}</span>
     </h1>
     <div class="topbar-right">
-      <button type="button" class="view-mode-toggle" id="view-mode-toggle" onclick="toggleViewMode()" aria-pressed="false">
-        <svg class="view-mode-desktop-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
-        <svg class="view-mode-mobile-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
-        <span id="view-mode-label">Desktop view</span>
-      </button>
       {% if not user.is_super and user.school %}
       <div class="topbar-school">
         {% if user.school.logo %}
@@ -839,41 +705,7 @@ function closeMobileNav() {
   setMobileNav(false);
 }
 
-function applyViewMode(mode) {
-  const isDesktop = mode === 'desktop';
-  document.documentElement.classList.toggle('force-desktop-view', isDesktop);
-  document.body.classList.remove('mobile-nav-open');
-  closeMobileNav();
-  const btn = document.getElementById('view-mode-toggle');
-  const label = document.getElementById('view-mode-label');
-  const desktopIcon = document.querySelector('.view-mode-desktop-icon');
-  const mobileIcon = document.querySelector('.view-mode-mobile-icon');
-  if (btn) {
-    btn.setAttribute('aria-pressed', String(isDesktop));
-    btn.setAttribute('title', isDesktop ? 'Switch to mobile view' : 'Switch to desktop view');
-  }
-  if (label) label.textContent = isDesktop ? 'Mobile view' : 'Desktop view';
-  if (desktopIcon) desktopIcon.style.display = isDesktop ? 'none' : '';
-  if (mobileIcon) mobileIcon.style.display = isDesktop ? '' : 'none';
-}
 
-function toggleViewMode() {
-  const isDesktop = document.documentElement.classList.contains('force-desktop-view');
-  const nextMode = isDesktop ? 'mobile' : 'desktop';
-  try {
-    if (nextMode === 'desktop') localStorage.setItem('erpViewMode', 'desktop');
-    else localStorage.removeItem('erpViewMode');
-  } catch (e) {}
-  applyViewMode(nextMode);
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  let mode = 'mobile';
-  try {
-    mode = localStorage.getItem('erpViewMode') === 'desktop' ? 'desktop' : 'mobile';
-  } catch (e) {}
-  applyViewMode(mode);
-});
 
 function toggleBrandProfile(event) {
   event.stopPropagation();

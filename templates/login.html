@@ -8,15 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script>
-  (function () {
-    try {
-      if (localStorage.getItem('erpViewMode') === 'desktop') {
-        document.documentElement.classList.add('force-desktop-view');
-      }
-    } catch (e) {}
-  })();
-</script>
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -516,78 +508,6 @@ body::before {
   .form-panel { padding: 30px 22px; }
 }
 
-/* ── view mode toggle ── */
-.view-mode-toggle {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(15,23,42,0.6);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-.view-mode-toggle:hover {
-  background: rgba(15,23,42,0.8);
-  transform: translateY(-1px);
-}
-.view-mode-toggle:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-@media (max-width: 680px) {
-  .view-mode-toggle {
-    display: inline-flex;
-  }
-}
-
-/* ── force desktop view overrides ── */
-html.force-desktop-view {
-  min-width: 800px;
-  overflow-x: auto;
-}
-html.force-desktop-view body {
-  align-items: center !important;
-  overflow-y: hidden !important;
-  padding: 24px !important;
-}
-html.force-desktop-view .login-shell {
-  grid-template-columns: 1fr 1fr !important;
-  max-width: 760px !important;
-  min-height: 460px !important;
-}
-html.force-desktop-view .brand-panel {
-  padding: 36px 32px !important;
-  min-height: auto !important;
-}
-html.force-desktop-view .brand-stats {
-  display: flex !important;
-}
-html.force-desktop-view .form-panel {
-  padding: 40px 36px !important;
-}
-html.force-desktop-view .view-mode-toggle {
-  display: inline-flex !important;
-  position: fixed !important;
-  right: 20px !important;
-  bottom: 20px !important;
-  top: auto !important;
-  box-shadow: 0 10px 24px rgba(15,23,42,.2) !important;
-  border: 1px solid rgba(255,255,255,0.15) !important;
-}
 </style>
 </head>
 <body>
@@ -597,11 +517,6 @@ html.force-desktop-view .view-mode-toggle {
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
 
-<button type="button" class="view-mode-toggle" id="view-mode-toggle" onclick="toggleViewMode()" aria-pressed="false">
-  <svg class="view-mode-desktop-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
-  <svg class="view-mode-mobile-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
-  <span id="view-mode-label">Desktop view</span>
-</button>
 
 <div class="login-shell">
 
@@ -750,39 +665,6 @@ function togglePw() {
   }
 }
 
-function applyViewMode(mode) {
-  const isDesktop = mode === 'desktop';
-  document.documentElement.classList.toggle('force-desktop-view', isDesktop);
-  const btn = document.getElementById('view-mode-toggle');
-  const label = document.getElementById('view-mode-label');
-  const desktopIcon = document.querySelector('.view-mode-desktop-icon');
-  const mobileIcon = document.querySelector('.view-mode-mobile-icon');
-  if (btn) {
-    btn.setAttribute('aria-pressed', String(isDesktop));
-    btn.setAttribute('title', isDesktop ? 'Switch to mobile view' : 'Switch to desktop view');
-  }
-  if (label) label.textContent = isDesktop ? 'Mobile view' : 'Desktop view';
-  if (desktopIcon) desktopIcon.style.display = isDesktop ? 'none' : '';
-  if (mobileIcon) mobileIcon.style.display = isDesktop ? '' : 'none';
-}
-
-function toggleViewMode() {
-  const isDesktop = document.documentElement.classList.contains('force-desktop-view');
-  const nextMode = isDesktop ? 'mobile' : 'desktop';
-  try {
-    if (nextMode === 'desktop') localStorage.setItem('erpViewMode', 'desktop');
-    else localStorage.removeItem('erpViewMode');
-  } catch (e) {}
-  applyViewMode(nextMode);
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  let mode = 'mobile';
-  try {
-    mode = localStorage.getItem('erpViewMode') === 'desktop' ? 'desktop' : 'mobile';
-  } catch (e) {}
-  applyViewMode(mode);
-});
 </script>
 
 </body>
