@@ -12,6 +12,7 @@
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
   .sidebar { position:fixed; top:0; left:0; height:100vh; width:230px; background:#1e293b; color:#cbd5e1; display:flex; flex-direction:column; z-index:100; }
+  .sidebar { transition:width .24s ease, transform .24s ease; }
 
   /* Brand / logo area */
   .sidebar .brand { padding:0; border-bottom:1px solid #334155; position:relative; }
@@ -107,11 +108,9 @@
   .sidebar a.user-info.active { background:#273549; color:#fff; }
   .sidebar .settings-icon { flex-shrink:0; opacity:.45; color:#94a3b8; transition:opacity .15s, color .15s; }
 
-  .main { margin-left:230px; min-height:100vh; }
+  .main { margin-left:230px; min-height:100vh; transition:margin-left .24s ease; }
   .topbar { background:#fff; padding:12px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,.04); }
   .topbar h1 { font-size:19px; font-weight:700; margin:0; color:#1e293b; }
-  .mobile-menu-btn { display:none; width:42px; height:42px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#1e293b; align-items:center; justify-content:center; flex-shrink:0; }
-  .mobile-menu-btn:focus-visible { outline:2px solid #38bdf8; outline-offset:2px; }
   .topbar .page-title { display:flex; align-items:center; gap:10px; }
   .topbar .page-title-icon {
     width:34px;
@@ -170,6 +169,43 @@
   .alert-error, .alert-danger { background:#fee2e2; color:#991b1b; border:none; }
   .sidebar-overlay { display:none; }
 
+  .sidebar.is-collapsed { width:72px; }
+  .sidebar.is-collapsed .brand-inner,
+  .sidebar.is-collapsed nav a,
+  .sidebar.is-collapsed .nav-group-toggle,
+  .sidebar.is-collapsed .nav-sub a,
+  .sidebar.is-collapsed .user-info { justify-content:center; }
+  .sidebar.is-collapsed .brand-text,
+  .sidebar.is-collapsed .brand-chevron,
+  .sidebar.is-collapsed .nav-section,
+  .sidebar.is-collapsed .user-details,
+  .sidebar.is-collapsed .nav-group-toggle .toggle-left > span:last-child,
+  .sidebar.is-collapsed .nav-group-toggle .chevron,
+  .sidebar.is-collapsed .nav-sub,
+  .sidebar.is-collapsed .user-info .user-details {
+    display:none;
+  }
+  .sidebar.is-collapsed .brand-inner,
+  .sidebar.is-collapsed .brand-trigger,
+  .sidebar.is-collapsed .user-info { padding-left:0; padding-right:0; }
+  .sidebar.is-collapsed .brand-logo,
+  .sidebar.is-collapsed .brand-logo-fallback { margin-left:auto; margin-right:auto; }
+  .sidebar.is-collapsed .brand-inner { gap:0; }
+  .sidebar.is-collapsed nav a,
+  .sidebar.is-collapsed .nav-group-toggle,
+  .sidebar.is-collapsed .nav-sub a,
+  .sidebar.is-collapsed .user-info {
+    gap:0;
+    font-size:0;
+    padding-left:0;
+    padding-right:0;
+  }
+  .sidebar.is-collapsed nav a svg,
+  .sidebar.is-collapsed .nav-group-toggle svg,
+  .sidebar.is-collapsed .nav-sub a svg,
+  .sidebar.is-collapsed .user-info svg { margin:0 auto; }
+  .main.sidebar-collapsed { margin-left:72px; }
+
   /* Toast notifications */
   @keyframes toastIn {
     from { opacity:0; transform:translateX(60px); }
@@ -213,6 +249,26 @@
       box-shadow:0 20px 45px rgba(15,23,42,.28);
     }
     .sidebar.is-open { transform:translateX(0); }
+    .sidebar.is-collapsed { width:min(84vw, 300px); }
+    .sidebar.is-collapsed .brand-text,
+    .sidebar.is-collapsed .brand-chevron,
+    .sidebar.is-collapsed .nav-section,
+    .sidebar.is-collapsed .user-details,
+    .sidebar.is-collapsed .nav-group-toggle .toggle-left > span:last-child,
+    .sidebar.is-collapsed .nav-group-toggle .chevron,
+    .sidebar.is-collapsed .nav-sub,
+    .sidebar.is-collapsed .user-info .user-details { display:block; }
+    .sidebar.is-collapsed nav a,
+    .sidebar.is-collapsed .nav-group-toggle,
+    .sidebar.is-collapsed .nav-sub a,
+    .sidebar.is-collapsed .user-info {
+      justify-content:flex-start;
+      gap:10px;
+      font-size:13.5px;
+      padding-left:12px;
+      padding-right:12px;
+    }
+    .sidebar.is-collapsed .brand-inner { gap:11px; }
     .sidebar nav a,
     .nav-group-toggle,
     .nav-sub a,
@@ -240,7 +296,6 @@
       gap:10px;
       align-items:center;
     }
-    .mobile-menu-btn { display:inline-flex; }
     .topbar h1 { font-size:16px; min-width:0; flex:1; }
     .topbar .page-title { gap:8px; }
     .topbar .page-title > span:last-child {
@@ -595,9 +650,6 @@
 
 <div class="main">
   <div class="topbar">
-    <button type="button" class="mobile-menu-btn" aria-label="Open navigation menu" aria-controls="mobile-sidebar" aria-expanded="false" onclick="toggleMobileNav()">
-      <svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-    </button>
     <h1 class="page-title">
       {% with url_name=request.resolver_match.url_name|default:'' %}
         {% if url_name == 'student_list' or url_name == 'student_create' or url_name == 'student_edit' or url_name == 'student_delete' or url_name == 'student_promote' or url_name == 'student_fail' or url_name == 'student_transfer' or url_name == 'admission_bulk_upload' %}
@@ -685,27 +737,26 @@ function toggleNavGroup(el) {
   sub.classList.toggle('open', !isOpen);
 }
 
-function setMobileNav(open) {
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function setDesktopSidebarCollapsed(collapsed) {
   const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  const btn = document.querySelector('.mobile-menu-btn');
-  if (!sidebar || !overlay) return;
-  sidebar.classList.toggle('is-open', open);
-  overlay.classList.toggle('is-open', open);
-  document.body.classList.toggle('mobile-nav-open', open);
-  if (btn) btn.setAttribute('aria-expanded', String(open));
+  const main = document.querySelector('.main');
+  if (!sidebar || !main) return;
+  sidebar.classList.toggle('is-collapsed', collapsed);
+  main.classList.toggle('sidebar-collapsed', collapsed);
+  try {
+    localStorage.setItem('erp-sidebar-collapsed', collapsed ? '1' : '0');
+  } catch (error) {}
 }
 
-function toggleMobileNav() {
+function toggleSidebarNav() {
   const sidebar = document.querySelector('.sidebar');
-  setMobileNav(!(sidebar && sidebar.classList.contains('is-open')));
+  if (!sidebar) return;
+  setDesktopSidebarCollapsed(!sidebar.classList.contains('is-collapsed'));
 }
-
-function closeMobileNav() {
-  setMobileNav(false);
-}
-
-
 
 function toggleBrandProfile(event) {
   event.stopPropagation();
@@ -731,7 +782,6 @@ document.addEventListener('click', function (event) {
 
 document.addEventListener('keydown', function (event) {
   if (event.key !== 'Escape') return;
-  closeMobileNav();
   const brand = document.getElementById('brand-profile');
   if (!brand) return;
   brand.classList.remove('open');
@@ -739,6 +789,19 @@ document.addEventListener('keydown', function (event) {
   if (trigger) {
     trigger.setAttribute('aria-expanded', 'false');
   }
+});
+
+(function () {
+  try {
+    const storedCollapsed = localStorage.getItem('erp-sidebar-collapsed') === '1';
+    setDesktopSidebarCollapsed(isMobileViewport() ? true : storedCollapsed);
+  } catch (error) {}
+})();
+
+document.getElementById('mobile-sidebar')?.addEventListener('click', function (event) {
+  if (event.target.closest('.brand')) return;
+  if (event.target.closest('a, button, form, input, select, textarea, label')) return;
+  toggleSidebarNav();
 });
 </script>
 
