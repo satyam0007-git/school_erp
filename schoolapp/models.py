@@ -42,6 +42,11 @@ class School(models.Model):
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     fee_per_student = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    motto = models.CharField(max_length=255, blank=True, default='')
+    campus_image = models.ImageField(upload_to='school_campus/', blank=True, null=True)
+    campus_image2 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
+    campus_image3 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
+    theme_color = models.CharField(max_length=7, default='#0f766e', help_text='Primary theme color in hex, e.g. #0f766e')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

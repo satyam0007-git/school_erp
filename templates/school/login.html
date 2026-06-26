@@ -4,622 +4,912 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>School Login — {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</title>
+<title>{{ tenant.name }} — Portal Login</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand:      #0f766e;
-  --brand-mid:  #0d9488;
-  --brand-deep: #0f172a;
-  --text-1:     #0f172a;
-  --text-2:     #475569;
-  --text-3:     #94a3b8;
-  --surface:    #f8fafc;
-  --border:     #e2e8f0;
-  --white:      #ffffff;
-  --err-bg:     #fef2f2;
-  --err-border: #fca5a5;
-  --err-text:   #dc2626;
+  /* Dynamic branding colors injected from school tenant settings */
+  --brand:             {{ tenant.theme_color|default:'#0f766e' }};
+  --brand-light:       {{ tenant.theme_color|default:'#0f766e' }}e0;
+  --brand-glow:        {{ tenant.theme_color|default:'#0f766e' }}1e;
+  --brand-deep:        #0f172a;
+  --text-1:            #0f172a;
+  --text-2:            #475569;
+  --text-3:            #94a3b8;
+  --surface:           #f8fafc;
+  --border:            #e2e8f0;
+  --white:             #ffffff;
+  --err-bg:            #fef2f2;
+  --err-border:        #fca5a5;
+  --err-text:          #dc2626;
+  --transition:        all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--brand-deep);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--brand-deep);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow: hidden;
+  flex-direction: column;
   position: relative;
+  overflow-x: hidden;
+  color: var(--text-1);
 }
 
-body::before {
-  content: '';
-  position: fixed;
+/* Background animated mesh and orbs */
+.bg-decorations {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bg-mesh {
+  position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 10% 20%,  rgba(15,118,110,.25) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 80%,  rgba(13,148,136,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 70% at 50% 110%, rgba(20,184,166,.12) 0%, transparent 55%);
-  animation: meshShift 12s ease-in-out infinite alternate;
-  pointer-events: none;
+    radial-gradient(ellipse 70% 60% at 10% 20%, {{ tenant.theme_color|default:'#0f766e' }}25 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+  animation: meshAnim 15s ease-in-out infinite alternate;
 }
-@keyframes meshShift {
-  0%   { opacity: 1;   transform: scale(1); }
-  100% { opacity: .85; transform: scale(1.04); }
-}
-
 .orb {
-  position: fixed; border-radius: 50%;
-  filter: blur(80px); opacity: .15; pointer-events: none;
-  animation: float 8s ease-in-out infinite alternate;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.22;
+  animation: orbFloat 10s ease-in-out infinite alternate;
 }
-.orb-1 { width: 360px; height: 360px; background: #0d9488; top: -80px; left: -60px; animation-delay: 0s; }
-.orb-2 { width: 260px; height: 260px; background: #6366f1; bottom: -60px; right: -50px; animation-delay: -4s; }
-.orb-3 { width: 180px; height: 180px; background: #14b8a6; top: 50%; left: 55%; animation-delay: -2s; }
-@keyframes float {
-  0%   { transform: translate(0,0) scale(1); }
-  100% { transform: translate(18px,-18px) scale(1.05); }
+.orb-1 { width: 450px; height: 450px; background: var(--brand); top: -10%; left: -10%; animation-delay: 0s; }
+.orb-2 { width: 350px; height: 350px; background: #6366f1; bottom: -10%; right: -5%; animation-delay: -3s; }
+
+@keyframes meshAnim {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.05) translate(1%, -1%); }
+}
+@keyframes orbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, -30px) scale(1.08); }
 }
 
-/* ── shell — slightly smaller ── */
-.login-shell {
-  width: 100%;
-  max-width: 760px;
+/* Main Container Layout - Full screen split */
+.app-container {
+  width: 100vw;
+  min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 460px;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 28px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
-  position: relative;
+  grid-template-columns: 1.15fr 0.85fr;
+  background: #ffffff;
   z-index: 10;
+  position: relative;
+  animation: fadeIn 0.8s ease-out;
 }
 
-/* ══ LEFT brand panel ══ */
-.brand-panel {
-  background: linear-gradient(145deg, #134e4a 0%, #0f766e 45%, #115e59 100%);
-  padding: 36px 32px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* LEFT COLUMN - School Website Showcase */
+.branding-panel {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 64px 48px;
+  color: #f8fafc;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
 }
-.brand-panel::before {
+
+/* Decorative glass circle */
+.branding-panel::before {
   content: '';
-  position: absolute; top: -70px; right: -70px;
-  width: 280px; height: 280px;
-  border-radius: 50%;
-  border: 55px solid rgba(255,255,255,.05);
-}
-.brand-panel::after {
-  content: '';
-  position: absolute; bottom: -90px; left: -90px;
+  position: absolute;
+  top: -10%; right: -10%;
   width: 320px; height: 320px;
   border-radius: 50%;
-  border: 70px solid rgba(255,255,255,.04);
+  border: 50px solid rgba(255, 255, 255, 0.015);
+  pointer-events: none;
 }
 
-.brand-top { position: relative; z-index: 1; }
-
-/* ── dual logo row ── */
-.dual-logo-row {
+.school-brand-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
+  gap: 18px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 28px;
 }
-
-.logo-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.logo-wrap {
-  width: 72px; height: 72px;
+.school-logo-container {
+  width: 72px;
+  height: 72px;
   border-radius: 16px;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.22);
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(8px);
   overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
-.logo-wrap img {
-  width: 100%; height: 100%;
+.school-logo-container img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   padding: 6px;
 }
-.logo-wrap .initials {
-  font-size: 20px;
+.school-initials {
+  font-size: 26px;
   font-weight: 800;
-  color: #fff;
-  letter-spacing: -1px;
+  color: var(--brand);
 }
-
-.logo-label {
-  font-size: 9.5px;
-  font-weight: 500;
-  color: rgba(255,255,255,.5);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  text-align: center;
-}
-
-/* divider between the two logos */
-.logo-divider {
+.school-title-group {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: rgba(255,255,255,.25);
-  font-size: 10px;
-  letter-spacing: .3px;
-  text-transform: uppercase;
 }
-.logo-divider-line {
-  width: 1px;
-  height: 24px;
-  background: rgba(255,255,255,.18);
-}
-
-/* software name + badge */
-.brand-name {
-  font-size: 22px;
+.school-name-heading {
+  font-size: 24px;
   font-weight: 800;
-  color: #fff;
-  letter-spacing: -.6px;
-  line-height: 1.15;
-  margin-bottom: 7px;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
 }
-.brand-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 20px;
-  padding: 3px 10px;
-  font-size: 10px;
-  font-weight: 500;
-  color: rgba(255,255,255,.85);
-  letter-spacing: .6px;
-  text-transform: uppercase;
-}
-
-/* school info card */
-.school-info-card {
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.school-icon {
-  width: 34px; height: 34px;
-  border-radius: 9px;
-  background: rgba(255,255,255,.12);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.school-info-text p {
-  font-size: 10.5px;
-  color: rgba(255,255,255,.5);
-  margin-bottom: 2px;
-  letter-spacing: .3px;
-  text-transform: uppercase;
-}
-.school-info-text strong {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.brand-middle { position: relative; z-index: 1; }
-
-/* stats strip */
-.brand-stats {
-  display: flex;
-  gap: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.12);
-  margin-bottom: 18px;
-}
-.stat-item {
-  flex: 1;
-  padding: 10px 12px;
-  background: rgba(255,255,255,.07);
-  text-align: center;
-  border-right: 1px solid rgba(255,255,255,.1);
-}
-.stat-item:last-child { border-right: none; }
-.stat-num {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
-  margin-bottom: 3px;
-}
-.stat-label {
-  font-size: 9px;
-  color: rgba(255,255,255,.5);
-  letter-spacing: .5px;
-  text-transform: uppercase;
-}
-
-.brand-quote-block {
-  border-left: 2px solid rgba(255,255,255,.28);
-  padding-left: 13px;
-}
-.brand-quote-text {
-  font-size: 12px;
-  line-height: 1.7;
-  color: rgba(255,255,255,.75);
+.school-motto-text {
+  font-size: 13.5px;
+  color: #94a3b8;
   font-style: italic;
+  margin-top: 4px;
   font-weight: 300;
+  line-height: 1.4;
+  border-left: 2px solid var(--brand);
+  padding-left: 8px;
 }
 
-.brand-bottom { position: relative; z-index: 1; }
-.brand-secure {
+/* Campus Preview Image Slider */
+.campus-showcase {
+  margin: 10px 0 24px;
+  position: relative;
+  z-index: 2;
+}
+.campus-preview-card {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+.slider-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.campus-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.5s ease-in-out;
+}
+.campus-preview-card:hover .campus-img {
+  transform: scale(1.02);
+}
+.campus-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, transparent 60%);
   display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 10.5px;
-  color: rgba(255,255,255,.4);
+  align-items: flex-end;
+  padding: 16px;
+  z-index: 3;
+  pointer-events: none;
 }
-
-/* ══ RIGHT form panel ══ */
-.form-panel {
-  background: var(--white);
-  padding: 36px 38px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.form-panel-inner { width: 100%; }
-
-.form-eyebrow {
-  font-size: 10.5px;
+.campus-card-overlay span {
+  font-size: 12.5px;
   font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.slider-indicators {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+.indicator-dot:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.indicator-dot.active {
+  background-color: var(--brand);
+  transform: scale(1.2);
+  box-shadow: 0 0 8px var(--brand);
+}
+
+/* Features grid block */
+.features-title-label {
+  font-size: 12px;
+  font-weight: 700;
   color: var(--brand);
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  display: block;
 }
-.form-sub {
-  font-size: 13px;
-  color: var(--text-2);
-  margin-bottom: 26px;
-  line-height: 1.5;
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
 }
-
-.alert-error {
+.feature-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 14px 16px;
   display: flex;
   align-items: flex-start;
-  gap: 9px;
-  background: var(--err-bg);
-  border: 1px solid var(--err-border);
-  border-radius: 9px;
-  padding: 11px 13px;
-  margin-bottom: 18px;
-  font-size: 12.5px;
-  color: var(--err-text);
+  gap: 12px;
+  transition: var(--transition);
+}
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+.feature-icon-wrapper {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--brand-glow);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.feature-info {
+  display: flex;
+  flex-direction: column;
+}
+.feature-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.feature-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Powered by ERP Footer */
+.powered-by-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: #475569;
+  position: relative;
+  z-index: 2;
+}
+.powered-text {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.erp-mini-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.erp-mini-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.erp-mini-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+.erp-mini-logo span {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+}
+.erp-mini-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* RIGHT COLUMN - Login Form Panel */
+.form-panel {
+  background: #ffffff;
+  padding: 64px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+.form-panel-inner {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+/* Dual Logo Header Row */
+.card-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  width: 100%;
+}
+.card-logo {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.card-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.logo-connector {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.form-header-group {
+  margin-bottom: 28px;
+}
+.welcome-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  display: block;
+}
+.form-heading {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-1);
+  letter-spacing: -0.8px;
+  margin-bottom: 6px;
+}
+.form-sub {
+  font-size: 13.5px;
+  color: var(--text-2);
   line-height: 1.5;
 }
-.alert-error svg { flex-shrink: 0; margin-top: 1px; }
 
-.field { margin-bottom: 16px; }
-.field label {
+/* Forms & Fields */
+.form-group {
+  margin-bottom: 18px;
+}
+.form-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-1);
-  margin-bottom: 6px;
-  letter-spacing: .15px;
+  margin-bottom: 7px;
 }
-
-.input-wrap { position: relative; }
-.input-wrap > svg {
-  position: absolute; left: 12px; top: 50%;
+.input-wrapper {
+  position: relative;
+}
+.input-icon-left {
+  position: absolute;
+  left: 14px;
+  top: 50%;
   transform: translateY(-50%);
-  color: var(--text-3); pointer-events: none; transition: color .2s;
+  color: var(--text-3);
+  pointer-events: none;
+  transition: var(--transition);
 }
-.input-wrap input {
+.form-control {
   width: 100%;
-  padding: 10px 13px 10px 38px;
+  padding: 12px 14px 12px 42px;
   border: 1.5px solid var(--border);
-  border-radius: 9px;
-  font-size: 13.5px;
+  border-radius: 12px;
+  font-size: 14px;
   font-family: inherit;
   color: var(--text-1);
-  background: var(--surface);
+  background-color: var(--surface);
   outline: none;
-  transition: border-color .2s, background .2s, box-shadow .2s;
+  transition: var(--transition);
 }
-.input-wrap.has-toggle input { padding-right: 44px; }
-.input-wrap input::placeholder { color: var(--text-3); }
-.input-wrap input:focus {
-  border-color: var(--brand-mid);
-  background: var(--white);
-  box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+.form-control::placeholder {
+  color: var(--text-3);
 }
-.input-wrap:focus-within > svg { color: var(--brand-mid); }
+.form-control:focus {
+  border-color: var(--brand);
+  background-color: var(--white);
+  box-shadow: 0 0 0 4px var(--brand-glow);
+}
+.form-control:focus + .input-icon-left {
+  color: var(--brand);
+}
 
-.pw-toggle {
-  position: absolute; right: 12px; top: 50%;
+/* Password visibility toggle */
+.has-password-toggle {
+  padding-right: 48px !important;
+}
+.btn-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
   transform: translateY(-50%);
-  background: none; border: none; cursor: pointer;
-  color: var(--text-3); padding: 0;
-  width: 30px; height: 30px; z-index: 2;
-  display: flex; justify-content: center; align-items: center;
-  border-radius: 999px; transition: color .2s;
-}
-.pw-toggle:hover { color: var(--text-2); }
-
-.btn-login {
-  width: 100%;
-  padding: 11px 20px;
-  margin-top: 4px;
-  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
-  color: #fff;
+  background: none;
   border: none;
-  border-radius: 9px;
-  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-3);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+.btn-password-toggle:hover {
+  color: var(--brand);
+  background-color: var(--brand-glow);
+}
+
+/* Remember me option */
+.options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 13.5px;
+}
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-2);
+}
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0; width: 0;
+}
+.checkmark {
+  width: 18px;
+  height: 18px;
+  background-color: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  position: relative;
+  transition: var(--transition);
+}
+.checkbox-container:hover input ~ .checkmark {
+  border-color: var(--brand);
+}
+.checkbox-container input:checked ~ .checkmark {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+.checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.checkbox-container input:checked ~ .checkmark::after {
+  display: block;
+}
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 13px 24px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-size: 15.5px;
   font-weight: 600;
-  font-family: inherit;
-  letter-spacing: .2px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform .15s, box-shadow .2s, opacity .2s;
-  box-shadow: 0 4px 12px rgba(15,118,110,.35);
+  box-shadow: 0 4px 14px var(--brand-glow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
-.btn-login:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(15,118,110,.4); }
-.btn-login:active { transform: translateY(0); }
+.btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--brand-glow);
+  filter: brightness(1.05);
+}
+.btn-submit:active {
+  transform: translateY(1px);
+}
 
-.form-divider {
+/* Secure Login footer badge */
+.secure-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.secure-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   display: flex;
   align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.secure-text {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* Error messages */
+.alert-error {
+  display: flex;
+  align-items: flex-start;
   gap: 10px;
-  margin: 22px 0 0;
-  color: var(--text-3);
-  font-size: 11px;
-  letter-spacing: .3px;
+  background-color: var(--err-bg);
+  border: 1px solid var(--err-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--err-text);
+  line-height: 1.4;
+  animation: shake 0.4s ease;
 }
-.form-divider::before, .form-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--border);
+.alert-error svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
-.form-footer {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.form-footer-left {
-  font-size: 11px;
-  color: var(--text-3);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.form-footer-left svg { color: #22c55e; }
-.form-version { font-size: 10.5px; color: var(--text-3); }
-
-@media (max-width: 640px) {
-  body {
-    align-items: flex-start;
-    overflow-y: auto;
-    padding: 16px;
+/* Responsive Layout */
+@media (max-width: 960px) {
+  .app-container {
+    grid-template-columns: 1fr;
+    width: 100%;
+    min-height: 100vh;
   }
-  .login-shell { grid-template-columns: 1fr; max-width: 400px; min-height: auto; }
-  .brand-panel { padding: 28px 28px; min-height: 200px; }
-  .brand-stats, .school-info-card { display: none; }
-  .form-panel { padding: 32px 28px; }
+  .branding-panel {
+    padding: 48px 32px 32px;
+  }
+  .campus-showcase {
+    display: none;
+  }
+  .features-grid {
+    display: none;
+  }
+  .form-panel {
+    padding: 40px 32px 48px;
+  }
+  .school-brand-banner {
+    margin-bottom: 12px;
+  }
+  .school-logo-container {
+    width: 60px;
+    height: 60px;
+  }
+  .school-name-heading {
+    font-size: 21px;
+  }
 }
 
-@media (max-width: 420px) {
-  .brand-panel { padding: 26px 22px; min-height: 190px; }
-  .form-panel { padding: 30px 22px; }
+@media (max-width: 480px) {
+  .branding-panel {
+    padding: 32px 20px 20px;
+  }
+  .school-logo-container {
+    width: 48px;
+    height: 48px;
+  }
+  .school-name-heading {
+    font-size: 18px;
+  }
+  .form-panel {
+    padding: 32px 20px;
+  }
+  .form-heading {
+    font-size: 22px;
+  }
 }
 </style>
 </head>
 <body>
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
+<div class="app-container">
 
-<div class="login-shell">
+  <!-- LEFT PANEL - School Brand & Features Grid -->
+  <div class="branding-panel">
+    <div>
+      <div class="school-brand-banner">
+        <div class="school-logo-container">
+          {% if tenant.logo %}
+            <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
+          {% else %}
+            <span class="school-initials">
+              {{ tenant.name|slice:":2"|upper }}
+            </span>
+          {% endif %}
+        </div>
+        <div class="school-title-group">
+          <h2 class="school-name-heading">{{ tenant.name }}</h2>
+          {% if tenant.motto %}
+            <p class="school-motto-text">"{{ tenant.motto }}"</p>
+          {% endif %}
+        </div>
+      </div>
 
-  <!-- ══ LEFT BRAND PANEL ══ -->
-  <div class="brand-panel">
-
-    <div class="brand-top">
-
-      <!-- Dual logo row: software logo LEFT · school logo RIGHT -->
-      <div class="dual-logo-row">
-
-        <!-- Software logo -->
-        <div class="logo-box">
-          <div class="logo-wrap">
-            {% if settings.logo %}
-              <img src="{{ settings.logo.url }}" alt="{{ settings.software_name|default:'ERP' }}">
-            {% else %}
-              <span class="initials">
-                {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
-              </span>
+      <!-- Campus Image Showcase with 3 switchable images -->
+      {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
+      <div class="campus-showcase">
+        <div class="campus-preview-card">
+          <div class="slider-wrapper">
+            {% if tenant.campus_image %}
+              <img src="{{ tenant.campus_image.url }}" alt="Campus Image 1" class="campus-img active" data-index="0">
+            {% endif %}
+            {% if tenant.campus_image2 %}
+              <img src="{{ tenant.campus_image2.url }}" alt="Campus Image 2" class="campus-img" data-index="1" style="display: none; opacity: 0;">
+            {% endif %}
+            {% if tenant.campus_image3 %}
+              <img src="{{ tenant.campus_image3.url }}" alt="Campus Image 3" class="campus-img" data-index="2" style="display: none; opacity: 0;">
             {% endif %}
           </div>
-        </div>
-
-        <!-- Divider -->
-        <div class="logo-divider">
-          <div class="logo-divider-line"></div>
-          <span>×</span>
-          <div class="logo-divider-line"></div>
-        </div>
-
-        <!-- School logo -->
-        <div class="logo-box">
-          <div class="logo-wrap">
-            {% if tenant and tenant.logo %}
-              <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
-            {% else %}
-              <span class="initials">
-                {% if tenant %}{{ tenant.name|slice:":2"|upper }}{% else %}SC{% endif %}
-              </span>
-            {% endif %}
+          <div class="campus-card-overlay">
+            <span>Welcome to our campus</span>
           </div>
         </div>
-
-      </div>
-      <!-- end dual-logo-row -->
-
-      <div class="brand-name">
-        {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}
-      </div>
-
-      <div class="brand-badge">
-        <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-          <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2"/>
-          <path d="M3 5l1.5 1.5L7 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        School Admin Portal
-      </div>
-    </div>
-
-    <div class="brand-middle">
-
-      {% if tenant %}
-      <div class="school-info-card">
-        <div class="school-icon">
-          <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-        </div>
-        <div class="school-info-text">
-          <strong>{{ tenant.name }}</strong>
+        
+        <!-- Indicators dot row under the image -->
+        <div class="slider-indicators">
+          {% if tenant.campus_image %}
+            <button type="button" class="indicator-dot active" onclick="switchSlide(0)" aria-label="Campus Image 1"></button>
+          {% endif %}
+          {% if tenant.campus_image2 %}
+            <button type="button" class="indicator-dot" onclick="switchSlide(1)" aria-label="Campus Image 2"></button>
+          {% endif %}
+          {% if tenant.campus_image3 %}
+            <button type="button" class="indicator-dot" onclick="switchSlide(2)" aria-label="Campus Image 3"></button>
+          {% endif %}
         </div>
       </div>
       {% endif %}
 
-      <div class="brand-stats">
-        <div class="stat-item">
-          <div class="stat-num">Smart</div>
-          <div class="stat-label">Attendance</div>
+      <!-- Feature Grid Showcase (shown on desktop only) -->
+      <span class="features-title-label">Portal Features</span>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🎓</div>
+          <div class="feature-info">
+            <span class="feature-title">Student Portal</span>
+            <span class="feature-desc">Track academic and attendance sheets.</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <div class="stat-num">Auto</div>
-          <div class="stat-label">Fee Alerts</div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">👥</div>
+          <div class="feature-info">
+            <span class="feature-title">Staff Management</span>
+            <span class="feature-desc">Control registers and scheduling.</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <div class="stat-num">Live</div>
-          <div class="stat-label">Reports</div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">💳</div>
+          <div class="feature-info">
+            <span class="feature-title">Fee Billing</span>
+            <span class="feature-desc">Submit online payments and fee records.</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📝</div>
+          <div class="feature-info">
+            <span class="feature-title">Examination</span>
+            <span class="feature-desc">Access scores and report card details.</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🚌</div>
+          <div class="feature-info">
+            <span class="feature-title">Transport Details</span>
+            <span class="feature-desc">Check route plans and driver updates.</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">☁️</div>
+          <div class="feature-info">
+            <span class="feature-title">Encrypted Cloud</span>
+            <span class="feature-desc">Safe operations with role-based safety.</span>
+          </div>
         </div>
       </div>
-
-      {% if settings.organization_address %}
-      <div class="brand-quote-block">
-        <p class="brand-quote-text">"{{ settings.organization_address }}"</p>
-      </div>
-      {% else %}
-      <div class="brand-quote-block">
-        <p class="brand-quote-text">"Empowering institutions with intelligent management, one click at a time."</p>
-      </div>
-      {% endif %}
     </div>
 
-    <div class="brand-bottom">
-      <div class="brand-secure">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        256-bit SSL encrypted &nbsp;·&nbsp; Role-based access control
+    <!-- Powered by ERP SaaS Footer -->
+    <div class="powered-by-footer">
+      <span class="powered-text">Powered by</span>
+      <div class="erp-mini-brand">
+        <div class="erp-mini-logo">
+          {% if settings.logo %}
+            <img src="{{ settings.logo.url }}" alt="ERP Logo">
+          {% else %}
+            <span>{{ settings.software_name|slice:":2"|upper }}</span>
+          {% endif %}
+        </div>
+        <span class="erp-mini-name">{{ settings.software_name|default:"SchoolERP" }}</span>
       </div>
     </div>
-
   </div>
 
-  <!-- ══ RIGHT FORM PANEL ══ -->
+  <!-- RIGHT PANEL - Floating Login Form -->
   <div class="form-panel">
     <div class="form-panel-inner">
 
-      <p class="form-eyebrow">Welcome Back</p>
-      <p class="form-sub">Enter your school credentials to manage students, fees, and reports.</p>
+      <!-- Dynamic Logo Badge Header -->
+      <div class="card-logo-row">
+        {% if tenant.logo %}
+        <div class="card-logo school-card-logo">
+          <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
+        </div>
+        {% endif %}
+        
+        {% if settings.logo or tenant.logo %}
+
+        
+        {% if settings.logo %}
+        <div class="card-logo erp-card-logo">
+          <img src="{{ settings.logo.url }}" alt="{{ settings.software_name }}">
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="form-header-group">
+        <span class="welcome-badge">Welcome back</span>
+        <h1 class="form-heading">Login to continue</h1>
+        <p class="form-sub">Enter your school credentials to manage students, fees, and reports.</p>
+      </div>
 
       {% for msg in messages %}
       <div class="alert-error">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        {{ msg }}
+        <span>{{ msg }}</span>
       </div>
       {% endfor %}
 
-      <form method="post">
+      <form method="post" id="loginForm">
         {% csrf_token %}
 
-        <div class="field">
-          <label for="id_username">Username</label>
-          <div class="input-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <div class="input-wrapper">
+            <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
             </svg>
-            <input type="text" id="id_username" name="username" placeholder="Enter your username" required autofocus autocomplete="username">
           </div>
         </div>
 
-        <div class="field">
-          <label for="id_password">Password</label>
-          <div class="input-wrap has-toggle">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <div class="form-group">
+          <label class="form-label" for="id_password">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
-            <input type="password" id="id_password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-            <button type="button" class="pw-toggle" onclick="togglePw()" aria-label="Toggle password">
-              <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <button type="submit" class="btn-login">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+        <div class="options-row">
+          <label class="checkbox-container">
+            <input type="checkbox" name="remember_me" id="remember_me">
+            <span class="checkmark"></span>
+            <span>Remember Me</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
           </svg>
           Sign In
         </button>
       </form>
 
-      <div class="form-divider">secure access</div>
-
-      <div class="form-footer">
-        <div class="form-footer-left">
-          <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor">
-            <circle cx="5" cy="5" r="5"/>
+      <div class="secure-notice">
+        <div class="secure-heading">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          System operational
+          Secure Login
         </div>
-        <span class="form-version">v2.0 &nbsp;·&nbsp; {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+        <span class="secure-text">Protected by encrypted authentication.</span>
       </div>
 
     </div>
@@ -629,20 +919,91 @@ body::before {
 
 <script>
 function togglePw() {
-  const input  = document.getElementById('id_password');
-  const button = document.querySelector('.pw-toggle');
-  const icon   = document.getElementById('eyeIcon');
-  if (!input || !icon || !button) return;
+  const input = document.getElementById('id_password');
+  const button = document.querySelector('.btn-password-toggle');
+  const icon = document.getElementById('eyeIcon');
+  if (!input || !button) return;
+  
   if (input.type === 'password') {
     input.type = 'text';
-    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
     button.setAttribute('aria-label', 'Hide password');
+    icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/><circle cx="12" cy="12" r="3" fill="none"/>';
   } else {
     input.type = 'password';
-    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
     button.setAttribute('aria-label', 'Show password');
+    icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
   }
 }
+
+function switchSlide(index) {
+  const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
+  const dots = Array.from(document.querySelectorAll('.slider-indicators .indicator-dot'));
+  if (!images.length) return;
+  
+  // Wrap around indices safely
+  if (index < 0) {
+    index = images.length - 1;
+  } else if (index >= images.length) {
+    index = 0;
+  }
+  
+  images.forEach((img, idx) => {
+    if (idx === index) {
+      img.classList.add('active');
+      img.style.display = 'block';
+      img.offsetHeight; // force reflow
+      img.style.opacity = '1';
+    } else {
+      img.classList.remove('active');
+      img.style.opacity = '0';
+      setTimeout(() => {
+        if (!img.classList.contains('active')) {
+          img.style.display = 'none';
+        }
+      }, 500);
+    }
+  });
+  
+  dots.forEach((dot, dotIdx) => {
+    if (dotIdx === index) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const card = document.querySelector('.campus-preview-card');
+  if (card) {
+    card.addEventListener('mousemove', function(e) {
+      const rect = this.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      if (clickX < rect.width / 2) {
+        this.style.cursor = 'w-resize';
+      } else {
+        this.style.cursor = 'e-resize';
+      }
+    });
+
+    card.addEventListener('click', function(e) {
+      const rect = this.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      
+      const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
+      const activeIdx = images.findIndex(img => img.classList.contains('active'));
+      
+      if (activeIdx !== -1) {
+        if (clickX < width / 2) {
+          switchSlide(activeIdx - 1);
+        } else {
+          switchSlide(activeIdx + 1);
+        }
+      }
+    });
+  }
+});
 </script>
 
 </body>
