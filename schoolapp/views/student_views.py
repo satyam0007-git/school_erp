@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from ..decorators import school_only
 from ..forms import StudentForm
+from ..logging_utils import log_activity_event
 from ..models import AdmissionBulkUploadHistory, SchoolClass, SchoolProfile, Student
 from ..services.student_service import (
     BULK_FIELD_INFO, BULK_UPLOAD_HEADERS,
@@ -84,6 +85,18 @@ def student_create(request):
         student.academic_session = session
         student.save()
         discount_months = form.cleaned_data.get('discount_months') or 0
+        log_activity_event(
+            request,
+            module='student',
+            action='create',
+            record_id=student.pk,
+            details={
+                'name': student.name,
+                'class': student.school_class_id,
+                'academic_session': student.academic_session,
+                'discount_months': discount_months,
+            },
+        )
         msg = f'Student admitted. First {discount_months} month(s) discounted.' if discount_months > 0 else 'Student admitted.'
         messages.success(request, msg)
         return redirect('student_list')
@@ -96,7 +109,42 @@ def student_edit(request, pk):
     student = get_object_or_404(Student, pk=pk, school=school)
     form = StudentForm(request.POST or None, instance=student, school=school, session=student.academic_session)
     if request.method == 'POST' and form.is_valid():
+        old_values = {
+            'name': student.name,
+            'school_class_id': student.school_class_id,
+            'father_name': student.father_name,
+            'mother_name': student.mother_name,
+            'father_phone': student.father_phone,
+            'address': student.address,
+            'religion': student.religion,
+            'caste': student.caste,
+            'blood_group': student.blood_group,
+            'transport_opted': student.transport_opted,
+            'transport_amount': str(student.transport_amount) if student.transport_amount is not None else None,
+            'discount_months': student.discount_months,
+        }
         form.save()
+        log_activity_event(
+            request,
+            module='student',
+            action='update',
+            record_id=student.pk,
+            old_values=old_values,
+            new_values={
+                'name': student.name,
+                'school_class_id': student.school_class_id,
+                'father_name': student.father_name,
+                'mother_name': student.mother_name,
+                'father_phone': student.father_phone,
+                'address': student.address,
+                'religion': student.religion,
+                'caste': student.caste,
+                'blood_group': student.blood_group,
+                'transport_opted': student.transport_opted,
+                'transport_amount': str(student.transport_amount) if student.transport_amount is not None else None,
+                'discount_months': student.discount_months,
+            },
+        )
         messages.success(request, 'Student updated.')
         return redirect('student_list')
     return render(request, 'school/admission/student_form.html', {'form': form, 'object': student})
@@ -107,10 +155,30 @@ def student_delete(request, pk):
     student = get_object_or_404(Student, pk=pk, school=request.user.school)
     if request.method == 'POST':
         try:
+            student_snapshot = {
+                'name': student.name,
+                'roll_number': student.roll_number,
+                'class': student.school_class_id,
+            }
             student.delete()
+            log_activity_event(
+                request,
+                module='student',
+                action='delete',
+                record_id=pk,
+                details=student_snapshot,
+            )
             messages.success(request, 'Student deleted.')
         except ProtectedError:
             payment_count = student.fee_payments.count()
+            log_activity_event(
+                request,
+                module='student',
+                action='delete',
+                record_id=pk,
+                status='failure',
+                details={'name': student.name, 'reason': 'protected_by_fee_payments', 'payment_count': payment_count},
+            )
             messages.error(
                 request,
                 f'Cannot delete {student.name}: they have {payment_count} fee payment record(s). '
@@ -128,8 +196,28 @@ def student_promote(request, pk):
     student = get_object_or_404(Student, pk=pk, school=school, status=Student.STATUS_ACTIVE)
     promoted, error = promote_student(student, school)
     if error:
+        log_activity_event(
+            request,
+            module='student',
+            action='promote',
+            record_id=student.pk,
+            status='failure',
+            details={'name': student.name, 'reason': error},
+        )
         messages.error(request, error)
     else:
+        log_activity_event(
+            request,
+            module='student',
+            action='promote',
+            record_id=student.pk,
+            details={
+                'name': student.name,
+                'promoted_to_student_id': promoted.pk,
+                'new_class': promoted.school_class_id,
+                'new_session': promoted.academic_session,
+            },
+        )
         messages.success(
             request,
             f'{student.name} promoted → {promoted.school_class.name} ({promoted.academic_session}).',
@@ -144,6 +232,13 @@ def student_fail(request, pk):
     school = request.user.school
     student = get_object_or_404(Student, pk=pk, school=school, status=Student.STATUS_ACTIVE)
     retained = fail_student(student)
+    log_activity_event(
+        request,
+        module='student',
+        action='fail',
+        record_id=student.pk,
+        details={'name': student.name, 'retained_student_id': retained.pk, 'class': retained.school_class_id, 'session': retained.academic_session},
+    )
     messages.success(
         request,
         f'{student.name} marked as failed and retained in {retained.school_class.name} ({retained.academic_session}).',
@@ -156,8 +251,18 @@ def student_transfer(request, pk):
     if request.method != 'POST':
         return redirect('student_list')
     student = get_object_or_404(Student, pk=pk, school=request.user.school, status=Student.STATUS_ACTIVE)
+    previous_status = student.status
     student.status = Student.STATUS_INACTIVE
     student.save(update_fields=['status', 'updated_at'])
+    log_activity_event(
+        request,
+        module='student',
+        action='transfer',
+        record_id=student.pk,
+        old_values={'status': previous_status},
+        new_values={'status': student.status},
+        details={'name': student.name},
+    )
     messages.success(request, f'{student.name} marked as transferred.')
     return redirect('student_list')
 
@@ -261,7 +366,27 @@ def admission_bulk_upload(request):
                     request.session['bulk_upload_failed'] = failed_rows
                 else:
                     request.session.pop('bulk_upload_failed', None)
+                log_activity_event(
+                    request,
+                    module='student',
+                    action='bulk_upload',
+                    details={
+                        'file_name': uploaded_file.name,
+                        'total_records': upload_result['total'],
+                        'success': upload_result['success'],
+                        'failed': upload_result['failed'],
+                        'fee_success': upload_result['fee_success'],
+                        'fee_skipped': upload_result['fee_skipped'],
+                    },
+                )
             except Exception as exc:
+                log_activity_event(
+                    request,
+                    module='student',
+                    action='bulk_upload',
+                    status='failure',
+                    details={'file_name': uploaded_file.name if uploaded_file else '', 'error': str(exc)},
+                )
                 messages.error(request, f'Failed to process file: {exc}')
 
     upload_history = AdmissionBulkUploadHistory.objects.filter(

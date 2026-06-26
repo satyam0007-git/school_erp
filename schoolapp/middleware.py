@@ -1,6 +1,14 @@
 from django.conf import settings
 from django.http import Http404
+from django.utils import timezone
 
+from .logging_utils import (
+    get_request_context,
+    log_request_event,
+    log_unhandled_exception,
+    reset_request_context,
+    set_request_context,
+)
 from .models import School
 
 
@@ -59,3 +67,21 @@ class TenantMiddleware:
                 )
 
         return self.get_response(request)
+
+
+class RequestLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        token = set_request_context(request)
+        started_at = timezone.now()
+        try:
+            return self.get_response(request)
+        except Exception as exc:
+            if getattr(request, 'tenant', None) is not None:
+                log_request_event(request, exc=exc, started_at=started_at)
+                log_unhandled_exception(request, exc)
+            raise
+        finally:
+            reset_request_context(token)

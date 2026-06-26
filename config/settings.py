@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'schoolapp',
+    'schoolapp.apps.SchoolAppConfig',
 ]
 
 MIDDLEWARE = [
@@ -86,6 +86,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'schoolapp.middleware.TenantMiddleware',
+    'schoolapp.middleware.RequestLoggingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -137,8 +138,8 @@ DATABASES = {
 AUTH_USER_MODEL = 'schoolapp.User'
 AUTH_PASSWORD_VALIDATORS = []
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'en'
+TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
@@ -155,3 +156,69 @@ CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
 SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
 SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)
+
+LOG_ROOT = BASE_DIR / 'logs'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'request_context': {
+            '()': 'schoolapp.logging_utils.RequestContextFilter',
+        },
+    },
+    'formatters': {
+        'ist': {
+            '()': 'schoolapp.logging_utils.IstFormatter',
+            'format': '%(asctime)s %(levelname)s %(name)s [school=%(school_subdomain)s school_id=%(school_id)s user=%(user_label)s ip=%(ip_address)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S %Z',
+        },
+        'requests': {
+            '()': 'schoolapp.logging_utils.IstFormatter',
+            'format': '%(asctime)s %(levelname)s %(name)s [school=%(school_subdomain)s school_id=%(school_id)s user=%(user_label)s role=%(user_role)s ip=%(ip_address)s method=%(request_method)s path=%(request_path)s status=%(response_status)s duration_ms=%(duration_ms)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S %Z',
+        },
+    },
+    'handlers': {
+        'queue': {
+            '()': 'schoolapp.logging_utils.make_queue_handler',
+            'filters': ['request_context'],
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['queue'],
+    },
+    'loggers': {
+        'django': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+        'django.request': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+        'schoolapp.application': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+        'schoolapp.activity': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+        'schoolapp.errors': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+        'schoolapp.requests': {
+            'level': 'INFO',
+            'handlers': ['queue'],
+            'propagate': False,
+        },
+    },
+}

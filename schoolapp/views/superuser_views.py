@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from ..decorators import super_only
+from ..logging_utils import log_activity_event
 from ..forms import SuperUserSettingsForm
 from ..models import (
     FeePayment, FeeStructure, School, SchoolBillingPayment, SchoolProfile,
@@ -156,6 +157,12 @@ def super_collect_fee(request, school_pk):
                     amount_paid=amount_paid, is_adjustment=True,
                     note=f'Adjustment for {delta} additional student(s): {month_labels}',
                 )
+                log_activity_event(
+                    request,
+                    module='superuser',
+                    action='billing_payment_create',
+                    details={'school_id': school.pk, 'school_name': school.name, 'payment_type': 'adjustment', 'amount_paid': str(amount_paid), 'months': selected},
+                )
                 messages.success(request, f'Adjustment of ₹{amount_paid} recorded for {school.name}.')
                 return redirect('super_school_fee_dashboard')
         else:
@@ -168,6 +175,12 @@ def super_collect_fee(request, school_pk):
                     payment_date=payment_date, num_students=num_students,
                     fee_per_student=fee_per_student, payment_months=selected,
                     amount_paid=amount_paid,
+                )
+                log_activity_event(
+                    request,
+                    module='superuser',
+                    action='billing_payment_create',
+                    details={'school_id': school.pk, 'school_name': school.name, 'payment_type': 'regular', 'amount_paid': str(amount_paid), 'months': selected},
                 )
                 messages.success(request, f'Payment of ₹{amount_paid} recorded for {school.name} ({current_session}).')
                 return redirect('super_school_fee_dashboard')
@@ -237,6 +250,13 @@ def super_promote_school(request, pk):
 
         profile.current_academic_session = next_session
         profile.save()
+        log_activity_event(
+            request,
+            module='superuser',
+            action='school_renew',
+            record_id=school.pk,
+            details={'school_name': school.name, 'new_session': next_session, 'copied_fee_structures': len(new_structures)},
+        )
         messages.success(request, f'{school.name} renewed to {next_session}. Fee structures copied.')
     return redirect('super_dashboard')
 
@@ -253,6 +273,13 @@ def super_settings(request):
             instance.default_session = request.POST.get('default_session', '').strip()
             instance.save()
             settings_obj = SuperUserSettings.get_solo()
+            log_activity_event(
+                request,
+                module='superuser',
+                action='settings_update',
+                record_id=settings_obj.pk,
+                details={'default_session': settings_obj.default_session},
+            )
             messages.success(request, 'Settings saved successfully.')
             return redirect('super_settings')
         messages.error(request, 'Could not save settings. Please check the highlighted fields.')
@@ -324,6 +351,13 @@ def school_add(request):
             )
             User.objects.create_user(username=username, password=password, role='school_admin', school=school)
             portal_url = school.get_tenant_url() if school.subdomain else '(no subdomain set)'
+            log_activity_event(
+                request,
+                module='superuser',
+                action='school_create',
+                record_id=school.pk,
+                details={'school_name': school.name, 'subdomain': school.subdomain, 'admin_username': username, 'session': session},
+            )
             messages.success(request, f'School "{name}" created. Admin: {username}. Portal: {portal_url}')
             return redirect('super_dashboard')
 
@@ -353,6 +387,18 @@ def school_edit(request, pk):
         return render(request, 'superuser/school_form.html', ctx)
 
     if request.method == 'POST':
+        old_values = {
+            'name': school.name,
+            'phone': school.phone,
+            'email': school.email,
+            'address': school.address,
+            'is_active': school.is_active,
+            'fee_per_student': str(school.fee_per_student),
+            'subdomain': school.subdomain,
+            'current_academic_session': profile.current_academic_session,
+            'billing_start_month': profile.billing_start_month,
+            'billing_end_month': profile.billing_end_month,
+        }
         school.name = request.POST['name']
         school.phone = request.POST.get('phone', '')
         school.email = request.POST.get('email', '')
@@ -410,6 +456,25 @@ def school_edit(request, pk):
                 admin_user.set_password(new_password)
             admin_user.save()
 
+        log_activity_event(
+            request,
+            module='superuser',
+            action='school_update',
+            record_id=school.pk,
+            old_values=old_values,
+            new_values={
+                'name': school.name,
+                'phone': school.phone,
+                'email': school.email,
+                'address': school.address,
+                'is_active': school.is_active,
+                'fee_per_student': str(school.fee_per_student),
+                'subdomain': school.subdomain,
+                'current_academic_session': profile.current_academic_session,
+                'billing_start_month': profile.billing_start_month,
+                'billing_end_month': profile.billing_end_month,
+            },
+        )
         messages.success(request, 'School updated.')
         return redirect('super_dashboard')
 
@@ -420,10 +485,18 @@ def school_edit(request, pk):
 def school_delete(request, pk):
     school = get_object_or_404(School, pk=pk)
     if request.method == 'POST':
+        school_snapshot = {'school_id': school.pk, 'school_name': school.name, 'subdomain': school.subdomain}
         FeePayment.objects.filter(school=school).delete()
         FeeStructure.objects.filter(school_class__school=school).delete()
         Student.objects.filter(school=school).delete()
         school.delete()
+        log_activity_event(
+            request,
+            module='superuser',
+            action='school_delete',
+            record_id=school_snapshot['school_id'],
+            details=school_snapshot,
+        )
         messages.success(request, 'School deleted.')
         return redirect('super_dashboard')
     return render(request, 'confirm_delete.html', {'name': school.name})
@@ -442,6 +515,12 @@ def user_add(request):
         else:
             school = get_object_or_404(School, pk=school_id)
             User.objects.create_user(username=username, password=password, role='school_admin', school=school)
+            log_activity_event(
+                request,
+                module='superuser',
+                action='user_create',
+                details={'username': username, 'school_id': school.pk, 'school_name': school.name, 'role': 'school_admin'},
+            )
             messages.success(request, 'User created.')
             return redirect('super_dashboard')
     return redirect('super_dashboard')
@@ -451,7 +530,15 @@ def user_add(request):
 def user_delete(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
+        user_snapshot = {'user_id': user.pk, 'username': user.username, 'role': user.role, 'school_id': user.school_id}
         user.delete()
+        log_activity_event(
+            request,
+            module='superuser',
+            action='user_delete',
+            record_id=user.pk,
+            details=user_snapshot,
+        )
         messages.success(request, 'Deleted.')
         return redirect('super_dashboard')
     return render(request, 'confirm_delete.html', {'name': user.username})
