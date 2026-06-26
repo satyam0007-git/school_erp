@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from ..decorators import school_only
 from ..forms import FeePaymentForm
+from ..logging_utils import log_activity_event
 from ..models import (
     ExamFee, FeePayment, FeeStructure, SchoolClass, SchoolProfile,
     SchoolSessionRecord, Student, WhatsAppConfig, MONTH_CHOICES,
@@ -348,6 +349,20 @@ def payment_create(request):
                             payment.advance_used = advance_available
                             payment.advance_balance = result['advance_balance']
                             payment.save()
+                            log_activity_event(
+                                request,
+                                module='fee',
+                                action='payment_create',
+                                record_id=payment.pk,
+                                details={
+                                    'student_id': payment.student_id,
+                                    'student_name': payment.student.name,
+                                    'mode': 'lump_sum',
+                                    'amount_paid': str(payment.amount_paid),
+                                    'payment_months': payment.payment_months,
+                                    'exam_fee_items': payment.exam_fee_items,
+                                },
+                            )
                             messages.success(request, 'Lump-sum payment saved and auto-distributed.')
                             return redirect('payment_dashboard')
                 else:
@@ -380,6 +395,20 @@ def payment_create(request):
                         payment.amount_paid = (monthly_base * base_count) + (monthly_transport * transport_count) + exam_total
                         payment.gross_amount = payment.amount_paid
                         payment.save()
+                        log_activity_event(
+                            request,
+                            module='fee',
+                            action='payment_create',
+                            record_id=payment.pk,
+                            details={
+                                'student_id': payment.student_id,
+                                'student_name': payment.student.name,
+                                'mode': 'manual',
+                                'amount_paid': str(payment.amount_paid),
+                                'payment_months': payment.payment_months,
+                                'exam_fee_items': payment.exam_fee_items,
+                            },
+                        )
                         messages.success(request, 'Payment saved.')
                         return redirect('payment_dashboard')
     else:
@@ -472,6 +501,13 @@ def payment_edit(request, pk):
                 errors.append('Some selected months are already paid in another payment.')
             else:
                 with transaction.atomic():
+                    old_values = {
+                        'payment_date': payment.payment_date.isoformat() if payment.payment_date else None,
+                        'payment_months': list(payment.payment_months or []),
+                        'exam_fee_items': list(payment.exam_fee_items or []),
+                        'amount_paid': str(payment.amount_paid),
+                        'gross_amount': str(payment.gross_amount),
+                    }
                     transport_count = sum(1 for m in selected_months if str(m).endswith('_transport'))
                     base_count = len(selected_months) - transport_count
                     monthly_base = get_monthly_tuition_fee(student, school)
@@ -492,6 +528,21 @@ def payment_edit(request, pk):
                     payment.amount_paid = (monthly_base * base_count) + (monthly_transport * transport_count) + exam_total
                     payment.gross_amount = payment.amount_paid
                     payment.save()
+                    log_activity_event(
+                        request,
+                        module='fee',
+                        action='payment_update',
+                        record_id=payment.pk,
+                        old_values=old_values,
+                        new_values={
+                            'payment_date': payment.payment_date.isoformat() if payment.payment_date else None,
+                            'payment_months': payment.payment_months,
+                            'exam_fee_items': payment.exam_fee_items,
+                            'amount_paid': str(payment.amount_paid),
+                            'gross_amount': str(payment.gross_amount),
+                        },
+                        details={'student_id': student.pk, 'student_name': student.name},
+                    )
                     messages.success(request, 'Payment updated successfully.')
                     return redirect('payment_dashboard')
 

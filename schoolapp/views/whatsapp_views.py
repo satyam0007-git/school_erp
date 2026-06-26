@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from ..decorators import school_only
+from ..logging_utils import log_activity_event
 from ..models import FeePayment, FeeStructure, SchoolClass, SchoolProfile, Student, WhatsAppConfig
 from ..session_utils import MONTH_TO_CAL
 
@@ -114,7 +115,20 @@ def whatsapp_send(request):
             ]}],
         },
     }
-    return _send_whatsapp_message(wa_config, payload)
+    result = _send_whatsapp_message(wa_config, payload)
+    try:
+        response_payload = json.loads(result.content.decode('utf-8'))
+    except Exception:
+        response_payload = {}
+    was_success = bool(response_payload.get('ok'))
+    log_activity_event(
+        request,
+        module='communication',
+        action='whatsapp_send',
+        status='success' if was_success else 'failure',
+        details={'student_id': student.pk, 'student_name': student.name, 'channel': 'reminder', 'balance': balance, 'success': was_success},
+    )
+    return result
 
 
 @login_required
@@ -158,7 +172,20 @@ def whatsapp_announce(request):
             ]}],
         },
     }
-    return _send_whatsapp_message(wa_config, payload)
+    result = _send_whatsapp_message(wa_config, payload)
+    try:
+        response_payload = json.loads(result.content.decode('utf-8'))
+    except Exception:
+        response_payload = {}
+    was_success = bool(response_payload.get('ok'))
+    log_activity_event(
+        request,
+        module='communication',
+        action='whatsapp_announce',
+        status='success' if was_success else 'failure',
+        details={'student_id': student.pk, 'student_name': student.name, 'message_length': len(message), 'success': was_success},
+    )
+    return result
 
 
 @login_required
@@ -181,6 +208,12 @@ def whatsapp_templates_debug(request):
             {'name': t['name'], 'language': t['language'], 'status': t.get('status')}
             for t in tpl_data.get('data', [])
         ]
+        log_activity_event(
+            request,
+            module='communication',
+            action='whatsapp_templates_debug',
+            details={'template_count': len(templates)},
+        )
         return JsonResponse({'ok': True, 'templates': templates})
     except urllib.error.HTTPError as e:
         err_body = e.read().decode('utf-8', errors='replace')
@@ -188,6 +221,13 @@ def whatsapp_templates_debug(request):
             err_msg = json.loads(err_body).get('error', {}).get('message', err_body)
         except Exception:
             err_msg = err_body
+        log_activity_event(
+            request,
+            module='communication',
+            action='whatsapp_templates_debug',
+            status='failure',
+            details={'error': err_msg},
+        )
         return JsonResponse({'ok': False, 'error': err_msg})
 
 
@@ -230,4 +270,11 @@ def _send_whatsapp_message(wa_config, payload):
             err_msg = err_body
         return JsonResponse({'ok': False, 'error': err_msg})
     except Exception as e:
+        log_activity_event(
+            request,
+            module='communication',
+            action='whatsapp_send_raw',
+            status='failure',
+            details={'error': str(e)},
+        )
         return JsonResponse({'ok': False, 'error': str(e)})

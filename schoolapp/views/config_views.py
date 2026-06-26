@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from ..decorators import school_only
+from ..logging_utils import log_activity_event
 from ..models import (
     ExamFee, FeeCategory, FeeStructure, SchoolClass, SchoolProfile,
     SchoolSessionRecord, Student, FeePayment, WhatsAppConfig, MONTH_CHOICES,
@@ -47,6 +48,18 @@ def config_view(request):
                         'billing_end_month': profile.billing_end_month,
                     },
                 )
+                log_activity_event(
+                    request,
+                    module='config',
+                    action='profile_update',
+                    details={
+                        'current_academic_session': profile.current_academic_session,
+                        'session_start_month': profile.session_start_month,
+                        'session_end_month': profile.session_end_month,
+                        'billing_start_month': profile.billing_start_month,
+                        'billing_end_month': profile.billing_end_month,
+                    },
+                )
                 messages.success(request, 'School profile updated.')
                 view_session = session
 
@@ -66,6 +79,13 @@ def config_view(request):
                     school_class=klass, fee_category=category, academic_session=view_session,
                     defaults={'amount': amount, 'frequency': FeeStructure.FREQUENCY_MONTHLY},
                 )
+                log_activity_event(
+                    request,
+                    module='config',
+                    action='class_create',
+                    record_id=klass.pk,
+                    details={'class_name': klass.name, 'academic_session': view_session, 'monthly_fee': str(amount)},
+                )
                 messages.success(request, 'Class added.')
 
         elif 'update_class' in request.POST:
@@ -80,12 +100,21 @@ def config_view(request):
                 messages.error(request, 'Enter valid class name and fee.')
             else:
                 klass = get_object_or_404(SchoolClass, pk=class_id, school=school)
+                old_values = {'class_name': klass.name}
                 klass.name = class_name
                 klass.save(update_fields=['name'])
                 category, _ = FeeCategory.objects.get_or_create(school=school, name='Monthly Fee', defaults={'is_active': True})
                 FeeStructure.objects.update_or_create(
                     school_class=klass, fee_category=category, academic_session=view_session,
                     defaults={'amount': amount, 'frequency': FeeStructure.FREQUENCY_MONTHLY},
+                )
+                log_activity_event(
+                    request,
+                    module='config',
+                    action='class_update',
+                    record_id=klass.pk,
+                    old_values=old_values,
+                    new_values={'class_name': klass.name, 'academic_session': view_session, 'monthly_fee': str(amount)},
                 )
                 messages.success(request, 'Class updated.')
 
@@ -96,6 +125,12 @@ def config_view(request):
             FeePayment.objects.filter(student__in=students).delete()
             students.delete()
             klass.delete()
+            log_activity_event(
+                request,
+                module='config',
+                action='class_delete',
+                details={'class_name': klass.name, 'student_count': student_count},
+            )
             messages.success(request, f'Class "{klass.name}" and {student_count} student(s) deleted.')
 
         elif 'add_exam_fee' in request.POST:
@@ -111,6 +146,12 @@ def config_view(request):
             else:
                 klass = get_object_or_404(SchoolClass, pk=class_id, school=school)
                 ExamFee.objects.create(school=school, school_class=klass, exam_name=exam_name, academic_session=view_session, amount=amount)
+                log_activity_event(
+                    request,
+                    module='config',
+                    action='exam_fee_create',
+                    details={'class_id': klass.pk, 'exam_name': exam_name, 'academic_session': view_session, 'amount': str(amount)},
+                )
                 messages.success(request, 'Exam fee added.')
 
         elif 'update_exam_fee' in request.POST:
@@ -127,16 +168,38 @@ def config_view(request):
             else:
                 exam = get_object_or_404(ExamFee, pk=exam_id, school=school)
                 klass = get_object_or_404(SchoolClass, pk=class_id, school=school)
+                old_values = {
+                    'exam_name': exam.exam_name,
+                    'academic_session': exam.academic_session,
+                    'amount': str(exam.amount),
+                    'school_class_id': exam.school_class_id,
+                }
                 exam.exam_name = exam_name
                 exam.academic_session = view_session
                 exam.amount = amount
                 exam.school_class = klass
                 exam.save()
+                log_activity_event(
+                    request,
+                    module='config',
+                    action='exam_fee_update',
+                    record_id=exam.pk,
+                    old_values=old_values,
+                    new_values={'exam_name': exam.exam_name, 'academic_session': exam.academic_session, 'amount': str(exam.amount), 'school_class_id': exam.school_class_id},
+                )
                 messages.success(request, 'Exam fee updated.')
 
         elif 'delete_exam_fee' in request.POST:
             exam = get_object_or_404(ExamFee, pk=request.POST.get('exam_fee_id'), school=school)
+            exam_snapshot = {'exam_name': exam.exam_name, 'academic_session': exam.academic_session, 'amount': str(exam.amount), 'school_class_id': exam.school_class_id}
             exam.delete()
+            log_activity_event(
+                request,
+                module='config',
+                action='exam_fee_delete',
+                record_id=exam_snapshot.get('exam_name'),
+                details=exam_snapshot,
+            )
             messages.success(request, 'Exam fee deleted.')
 
         elif 'save_wa_config' in request.POST:
@@ -150,6 +213,21 @@ def config_view(request):
             wa_config.announcement_template_language = request.POST.get('announcement_template_language', 'en').strip()
             wa_config.is_active = bool(request.POST.get('is_active'))
             wa_config.save()
+            log_activity_event(
+                request,
+                module='config',
+                action='whatsapp_config_update',
+                record_id=wa_config.pk,
+                details={
+                    'phone_number_id': wa_config.phone_number_id,
+                    'waba_id': wa_config.waba_id,
+                    'template_name': wa_config.template_name,
+                    'template_language': wa_config.template_language,
+                    'announcement_template_name': wa_config.announcement_template_name,
+                    'announcement_template_language': wa_config.announcement_template_language,
+                    'is_active': wa_config.is_active,
+                },
+            )
             messages.success(request, 'WhatsApp configuration saved.')
 
         return redirect(f'{cfg_url}?s={view_session}')
