@@ -800,6 +800,7 @@ document.addEventListener('keydown', function (event) {
 
 document.getElementById('mobile-sidebar')?.addEventListener('click', function (event) {
   if (event.target.closest('.brand')) return;
+  if (event.target.closest('.nav-group-toggle')) return;
   if (event.target.closest('a, button, form, input, select, textarea, label')) return;
   toggleSidebarNav();
 });
