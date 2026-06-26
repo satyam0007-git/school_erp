@@ -256,6 +256,86 @@
           <span class="hint" style="margin-top:4px;">PNG, JPG or SVG — optional</span>
         </div>
         <div class="fg">
+          <label>School Motto</label>
+          <div class="input-wrap">
+            <span class="input-icon">💡</span>
+            <input type="text" name="motto" value="{{ school.motto }}" placeholder="e.g. Education for All">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Theme Color</label>
+          <div class="input-wrap">
+            <span class="input-icon">🎨</span>
+            <select name="theme_color" id="theme-color-select" style="padding-left: 38px;">
+              <option value="#0f766e" {% if school.theme_color == "#0f766e" %}selected{% endif %}>Teal</option>
+              <option value="#2563eb" {% if school.theme_color == "#2563eb" %}selected{% endif %}>Blue</option>
+              <option value="#4f46e5" {% if school.theme_color == "#4f46e5" %}selected{% endif %}>Indigo</option>
+              <option value="#7c3aed" {% if school.theme_color == "#7c3aed" %}selected{% endif %}>Violet</option>
+              <option value="#db2777" {% if school.theme_color == "#db2777" %}selected{% endif %}>Pink</option>
+              <option value="#dc2626" {% if school.theme_color == "#dc2626" %}selected{% endif %}>Red</option>
+              <option value="#ea580c" {% if school.theme_color == "#ea580c" %}selected{% endif %}>Orange</option>
+              <option value="#d97706" {% if school.theme_color == "#d97706" %}selected{% endif %}>Amber</option>
+              <option value="#059669" {% if school.theme_color == "#059669" %}selected{% endif %}>Emerald</option>
+              <option value="#475569" {% if school.theme_color == "#475569" %}selected{% endif %}>Slate</option>
+            </select>
+          </div>
+          <span class="hint">Brand color used for the school's portal theme</span>
+        </div>
+        <div class="fg">
+          <label>Campus Image 1</label>
+          <input type="file" name="campus_image" id="campus-input" accept="image/*" style="display:none;">
+          <input type="hidden" name="clear_campus_image" id="clear-campus" value="0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="logo-attach-btn" id="campus-attach-btn" onclick="document.getElementById('campus-input').click()"
+              {% if school.campus_image %}style="display:none;"{% endif %}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.42 16.4a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Attach campus image 1
+            </span>
+            <div class="logo-chip" id="campus-chip" {% if not school.campus_image %}style="display:none;"{% endif %}>
+              <img id="campus-preview-img" src="{% if school.campus_image %}{{ school.campus_image.url }}{% endif %}" alt="">
+              <span class="logo-chip-name" id="campus-chip-name">{% if school.campus_image %}{{ school.campus_image.name|slice:"14:" }}{% endif %}</span>
+              <span class="logo-chip-remove" onclick="removeCampus()">✕</span>
+            </div>
+          </div>
+          <span class="hint" style="margin-top:4px;">PNG or JPG — optional</span>
+        </div>
+        <div class="fg">
+          <label>Campus Image 2</label>
+          <input type="file" name="campus_image2" id="campus2-input" accept="image/*" style="display:none;">
+          <input type="hidden" name="clear_campus_image2" id="clear-campus2" value="0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="logo-attach-btn" id="campus2-attach-btn" onclick="document.getElementById('campus2-input').click()"
+              {% if school.campus_image2 %}style="display:none;"{% endif %}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.42 16.4a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Attach campus image 2
+            </span>
+            <div class="logo-chip" id="campus2-chip" {% if not school.campus_image2 %}style="display:none;"{% endif %}>
+              <img id="campus2-preview-img" src="{% if school.campus_image2 %}{{ school.campus_image2.url }}{% endif %}" alt="">
+              <span class="logo-chip-name" id="campus2-chip-name">{% if school.campus_image2 %}{{ school.campus_image2.name|slice:"14:" }}{% endif %}</span>
+              <span class="logo-chip-remove" onclick="removeCampus2()">✕</span>
+            </div>
+          </div>
+          <span class="hint" style="margin-top:4px;">PNG or JPG — optional</span>
+        </div>
+        <div class="fg">
+          <label>Campus Image 3</label>
+          <input type="file" name="campus_image3" id="campus3-input" accept="image/*" style="display:none;">
+          <input type="hidden" name="clear_campus_image3" id="clear-campus3" value="0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="logo-attach-btn" id="campus3-attach-btn" onclick="document.getElementById('campus3-input').click()"
+              {% if school.campus_image3 %}style="display:none;"{% endif %}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.42 16.4a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+              Attach campus image 3
+            </span>
+            <div class="logo-chip" id="campus3-chip" {% if not school.campus_image3 %}style="display:none;"{% endif %}>
+              <img id="campus3-preview-img" src="{% if school.campus_image3 %}{{ school.campus_image3.url }}{% endif %}" alt="">
+              <span class="logo-chip-name" id="campus3-chip-name">{% if school.campus_image3 %}{{ school.campus_image3.name|slice:"14:" }}{% endif %}</span>
+              <span class="logo-chip-remove" onclick="removeCampus3()">✕</span>
+            </div>
+          </div>
+          <span class="hint" style="margin-top:4px;">PNG or JPG — optional</span>
+        </div>
+        <div class="fg">
           <label>Fee Per Student / Month (₹)</label>
           <div class="input-wrap">
             <span class="input-icon" style="font-size:13px;font-weight:700;color:#374151;">₹</span>
@@ -413,6 +493,75 @@ function removeLogo() {
   document.getElementById('logo-chip').style.display = 'none';
   document.getElementById('logo-attach-btn').style.display = 'inline-flex';
   document.getElementById('clear-logo').value = '1';
+}
+
+document.getElementById('campus-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById('campus-preview-img').src = e.target.result;
+    document.getElementById('campus-chip-name').textContent = file.name;
+    document.getElementById('campus-attach-btn').style.display = 'none';
+    document.getElementById('campus-chip').style.display = 'inline-flex';
+    document.getElementById('clear-campus').value = '0';
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeCampus() {
+  document.getElementById('campus-input').value = '';
+  document.getElementById('campus-preview-img').src = '';
+  document.getElementById('campus-chip-name').textContent = '';
+  document.getElementById('campus-chip').style.display = 'none';
+  document.getElementById('campus-attach-btn').style.display = 'inline-flex';
+  document.getElementById('clear-campus').value = '1';
+}
+
+document.getElementById('campus2-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById('campus2-preview-img').src = e.target.result;
+    document.getElementById('campus2-chip-name').textContent = file.name;
+    document.getElementById('campus2-attach-btn').style.display = 'none';
+    document.getElementById('campus2-chip').style.display = 'inline-flex';
+    document.getElementById('clear-campus2').value = '0';
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeCampus2() {
+  document.getElementById('campus2-input').value = '';
+  document.getElementById('campus2-preview-img').src = '';
+  document.getElementById('campus2-chip-name').textContent = '';
+  document.getElementById('campus2-chip').style.display = 'none';
+  document.getElementById('campus2-attach-btn').style.display = 'inline-flex';
+  document.getElementById('clear-campus2').value = '1';
+}
+
+document.getElementById('campus3-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById('campus3-preview-img').src = e.target.result;
+    document.getElementById('campus3-chip-name').textContent = file.name;
+    document.getElementById('campus3-attach-btn').style.display = 'none';
+    document.getElementById('campus3-chip').style.display = 'inline-flex';
+    document.getElementById('clear-campus3').value = '0';
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeCampus3() {
+  document.getElementById('campus3-input').value = '';
+  document.getElementById('campus3-preview-img').src = '';
+  document.getElementById('campus3-chip-name').textContent = '';
+  document.getElementById('campus3-chip').style.display = 'none';
+  document.getElementById('campus3-attach-btn').style.display = 'inline-flex';
+  document.getElementById('clear-campus3').value = '1';
 }
 
 function togglePassword() {
