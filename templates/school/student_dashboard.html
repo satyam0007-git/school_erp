@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal — {{ student.name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    :root {
+      --brand:             {{ school.theme_color|default:'#2563eb' }};
+      --brand-light:       {{ school.theme_color|default:'#2563eb' }}e0;
+      --brand-glow:        {{ school.theme_color|default:'#2563eb' }}15;
+      --text-1:            #0f172a;
+      --text-2:            #475569;
+      --text-3:            #94a3b8;
+      --surface:           #f8fafc;
+      --border:            #e2e8f0;
+      --white:             #ffffff;
+      --transition:        all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: var(--text-1);
+      min-height: 100vh;
+    }
+    .topbar {
+      background-color: #ffffff;
+      border-bottom: 1.5px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .school-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .school-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      object-fit: contain;
+      background: #ffffff;
+      padding: 3px;
+    }
+    .school-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-1);
+      line-height: 1.25;
+    }
+    .student-badge {
+      font-size: 11px;
+      color: var(--brand);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #b91c1c;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      transition: var(--transition);
+    }
+    .logout-btn:hover {
+      background: #fee2e2;
+      transform: translateY(-1px);
+    }
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+    .card-premium {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1.5px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01);
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: var(--transition);
+    }
+    .card-premium:hover {
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);
+    }
+    .card-title-premium {
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-2);
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1.5px solid transparent;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    }
+    .kpi-card.paid {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #15803d;
+    }
+    .kpi-card.pending {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #b45309;
+    }
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 4px;
+    }
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .profile-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .profile-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .profile-value {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .receipts-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .receipts-table th {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-2);
+      border-bottom: 1.5px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .receipts-table td {
+      font-size: 13.5px;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .receipts-table tr:last-child td {
+      border-bottom: none;
+    }
+    .receipts-table tr:hover td {
+      background: var(--surface);
+    }
+    .announcement-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      transition: var(--transition);
+    }
+    .announcement-card:hover {
+      border-color: var(--brand);
+      background: #ffffff;
+    }
+    .badge-category {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: var(--brand-glow);
+      color: var(--brand);
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
+    @media (max-width: 768px) {
+      .kpi-row {
+        grid-template-columns: 1fr;
+      }
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="topbar">
+    <div class="school-info">
+      {% if school.logo %}
+        <img src="{{ school.logo.url }}" alt="School Logo" class="school-logo">
+      {% endif %}
+      <div>
+        <div class="school-name">{{ school.name }}</div>
+        <span class="student-badge">Student Portal</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center;">
+      <a href="{% url 'logout' %}" class="logout-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Portal Content -->
+  <main class="dashboard-container">
+    
+    <!-- Welcome banner -->
+    <div class="card-premium" style="background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%); color: #ffffff; border: none; box-shadow: 0 10px 20px var(--brand-glow); margin-bottom: 24px;">
+      <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 6px;">Hello, {{ student.name }}!</h1>
+      <p style="font-size: 14.5px; opacity: 0.9; margin: 0;">Welcome to your educational portal. Track your profile and fee receipts here.</p>
+    </div>
+
+    <!-- KPIs row -->
+    <div class="kpi-row">
+      <div class="kpi-card paid">
+        <div>
+          <span class="kpi-label">Total Fee Paid</span>
+          <div class="kpi-value">₹{{ total_paid|floatformat:2 }}</div>
+        </div>
+        <div style="font-size: 28px;">✅</div>
+      </div>
+      <div class="kpi-card pending">
+        <div>
+          <span class="kpi-label">Pending Dues</span>
+          <div class="kpi-value">₹{{ pending_fee|floatformat:2 }}</div>
+        </div>
+        <div style="font-size: 28px;">⏳</div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Profile & Fee History -->
+    <div class="row g-4">
+      
+      <!-- Student Profile -->
+      <div class="col-lg-5 col-md-6 d-flex align-items-stretch">
+        <div class="card-premium w-100 mb-0 d-flex flex-column">
+          <div class="card-title-premium">
+            <span>👤</span> Student Profile
+          </div>
+          <div class="profile-grid" style="flex: 1;">
+            <div class="profile-item">
+              <span class="profile-label">Student Name</span>
+              <span class="profile-value">{{ student.name }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="profile-label">Admission/Roll Number</span>
+              <span class="profile-value">{{ student.roll_number }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="profile-label">Class</span>
+              <span class="profile-value">{{ student.school_class }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="profile-label">Father's Name</span>
+              <span class="profile-value">{{ student.father_name }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="profile-label">Academic Session</span>
+              <span class="profile-value">{{ current_session }}</span>
+            </div>
+            <div class="profile-item">
+              <span class="profile-label">Father's Contact</span>
+              <span class="profile-value">{{ student.father_phone }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fee Receipts History -->
+      <div class="col-lg-7 col-md-6 d-flex align-items-stretch">
+        <div class="card-premium w-100 mb-0 d-flex flex-column">
+          <div class="card-title-premium">
+            <span>📄</span> Fee Payment Receipts
+          </div>
+          <div class="table-responsive" style="flex: 1;">
+            <table class="receipts-table">
+              <thead>
+                <tr>
+                  <th>Receipt No.</th>
+                  <th>Date</th>
+                  <th>Session</th>
+                  <th>Amount Paid</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for payment in receipts %}
+                <tr>
+                  <td class="fw-bold text-dark">{{ payment.receipt_number }}</td>
+                  <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                  <td>{{ payment.academic_session }}</td>
+                  <td class="fw-bold text-success">₹{{ payment.amount_paid|floatformat:2 }}</td>
+                  <td>
+                    <a href="{% url 'student_payment_detail' payment.pk %}" class="btn btn-sm btn-outline-primary py-1" style="font-size: 12px; font-weight: 600; border-radius: 6px;">
+                      🖨 View & Print
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted small">
+                    No fee payments found for this academic session.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

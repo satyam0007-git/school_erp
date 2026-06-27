@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-wrap { max-width: 100%; }
+  .section-card { border: 1.5px solid #94a3b8; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 13px 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
+  .section-header.blue  { background: #eff6ff; color: #1d4ed8; border-bottom: 1px solid #dbeafe; }
+  .section-body { padding: 20px; background: #fff; }
+  .form-label { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+  .form-control, .form-select { border-color: #94a3b8; font-size: 14px; }
+  .form-control:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; }
+  .error-box li { font-size: 13px; color: #991b1b; }
+  .field-error { font-size: 12px; color: #dc2626; margin-top: 4px; }
+  .btn-save { background: #16a34a; border: none; color: #fff; border-radius: 8px; padding: 10px 28px; font-weight: 600; font-size: 14px; }
+  .btn-save:hover { background: #15803d; color: #fff; }
+  .btn-cancel { border-radius: 8px; padding: 10px 20px; font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {# Error summary #}
+    {% if form.errors %}
+    <div class="error-box mb-3">
+      <ul class="mb-0 ps-3">
+        {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="section-card">
+      <div class="section-header blue">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Announcement Details
+      </div>
+      <div class="section-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Title <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="field-error">{{ form.title.errors|join:", " }}</div>{% endif %}
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label">Category <span class="text-danger">*</span></label>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="field-error">{{ form.category.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Description / Notice Text <span class="text-danger">*</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="field-error">{{ form.description.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Publish Date <span class="text-danger">*</span></label>
+            {{ form.publish_date }}
+            {% if form.publish_date.errors %}<div class="field-error">{{ form.publish_date.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Attachment (PDF/Image)</label>
+            {{ form.attachment }}
+            {% if form.attachment.errors %}<div class="field-error">{{ form.attachment.errors|join:", " }}</div>{% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions d-flex gap-2">
+      <button type="submit" class="btn btn-save">Save Notification</button>
+      <a href="{% url 'notification_list' %}" class="btn btn-outline-secondary btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -365,59 +365,6 @@ body {
   background-color: rgba(37, 99, 235, 0.06);
 }
 
-/* Remember me checkbox */
-.options-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  font-size: 13.5px;
-}
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  color: var(--text-2);
-}
-.checkbox-container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0; width: 0;
-}
-.checkmark {
-  width: 18px;
-  height: 18px;
-  background-color: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 5px;
-  position: relative;
-  transition: var(--transition);
-}
-.checkbox-container:hover input ~ .checkmark {
-  border-color: var(--brand-light);
-}
-.checkbox-container input:checked ~ .checkmark {
-  background-color: var(--brand);
-  border-color: var(--brand);
-}
-.checkmark::after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 5px;
-  top: 2px;
-  width: 5px;
-  height: 9px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-.checkbox-container input:checked ~ .checkmark::after {
-  display: block;
-}
 
 /* Submit button */
 .btn-submit {
@@ -665,13 +612,6 @@ body {
           </div>
         </div>
 
-        <div class="options-row">
-          <label class="checkbox-container">
-            <input type="checkbox" name="remember_me" id="remember_me">
-            <span class="checkmark"></span>
-            <span>Remember Me</span>
-          </label>
-        </div>
 
         <button type="submit" class="btn-submit">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

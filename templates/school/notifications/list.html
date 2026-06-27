@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notification Management{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filter-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    border: 1.5px solid #94a3b8;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    margin-bottom: 20px;
+  }
+  .notification-table { border-collapse: separate; border-spacing: 0; border: 1.5px solid #94a3b8; border-radius: 10px; width: 100%; }
+  .notification-table thead th:first-child { border-radius: 10px 0 0 0; }
+  .notification-table thead th:last-child  { border-radius: 0 10px 0 0; }
+  .notification-table thead th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #374151; background: #f1f5f9; border-bottom: 2px solid #94a3b8; border-right: 1px solid #cbd5e1; padding: 12px 14px; white-space: nowrap; }
+  .notification-table thead th:last-child { border-right: none; }
+  .notification-table tbody td { vertical-align: middle; padding: 11px 14px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; }
+  .notification-table tbody td:last-child { border-right: none; }
+  .notification-table tbody tr:last-child td { border-bottom: none; }
+  .notification-table tbody tr:hover td { background: #f8fafc; }
+  .badge-visibility { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 999px; }
+  .badge-public { background: #e0f2fe; color: #0369a1; }
+  .badge-students { background: #fef3c7; color: #d97706; }
+  .badge-staff { background: #dcfce7; color: #15803d; }
+  .badge-draft { background: #f1f5f9; color: #475569; }
+  .badge-published { background: #ecfdf5; color: #047857; }
+  .act-item { transition: background-color 0.15s ease; }
+  .act-item:hover { background-color: #f8fafc !important; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-card">
+  <div class="d-flex align-items-center justify-content-between">
+    <h2 class="fs-5 fw-bold text-dark m-0">Announcements & Notifications</h2>
+    <a href="{% url 'notification_create' %}" class="btn btn-sm d-flex align-items-center gap-1"
+       style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:600;border:none;border-radius:8px;padding:7px 14px;box-shadow:0 2px 8px rgba(34,197,94,.25);white-space:nowrap;">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Notification
+    </a>
+  </div>
+</div>
+
+<div style="background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.04);">
+  <div class="table-responsive">
+    <table class="notification-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Publish Date</th>
+          <th>Attachment</th>
+          <th style="width: 150px; text-align: center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for notice in notifications %}
+        <tr>
+          <td>
+            <div class="fw-bold text-dark">{{ notice.title }}</div>
+            <div class="text-muted small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ notice.description }}</div>
+          </td>
+          <td>
+            <span class="text-secondary fw-semibold">{{ notice.get_category_display }}</span>
+          </td>
+          <td>{{ notice.publish_date|date:"d M Y" }}</td>
+          <td>
+            {% if notice.attachment %}
+              <a href="{{ notice.attachment.url }}" target="_blank" class="text-decoration-none text-primary" style="font-size: 13px;">
+                📎 Download
+              </a>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center pe-3">
+            <div class="act-menu-wrap" style="position:relative;display:inline-block;">
+              <button class="act-toggle" type="button"
+                       style="font-size:12px;font-weight:600;padding:5px 14px;border:1.5px solid #3b82f6;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer;white-space:nowrap;"
+                       onclick="toggleActMenu(this)">
+                Actions ▾
+              </button>
+              <div class="act-menu" style="display:none;position:fixed;z-index:9999;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:120px;font-size:13px;padding:4px 0;">
+
+                <a class="act-item" href="{% url 'notification_edit' notice.pk %}"
+                   style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#3b82f6;text-decoration:none;">
+                  <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </a>
+
+                <div style="border-top:1px solid #f1f5f9;margin:2px 0;"></div>
+                <form method="post" action="{% url 'notification_delete' notice.pk %}" style="margin:0;padding:0;">
+                  {% csrf_token %}
+                  <button type="submit" class="act-item"
+                           onclick="return confirm('Delete {{ notice.title|escapejs }}? This cannot be undone.')"
+                           style="display:flex;align-items:center;gap:8px;padding:8px 14px;color:#ef4444;background:none;border:none;cursor:pointer;width:100%;text-align:left;">
+                    <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Delete
+                  </button>
+                </form>
+
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center py-5 text-muted">
+            <div class="fs-4">📢</div>
+            <div class="mt-2 fw-semibold">No notifications published yet.</div>
+            <div class="small">Click "Create Notification" to announce holiday schedules, fee reminders, or exam updates.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Custom action dropdown ──────────────────────────────────────────────
+  function toggleActMenu(btn) {
+    var menu = btn.nextElementSibling;
+    var isOpen = menu.style.display === 'block';
+    closeAllActMenus();
+    if (!isOpen) {
+      // Measure menu height by briefly making it invisible-but-rendered
+      menu.style.visibility = 'hidden';
+      menu.style.display = 'block';
+      var menuH = menu.offsetHeight;
+      var menuW = menu.offsetWidth || 120;
+      menu.style.visibility = '';
+
+      var rect = btn.getBoundingClientRect();
+      var spaceBelow = window.innerHeight - rect.bottom;
+      var top = spaceBelow >= menuH + 8
+        ? rect.bottom + 4              // open downward
+        : rect.top - menuH - 4;        // flip upward
+      var left = Math.max(4, rect.right - menuW);
+
+      menu.style.top  = top + 'px';
+      menu.style.left = left + 'px';
+    }
+  }
+
+  function closeAllActMenus() {
+    document.querySelectorAll('.act-menu').forEach(function(m){ m.style.display='none'; });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.act-menu-wrap')) closeAllActMenus();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeAllActMenus();
+  });
+</script>
+{% endblock %}

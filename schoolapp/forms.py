@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Student, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings
+from .models import Student, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings, Notification
 
 
 def to_title_case(name: str) -> str:
@@ -275,3 +275,24 @@ class SuperUserSettingsForm(forms.ModelForm):
         self.fields['superuser_phone'].required = True
         self.fields['organization_address'].required = True
         self.fields['logo'].required = not (self.instance and self.instance.logo)
+
+
+class NotificationForm(forms.ModelForm):
+    class Meta:
+        model = Notification
+        fields = [
+            'title', 'description', 'category', 'publish_date', 'attachment'
+        ]
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter notification title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Enter description…'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'publish_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'attachment': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['attachment'].required = False
+
+

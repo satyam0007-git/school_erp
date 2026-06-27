@@ -46,7 +46,7 @@ class School(models.Model):
     campus_image = models.ImageField(upload_to='school_campus/', blank=True, null=True)
     campus_image2 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
     campus_image3 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
-    theme_color = models.CharField(max_length=7, default='#0f766e', help_text='Primary theme color in hex, e.g. #0f766e')
+    theme_color = models.CharField(max_length=7, default='#2563eb', help_text='Primary theme color in hex, e.g. #2563eb')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -408,3 +408,51 @@ class WhatsAppConfig(models.Model):
 
     def __str__(self):
         return f"WhatsApp Config — {self.school.name}"
+
+
+class Notification(models.Model):
+    VISIBILITY_PUBLIC = 'public'
+    VISIBILITY_STUDENTS = 'students'
+    VISIBILITY_STAFF = 'staff'
+    VISIBILITY_CHOICES = [
+        (VISIBILITY_PUBLIC, 'Public (Login Page)'),
+        (VISIBILITY_STUDENTS, 'Students Only'),
+        (VISIBILITY_STAFF, 'Staff Only'),
+    ]
+
+    CATEGORY_CHOICES = [
+        ('holiday', 'Holiday Notice'),
+        ('fee', 'Fee Submission Reminder'),
+        ('exam', 'Exam Schedule'),
+        ('admission', 'Admission Notice'),
+        ('event', 'School Event'),
+        ('circular', 'Circular'),
+    ]
+
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(
+        max_length=50,
+        choices=CATEGORY_CHOICES,
+        default='circular'
+    )
+    publish_date = models.DateField(default=timezone.localdate)
+    expiry_date = models.DateField(null=True, blank=True)
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default=VISIBILITY_PUBLIC
+    )
+    is_published = models.BooleanField(default=True)
+    is_pinned = models.BooleanField(default=False)
+    attachment = models.FileField(upload_to='notifications/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_pinned', '-publish_date', '-created_at']
+
+    def __str__(self):
+        return self.title
+

@@ -338,7 +338,7 @@ def school_add(request):
                 fee_per_student=request.POST.get('fee_per_student') or 0,
                 logo=request.FILES.get('logo'),
                 motto=request.POST.get('motto', '').strip(),
-                theme_color=request.POST.get('theme_color', '#0f766e').strip(),
+                theme_color=request.POST.get('theme_color', '#2563eb').strip(),
                 campus_image=request.FILES.get('campus_image'),
                 campus_image2=request.FILES.get('campus_image2'),
                 campus_image3=request.FILES.get('campus_image3'),
@@ -411,7 +411,7 @@ def school_edit(request, pk):
         school.email = request.POST.get('email', '')
         school.address = request.POST.get('address', '')
         school.motto = request.POST.get('motto', '').strip()
-        school.theme_color = request.POST.get('theme_color', '#0f766e').strip()
+        school.theme_color = request.POST.get('theme_color', '#2563eb').strip()
         school.is_active = 'is_active' in request.POST
         school.fee_per_student = request.POST.get('fee_per_student') or 0
         new_logo = request.FILES.get('logo')
