@@ -30,3 +30,25 @@ def school_only(fn):
             return redirect('login')
         return fn(request, *args, **kwargs)
     return wrap
+
+
+def student_only(fn):
+    """Restrict view to authenticated students belonging to the current tenant."""
+    @wraps(fn)
+    def wrap(request, *args, **kwargs):
+        from .models import Student
+        if request.user.is_authenticated:
+            return redirect('school_dashboard')
+        student_id = request.session.get('student_id')
+        if not student_id:
+            return redirect('login')
+        tenant = getattr(request, 'tenant', None)
+        try:
+            student = Student.objects.get(pk=student_id, school=tenant)
+            request.student = student
+        except Student.DoesNotExist:
+            request.session.pop('student_id', None)
+            return redirect('login')
+        return fn(request, *args, **kwargs)
+    return wrap
+

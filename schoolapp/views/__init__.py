@@ -49,6 +49,18 @@ from .whatsapp_views import (
     whatsapp_send,
     whatsapp_templates_debug,
 )
+from .notification_views import (
+    notification_list,
+    notification_create,
+    notification_edit,
+    notification_delete,
+    notification_toggle_publish,
+)
+from .student_portal_views import (
+    student_dashboard,
+    student_payment_detail,
+)
+
 
 __all__ = [
     'dashboard', 'login_view', 'logout_view', 'school_dashboard',
@@ -67,4 +79,8 @@ __all__ = [
     'super_settings', 'user_add', 'user_delete',
     'announcement_dashboard', 'whatsapp_announce', 'whatsapp_dashboard',
     'whatsapp_send', 'whatsapp_templates_debug',
+    'notification_list', 'notification_create', 'notification_edit',
+    'notification_delete', 'notification_toggle_publish',
+    'student_dashboard', 'student_payment_detail',
 ]
+

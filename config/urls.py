@@ -58,6 +58,17 @@ urlpatterns = [
     # Announcement
     path('school/announcement/', views.announcement_dashboard, name='announcement_dashboard'),
 
+    # Notifications (Admin)
+    path('school/notifications/', views.notification_list, name='notification_list'),
+    path('school/notifications/new/', views.notification_create, name='notification_create'),
+    path('school/notifications/<int:pk>/edit/', views.notification_edit, name='notification_edit'),
+    path('school/notifications/<int:pk>/delete/', views.notification_delete, name='notification_delete'),
+    path('school/notifications/<int:pk>/toggle-publish/', views.notification_toggle_publish, name='notification_toggle_publish'),
+
+    # Student Portal
+    path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
+    path('student/receipt/<int:pk>/', views.student_payment_detail, name='student_payment_detail'),
+
     # Reports
     path('school/reports/', views.report_dashboard, name='report_dashboard'),
     path('school/reports/admissions/export/', views.report_admissions_export, name='report_admissions_export'),
