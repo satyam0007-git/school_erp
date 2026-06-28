@@ -17,11 +17,11 @@
   --brand:             {{ tenant.theme_color|default:'#2563eb' }};
   --brand-light:       {{ tenant.theme_color|default:'#2563eb' }}e0;
   --brand-glow:        {{ tenant.theme_color|default:'#2563eb' }}1e;
-  --brand-deep:        #0f172a;
+  --brand-deep:        #181c24;
   --text-1:            #0f172a;
   --text-2:            #475569;
   --text-3:            #94a3b8;
-  --surface:           #f8fafc;
+  --surface:           #ffffff;
   --border:            #e2e8f0;
   --white:             #ffffff;
   --err-bg:            #fef2f2;
@@ -85,7 +85,7 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  background: #ffffff;
+  background: #f9fafb;
   z-index: 10;
   position: relative;
   animation: fadeIn 0.8s ease-out;
@@ -98,7 +98,7 @@ body {
 
 /* LEFT COLUMN - School Website Showcase */
 .branding-panel {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(135deg, #181c24 0%, #2a303c 100%);
   padding: 64px 48px;
   color: #f8fafc;
   display: flex;
@@ -173,138 +173,143 @@ body {
   padding-left: 8px;
 }
 
-/* Campus Preview Image Slider */
-.campus-showcase {
-  margin: 10px 0 24px;
-  position: relative;
-  z-index: 2;
-}
-.campus-preview-card {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  border-radius: 16px;
+/* Campus Preview Image Slider (Full Background) */
+.campus-bg-slider {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
-.slider-wrapper {
+.campus-bg-slider .slider-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
 }
-.campus-img {
+.campus-bg-slider .campus-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 1.2s ease-in-out, transform 8s ease-out;
+  opacity: 0;
+  transform: scale(1);
 }
-.campus-preview-card:hover .campus-img {
-  transform: scale(1.02);
+.campus-bg-slider .campus-img.active {
+  opacity: 1;
+  transform: scale(1.06);
 }
-.campus-card-overlay {
+.campus-slider-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, transparent 60%);
-  display: flex;
-  align-items: flex-end;
-  padding: 16px;
-  z-index: 3;
-  pointer-events: none;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(20, 24, 33, 0.75) 50%, rgba(15, 23, 42, 0.92) 100%);
+  z-index: 2;
 }
-.campus-card-overlay span {
+.branding-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+/* Centered Welcome Badge */
+.branding-middle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+  margin: 32px 0;
+}
+.welcome-campus-badge {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  transition: var(--transition);
+}
+.welcome-campus-badge:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.welcome-campus-badge span {
   font-size: 12.5px;
-  font-weight: 600;
-  color: #f8fafc;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
+  color: #ffffff;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--brand);
+  border-radius: 50%;
+  position: relative;
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--brand);
+  animation: pulse 2s infinite;
+  opacity: 0.8;
+}
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Modern Pill Indicators */
+.slider-indicators-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+  padding-bottom: 8px;
+  position: relative;
+  z-index: 3;
 }
 .slider-indicators {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .indicator-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 4px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
   padding: 0;
-  transition: var(--transition);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .indicator-dot:hover {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.6);
 }
 .indicator-dot.active {
+  width: 24px;
   background-color: var(--brand);
-  transform: scale(1.2);
-  box-shadow: 0 0 8px var(--brand);
-}
-
-/* Features grid block */
-.features-title-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--brand);
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-bottom: 12px;
-  display: block;
-}
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-  position: relative;
-  z-index: 2;
-}
-.feature-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  transition: var(--transition);
-}
-.feature-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-}
-.feature-icon-wrapper {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--brand-glow);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  flex-shrink: 0;
-}
-.feature-info {
-  display: flex;
-  flex-direction: column;
-}
-.feature-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-}
-.feature-desc {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px var(--brand-glow);
 }
 
 /* Powered by ERP Footer */
@@ -359,7 +364,7 @@ body {
 
 /* RIGHT COLUMN - Login Form Panel */
 .form-panel {
-  background: #ffffff;
+  background: #f8fafc;
   padding: 64px 48px;
   display: flex;
   flex-direction: column;
@@ -368,7 +373,7 @@ body {
 }
 .form-panel-inner {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   margin: 0 auto;
 }
 
@@ -384,6 +389,7 @@ body {
   width: 54px;
   height: 54px;
   border-radius: 12px;
+  background: var(--white);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -408,7 +414,7 @@ body {
 }
 .welcome-badge {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--brand);
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -426,6 +432,53 @@ body {
   font-size: 13.5px;
   color: var(--text-2);
   line-height: 1.5;
+}
+
+/* Modern Card for login forms */
+.login-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.01);
+  transition: var(--transition);
+  margin-bottom: 24px;
+}
+.login-card:hover {
+  box-shadow: 0 16px 35px rgba(15, 23, 42, 0.05);
+}
+
+/* Modern Segmented Login Tabs */
+.login-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.login-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition);
+  outline: none;
+  text-align: center;
+}
+.login-tab-btn:hover {
+  color: var(--text-1);
+}
+.login-tab-btn.active {
+  color: var(--brand) !important;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  font-weight: 700;
 }
 
 /* Forms & Fields */
@@ -466,6 +519,9 @@ body {
 .form-control::placeholder {
   color: var(--text-3);
 }
+.form-control:hover {
+  border-color: #cbd5e1;
+}
 .form-control:focus {
   border-color: var(--brand);
   background-color: var(--white);
@@ -502,16 +558,15 @@ body {
   background-color: var(--brand-glow);
 }
 
-
 /* Submit button */
 .btn-submit {
   width: 100%;
-  padding: 13px 24px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
   color: var(--white);
   border: none;
   border-radius: 12px;
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -521,15 +576,15 @@ body {
   box-shadow: 0 4px 14px var(--brand-glow);
   transition: var(--transition);
   position: relative;
-  overflow: hidden;
 }
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--brand-glow);
-  filter: brightness(1.05);
+  box-shadow: 0 8px 20px var(--brand-glow);
+  filter: brightness(1.04);
 }
 .btn-submit:active {
   transform: translateY(1px);
+  box-shadow: 0 4px 10px var(--brand-glow);
 }
 
 /* Secure Login footer badge */
@@ -594,12 +649,6 @@ body {
   .branding-panel {
     padding: 48px 32px 32px;
   }
-  .campus-showcase {
-    display: none;
-  }
-  .features-grid {
-    display: none;
-  }
   .form-panel {
     padding: 40px 32px 48px;
   }
@@ -634,14 +683,19 @@ body {
   }
 }
 
-/* Floating Notification Bell and Dropdown */
-.notification-dropdown-container {
+/* Floating actions at top right */
+.floating-actions-container {
   position: absolute;
   top: 24px;
   right: 24px;
   z-index: 1000;
+  display: flex;
+  gap: 12px;
 }
-.notification-bell-btn {
+.action-dropdown-wrapper {
+  position: relative;
+}
+.action-btn {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -657,17 +711,17 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   outline: none;
 }
-.notification-bell-btn:hover {
+.action-btn:hover {
   background: var(--brand-glow);
   border-color: var(--brand);
   color: var(--brand);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px var(--brand-glow);
 }
-.notification-bell-btn:active {
+.action-btn:active {
   transform: translateY(0);
 }
-.notification-bell-btn svg {
+.action-btn svg {
   transition: transform 0.3s ease;
 }
 .notification-bell-btn:hover svg {
@@ -714,6 +768,49 @@ body {
   transform-origin: top right;
   animation: dropdownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+}
+.notification-dropdown.active {
+  display: flex;
+}
+.about-dropdown {
+  position: absolute;
+  top: 54px;
+  right: 0;
+  width: 320px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: none;
+  flex-direction: column;
+  z-index: 1001;
+  transform-origin: top right;
+  animation: dropdownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  padding: 16px;
+}
+.about-dropdown.active {
+  display: flex;
+}
+.about-dropdown .dropdown-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+}
+.about-dropdown .dropdown-header h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.about-dropdown .dropdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 @keyframes dropdownFade {
   from { opacity: 0; transform: scale(0.95); }
@@ -780,7 +877,7 @@ body {
 }
 
 @media (max-width: 960px) {
-  .notification-dropdown-container {
+  .floating-actions-container {
     top: 16px;
     right: 16px;
   }
@@ -879,14 +976,15 @@ body {
   text-decoration: underline;
 }
 .ticker-item-category {
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 9.5px;
+  font-weight: 800; /* Extra bold category */
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 2.5px 8px;
+  border-radius: 6px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .ticker-separator {
   color: rgba(255, 255, 255, 0.35);
@@ -895,8 +993,44 @@ body {
 }
 
 @keyframes tickerScroll {
-  0% { transform: translate3d(calc(100vw - 150px), 0, 0); }
+  0% { transform: translate3d(100%, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+
+
+.about-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.about-icon {
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+.about-info {
+  display: flex;
+  flex-direction: column;
+}
+.about-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.about-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
 }
 </style>
 </head>
@@ -923,7 +1057,7 @@ body {
           {% for notice in public_notifications %}
           <div class="dropdown-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-size: 10px; color: var(--brand); font-weight: 700; text-transform: uppercase;">{{ notice.get_category_display }}</span>
+              <span style="font-size: 10px; color: var(--brand); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{{ notice.get_category_display }}</span>
               <span style="font-size: 10px; color: #64748b;">{{ notice.publish_date|date:"d M Y" }}</span>
             </div>
             <h4 style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ notice.title }}</h4>
@@ -960,50 +1094,114 @@ body {
 
 <div class="app-container">
 
-  <!-- Floating Notification Bell -->
-  {% if public_notifications %}
-  <div class="notification-dropdown-container">
-    <button class="notification-bell-btn" id="bellBtn" aria-label="Notifications">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-      </svg>
-      <span class="bell-badge">{{ public_notifications|length }}</span>
-    </button>
-    
-    <div class="notification-dropdown" id="notificationDropdown">
-      <div class="dropdown-header">
-        <h3>Latest Announcements</h3>
-        <span class="dropdown-header-badge">{{ public_notifications|length }} New</span>
-      </div>
-      <div class="dropdown-list">
-        {% for notice in public_notifications %}
-        <div class="dropdown-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-size: 10px; color: var(--brand); font-weight: 700; text-transform: uppercase;">{{ notice.get_category_display }}</span>
-            <span style="font-size: 10px; color: #64748b;">{{ notice.publish_date|date:"d M Y" }}</span>
-          </div>
-          <h4 style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ notice.title }}</h4>
-          <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-            {{ notice.description }}
-          </p>
-          {% if notice.attachment %}
-            <div style="margin-top: 6px; display: flex; align-items: center;" onclick="event.stopPropagation();">
-              <a href="{{ notice.attachment.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--brand); text-decoration: none; font-weight: 500;">
-                📎 Attachment
-              </a>
+  <!-- Floating Actions (Bell & Info) -->
+  <div class="floating-actions-container">
+    {% if public_notifications %}
+    <div class="action-dropdown-wrapper">
+      <button class="action-btn notification-bell-btn" id="bellBtn" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span class="bell-badge">{{ public_notifications|length }}</span>
+      </button>
+      
+      <div class="notification-dropdown" id="notificationDropdown">
+        <div class="dropdown-header">
+          <h3>Latest Announcements</h3>
+          <span class="dropdown-header-badge">{{ public_notifications|length }} New</span>
+        </div>
+        <div class="dropdown-list">
+          {% for notice in public_notifications %}
+          <div class="dropdown-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 10px; color: var(--brand); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{{ notice.get_category_display }}</span>
+              <span style="font-size: 10px; color: #64748b;">{{ notice.publish_date|date:"d M Y" }}</span>
             </div>
+            <h4 style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ notice.title }}</h4>
+            <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ notice.description }}
+            </p>
+            {% if notice.attachment %}
+              <div style="margin-top: 6px; display: flex; align-items: center;" onclick="event.stopPropagation();">
+                <a href="{{ notice.attachment.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--brand); text-decoration: none; font-weight: 500;">
+                  📎 Attachment
+                </a>
+              </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="action-dropdown-wrapper">
+      <button class="action-btn about-btn" id="aboutBtn" aria-label="About School">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
+
+      <div class="about-dropdown" id="aboutDropdown">
+        <div class="dropdown-header">
+          <h3>About Our School</h3>
+        </div>
+        <div class="dropdown-list">
+          <div class="about-item">
+            <span class="about-icon">🏛️</span>
+            <div class="about-info">
+              <span class="about-label">School Name</span>
+              <span class="about-value">{{ tenant.name }}</span>
+            </div>
+          </div>
+          {% if tenant.phone %}
+          <div class="about-item">
+            <span class="about-icon">📞</span>
+            <div class="about-info">
+              <span class="about-label">Phone Number</span>
+              <span class="about-value">{{ tenant.phone }}</span>
+            </div>
+          </div>
+          {% endif %}
+          {% if tenant.email %}
+          <div class="about-item">
+            <span class="about-icon">✉️</span>
+            <div class="about-info">
+              <span class="about-label">Email ID</span>
+              <span class="about-value">{{ tenant.email }}</span>
+            </div>
+          </div>
           {% endif %}
         </div>
-        {% endfor %}
       </div>
     </div>
   </div>
-  {% endif %}
 
   <!-- LEFT PANEL - School Brand & Features Grid -->
   <div class="branding-panel">
-    <div>
+    <!-- Campus Image Showcase as full background -->
+    {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
+    <div class="campus-bg-slider">
+      <div class="slider-wrapper">
+        {% if tenant.campus_image %}
+          <img src="{{ tenant.campus_image.url }}" alt="Campus Image 1" class="campus-img active" data-index="0">
+        {% endif %}
+        {% if tenant.campus_image2 %}
+          <img src="{{ tenant.campus_image2.url }}" alt="Campus Image 2" class="campus-img" data-index="1" style="display: none; opacity: 0;">
+        {% endif %}
+        {% if tenant.campus_image3 %}
+          <img src="{{ tenant.campus_image3.url }}" alt="Campus Image 3" class="campus-img" data-index="2" style="display: none; opacity: 0;">
+        {% endif %}
+      </div>
+      <div class="campus-slider-overlay"></div>
+    </div>
+    {% endif %}
+
+    <!-- Foreground Content Wrapper -->
+    <div class="branding-content">
       <div class="school-brand-banner">
         <div class="school-logo-container">
           {% if tenant.logo %}
@@ -1022,27 +1220,11 @@ body {
         </div>
       </div>
 
-      <!-- Campus Image Showcase with 3 switchable images -->
+
+
+      <!-- Modern Pill Indicators -->
       {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
-      <div class="campus-showcase">
-        <div class="campus-preview-card">
-          <div class="slider-wrapper">
-            {% if tenant.campus_image %}
-              <img src="{{ tenant.campus_image.url }}" alt="Campus Image 1" class="campus-img active" data-index="0">
-            {% endif %}
-            {% if tenant.campus_image2 %}
-              <img src="{{ tenant.campus_image2.url }}" alt="Campus Image 2" class="campus-img" data-index="1" style="display: none; opacity: 0;">
-            {% endif %}
-            {% if tenant.campus_image3 %}
-              <img src="{{ tenant.campus_image3.url }}" alt="Campus Image 3" class="campus-img" data-index="2" style="display: none; opacity: 0;">
-            {% endif %}
-          </div>
-          <div class="campus-card-overlay">
-            <span>Welcome to our campus</span>
-          </div>
-        </div>
-        
-        <!-- Indicators dot row under the image -->
+      <div class="slider-indicators-container">
         <div class="slider-indicators">
           {% if tenant.campus_image %}
             <button type="button" class="indicator-dot active" onclick="switchSlide(0)" aria-label="Campus Image 1"></button>
@@ -1056,55 +1238,6 @@ body {
         </div>
       </div>
       {% endif %}
-
-      <!-- Feature Grid Showcase (shown on desktop only) -->
-      <span class="features-title-label">Portal Features</span>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">🎓</div>
-          <div class="feature-info">
-            <span class="feature-title">Student Portal</span>
-            <span class="feature-desc">Track academic and attendance sheets.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">👥</div>
-          <div class="feature-info">
-            <span class="feature-title">Staff Management</span>
-            <span class="feature-desc">Control registers and scheduling.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">💳</div>
-          <div class="feature-info">
-            <span class="feature-title">Fee Billing</span>
-            <span class="feature-desc">Submit online payments and fee records.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">📝</div>
-          <div class="feature-info">
-            <span class="feature-title">Examination</span>
-            <span class="feature-desc">Access scores and report card details.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">🚌</div>
-          <div class="feature-info">
-            <span class="feature-title">Transport Details</span>
-            <span class="feature-desc">Check route plans and driver updates.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">☁️</div>
-          <div class="feature-info">
-            <span class="feature-title">Encrypted Cloud</span>
-            <span class="feature-desc">Safe operations with role-based safety.</span>
-          </div>
-        </div>
-      </div>
-
-
     </div>
 
     <!-- Powered by ERP SaaS Footer -->
@@ -1152,126 +1285,111 @@ body {
         <p class="form-sub">Enter your school credentials to manage students, fees, and reports.</p>
       </div>
 
-      <!-- Tabs for Dual Login -->
-      <div class="login-tabs" style="display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px;">
-        <button type="button" id="tab-staff" class="login-tab-btn active" onclick="switchTab('staff')" style="flex: 1; padding: 12px; border: none; background: none; font-size: 14px; font-weight: 700; color: var(--text-2); cursor: pointer; position: relative; transition: var(--transition);">
-          Staff Login
-        </button>
-        <button type="button" id="tab-student" class="login-tab-btn" onclick="switchTab('student')" style="flex: 1; padding: 12px; border: none; background: none; font-size: 14px; font-weight: 700; color: var(--text-2); cursor: pointer; position: relative; transition: var(--transition);">
-          Student Login
-        </button>
-      </div>
-
-      <style>
-        .login-tab-btn {
-          outline: none;
-        }
-        .login-tab-btn.active {
-          color: var(--brand) !important;
-        }
-        .login-tab-btn.active::after {
-          content: '';
-          position: absolute;
-          bottom: -2px;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background-color: var(--brand);
-        }
-      </style>
-
-      {% for msg in messages %}
-      <div class="alert-error">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span>{{ msg }}</span>
-      </div>
-      {% endfor %}
-
-      <form method="post" id="loginForm">
-        {% csrf_token %}
-        <input type="hidden" name="login_type" value="staff">
-
-        <div class="form-group">
-          <label class="form-label" for="id_username">Username</label>
-          <div class="input-wrapper">
-            <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
+      <!-- Modern Card for Login Forms -->
+      <div class="login-card">
+        <!-- Tabs for Dual Login -->
+        <div class="login-tabs">
+          <button type="button" id="tab-staff" class="login-tab-btn active" onclick="switchTab('staff')">
+            Staff Login
+          </button>
+          <button type="button" id="tab-student" class="login-tab-btn" onclick="switchTab('student')">
+            Student Login
+          </button>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="id_password">Password</label>
-          <div class="input-wrapper">
-            <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
-              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                <circle cx="12" cy="12" r="3"/>
+        {% for msg in messages %}
+        <div class="alert-error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ msg }}</span>
+        </div>
+        {% endfor %}
+
+        <!-- Staff Login Form -->
+        <form method="post" id="loginForm">
+          {% csrf_token %}
+          <input type="hidden" name="login_type" value="staff">
+
+          <div class="form-group">
+            <label class="form-label" for="id_username">Username</label>
+            <div class="input-wrapper">
+              <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
               </svg>
-            </button>
+            </div>
           </div>
-        </div>
 
+          <div class="form-group">
+            <label class="form-label" for="id_password">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
+                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
 
-        <button type="submit" class="btn-submit">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
-          Sign In
-        </button>
-      </form>
-
-      <!-- Student Login Form -->
-      <form method="post" id="studentLoginForm" style="display: none;">
-        {% csrf_token %}
-        <input type="hidden" name="login_type" value="student">
-
-        <div class="form-group">
-          <label class="form-label" for="id_student_search">Student Name</label>
-          <div class="input-wrapper">
-            <input type="text" id="id_student_search" name="student_search" class="form-control" placeholder="Enter student name" required autocomplete="off">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
+          <button type="submit" class="btn-submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
             </svg>
-          </div>
-        </div>
+            Sign In
+          </button>
+        </form>
 
-        <div class="form-group">
-          <label class="form-label" for="id_dob">Date of Birth</label>
-          <div class="input-wrapper">
-            <input type="date" id="id_dob" name="dob" class="form-control" required placeholder="DD/MM/YYYY">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
+        <!-- Student Login Form -->
+        <form method="post" id="studentLoginForm" style="display: none;">
+          {% csrf_token %}
+          <input type="hidden" name="login_type" value="student">
+
+          <div class="form-group">
+            <label class="form-label" for="id_student_search">Student Name</label>
+            <div class="input-wrapper">
+              <input type="text" id="id_student_search" name="student_search" class="form-control" placeholder="Enter student name" required autocomplete="off">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="id_dob">Date of Birth</label>
+            <div class="input-wrapper">
+              <input type="date" id="id_dob" name="dob" class="form-control" required placeholder="DD/MM/YYYY">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" style="margin-top: 24px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
             </svg>
-          </div>
-        </div>
-
-        <button type="submit" class="btn-submit" style="margin-top: 24px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
-          Student Login
-        </button>
-      </form>
+            Student Login
+          </button>
+        </form>
+      </div>
 
       <div class="secure-notice">
         <div class="secure-heading">
@@ -1294,7 +1412,7 @@ body {
   <div style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; width: 100%; max-width: 500px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalSlide 0.3s ease-out;">
     <button onclick="closeNoticeModal()" style="position: absolute; top: 18px; right: 18px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 20px;">&times;</button>
     <div style="margin-bottom: 12px;">
-      <span id="modal-category" style="font-size: 11px; color: var(--brand); font-weight: 700; text-transform: uppercase; background: var(--brand-glow); padding: 4px 8px; border-radius: 6px;">Category</span>
+      <span id="modal-category" style="font-size: 11px; color: var(--brand); font-weight: 800; text-transform: uppercase; background: var(--brand-glow); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px;">Category</span>
       <span id="modal-date" style="font-size: 12px; color: var(--text-3); margin-left: 10px;">Date</span>
     </div>
     <h3 id="modal-title" style="font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 14px;">Notice Title</h3>
@@ -1374,11 +1492,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdown = document.getElementById('notificationDropdown');
   const tickerBellBtn = document.getElementById('tickerBellBtn');
   const tickerDropdown = document.getElementById('tickerDropdown');
+  const aboutBtn = document.getElementById('aboutBtn');
+  const aboutDropdown = document.getElementById('aboutDropdown');
 
   if (bellBtn && dropdown) {
     bellBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdown.classList.toggle('active');
+      if (aboutDropdown) aboutDropdown.classList.remove('active');
+      if (tickerDropdown) {
+        tickerDropdown.classList.remove('active');
+        tickerBellBtn.classList.remove('active');
+        tickerBellBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  if (aboutBtn && aboutDropdown) {
+    aboutBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aboutDropdown.classList.toggle('active');
+      if (dropdown) dropdown.classList.remove('active');
       if (tickerDropdown) {
         tickerDropdown.classList.remove('active');
         tickerBellBtn.classList.remove('active');
@@ -1393,9 +1527,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const isActive = tickerDropdown.classList.toggle('active');
       tickerBellBtn.classList.toggle('active');
       tickerBellBtn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-      if (dropdown) {
-        dropdown.classList.remove('active');
-      }
+      if (dropdown) dropdown.classList.remove('active');
+      if (aboutDropdown) aboutDropdown.classList.remove('active');
     });
   }
 
@@ -1404,6 +1537,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dropdown && bellBtn) {
       if (!dropdown.contains(e.target) && e.target !== bellBtn && !bellBtn.contains(e.target)) {
         dropdown.classList.remove('active');
+      }
+    }
+    // Click outside handling for about dropdown
+    if (aboutDropdown && aboutBtn) {
+      if (!aboutDropdown.contains(e.target) && e.target !== aboutBtn && !aboutBtn.contains(e.target)) {
+        aboutDropdown.classList.remove('active');
       }
     }
     // Click outside handling for ticker dropdown
@@ -1434,10 +1573,28 @@ function togglePw() {
   }
 }
 
-function switchSlide(index) {
+let slideInterval;
+
+function startAutoSlide() {
+  if (slideInterval) clearInterval(slideInterval);
+  slideInterval = setInterval(() => {
+    const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
+    if (!images.length) return;
+    const activeIdx = images.findIndex(img => img.classList.contains('active'));
+    if (activeIdx !== -1) {
+      switchSlide(activeIdx + 1, false);
+    }
+  }, 6000);
+}
+
+function switchSlide(index, resetTimer = true) {
   const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
   const dots = Array.from(document.querySelectorAll('.slider-indicators .indicator-dot'));
   if (!images.length) return;
+  
+  if (resetTimer) {
+    startAutoSlide();
+  }
   
   // Wrap around indices safely
   if (index < 0) {
@@ -1459,7 +1616,7 @@ function switchSlide(index) {
         if (!img.classList.contains('active')) {
           img.style.display = 'none';
         }
-      }, 500);
+      }, 1200);
     }
   });
   
@@ -1473,9 +1630,25 @@ function switchSlide(index) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const card = document.querySelector('.campus-preview-card');
-  if (card) {
-    card.addEventListener('mousemove', function(e) {
+  // Start the slideshow automatically
+  startAutoSlide();
+
+  // Allow clicking on the branding-panel to advance slides
+  const brandingPanel = document.querySelector('.branding-panel');
+  if (brandingPanel) {
+    brandingPanel.addEventListener('mousemove', function(e) {
+      // Don't change cursor if hovering over interactive elements
+      if (
+        e.target.closest('.slider-indicators') || 
+        e.target.closest('.school-logo-container') ||
+        e.target.closest('.powered-by-footer') ||
+        e.target.closest('a') ||
+        e.target.closest('button')
+      ) {
+        this.style.cursor = 'default';
+        return;
+      }
+      
       const rect = this.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       if (clickX < rect.width / 2) {
@@ -1485,7 +1658,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    card.addEventListener('click', function(e) {
+    brandingPanel.addEventListener('click', function(e) {
+      // Don't advance slide if the user clicks on links, indicators, or logo container
+      if (
+        e.target.closest('.slider-indicators') || 
+        e.target.closest('.school-logo-container') ||
+        e.target.closest('.powered-by-footer') ||
+        e.target.closest('a') ||
+        e.target.closest('button')
+      ) {
+        return;
+      }
+      
       const rect = this.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const width = rect.width;

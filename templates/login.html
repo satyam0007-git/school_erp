@@ -16,11 +16,11 @@
   --brand:      #2563eb;
   --brand-light:#3b82f6;
   --brand-dark: #1d4ed8;
-  --brand-deep: #0f172a;
+  --brand-deep: #181c24;
   --text-1:     #0f172a;
   --text-2:     #475569;
   --text-3:     #94a3b8;
-  --surface:    #f8fafc;
+  --surface:    #ffffff;
   --border:     #e2e8f0;
   --white:      #ffffff;
   --err-bg:     #fef2f2;
@@ -84,7 +84,7 @@ body {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  background: #ffffff;
+  background: #f9fafb;
   z-index: 10;
   position: relative;
   animation: fadeIn 0.8s ease-out;
@@ -97,7 +97,7 @@ body {
 
 /* LEFT COLUMN - SaaS Product Branding & Features */
 .marketing-panel {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(135deg, #181c24 0%, #2a303c 100%);
   padding: 64px 48px;
   color: #f8fafc;
   display: flex;
@@ -251,7 +251,7 @@ body {
 
 /* RIGHT COLUMN - Login Form Panel */
 .form-panel {
-  background: #ffffff;
+  background: #f8fafc;
   padding: 64px 48px;
   display: flex;
   flex-direction: column;
@@ -261,7 +261,7 @@ body {
 
 .form-panel-inner {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   margin: 0 auto;
 }
 
@@ -270,7 +270,7 @@ body {
 }
 .welcome-badge {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--brand);
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -288,6 +288,20 @@ body {
   font-size: 13.5px;
   color: var(--text-2);
   line-height: 1.5;
+}
+
+/* Modern Card for login forms */
+.login-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.01);
+  transition: var(--transition);
+  margin-bottom: 24px;
+}
+.login-card:hover {
+  box-shadow: 0 16px 35px rgba(15, 23, 42, 0.05);
 }
 
 /* Forms & Fields */
@@ -329,6 +343,9 @@ body {
 .form-control::placeholder {
   color: var(--text-3);
 }
+.form-control:hover {
+  border-color: #cbd5e1;
+}
 .form-control:focus {
   border-color: var(--brand);
   background-color: var(--white);
@@ -365,16 +382,15 @@ body {
   background-color: rgba(37, 99, 235, 0.06);
 }
 
-
 /* Submit button */
 .btn-submit {
   width: 100%;
-  padding: 13px 24px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
   color: var(--white);
   border: none;
   border-radius: 12px;
-  font-size: 15.5px;
+  font-size: 15.0px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -384,15 +400,15 @@ body {
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
   transition: var(--transition);
   position: relative;
-  overflow: hidden;
 }
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+  filter: brightness(1.04);
 }
 .btn-submit:active {
   transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
 /* Secure Login notice */
@@ -570,58 +586,60 @@ body {
         <p class="form-sub">Please enter your credentials to access the console.</p>
       </div>
 
-      {% for msg in messages %}
-      <div class="alert-error">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span>{{ msg }}</span>
-      </div>
-      {% endfor %}
-
-      <form method="post" id="loginForm">
-        {% csrf_token %}
-
-        <div class="form-group">
-          <label class="form-label" for="id_username">Username</label>
-          <div class="input-wrapper">
-            <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_password">Password</label>
-          <div class="input-wrapper">
-            <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
-            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
-              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-
-        <button type="submit" class="btn-submit">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
+      <!-- Modern Card for Login Forms -->
+      <div class="login-card">
+        {% for msg in messages %}
+        <div class="alert-error">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Login
-        </button>
-      </form>
+          <span>{{ msg }}</span>
+        </div>
+        {% endfor %}
+
+        <form method="post" id="loginForm">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label" for="id_username">Username</label>
+            <div class="input-wrapper">
+              <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="id_password">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
+              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
+                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            Login
+          </button>
+        </form>
+      </div>
 
       <div class="secure-notice">
         <div class="secure-heading">
