@@ -501,6 +501,9 @@ body {
     font-size: 22px;
   }
 }
+.is-hidden {
+  display: none !important;
+}
 </style>
 </head>
 <body>
@@ -513,7 +516,10 @@ body {
       <div class="system-logo-bar">
         <div class="system-logo-wrap">
           {% if settings.logo %}
-            <img src="{{ settings.logo.url }}" alt="Logo">
+            <img src="{{ settings.logo.url }}" alt="Logo" onerror="handleImageError(this)">
+            <span class="system-initials is-hidden">
+              {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
+            </span>
           {% else %}
             <span class="system-initials">
               {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
@@ -658,6 +664,17 @@ body {
 </div>
 
 <script>
+function handleImageError(img) {
+  img.style.display = 'none';
+  const container = img.parentElement;
+  if (container) {
+    const fallback = container.querySelector('.system-initials');
+    if (fallback) {
+      fallback.classList.remove('is-hidden');
+    }
+  }
+}
+
 function togglePw() {
   const input = document.getElementById('id_password');
   const button = document.querySelector('.btn-password-toggle');

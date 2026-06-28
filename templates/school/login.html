@@ -1032,6 +1032,174 @@ body {
   font-weight: 500;
   color: #ffffff;
 }
+
+/* Fallback Background & Features for Branding Panel */
+.branding-fallback-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+.glowing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.12;
+  mix-blend-mode: screen;
+  animation: floatOrb 15s infinite alternate ease-in-out;
+}
+.orb-1 {
+  top: 10%;
+  left: -10%;
+  width: 380px;
+  height: 380px;
+  background: var(--brand);
+}
+.orb-2 {
+  bottom: 10%;
+  right: -10%;
+  width: 420px;
+  height: 420px;
+  background: #0ea5e9;
+  animation-delay: -7s;
+}
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.1); }
+  100% { transform: translate(-30px, 50px) scale(0.95); }
+}
+
+/* Features Showcase styling */
+.portal-features-showcase {
+  margin: auto 0;
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 24px 0;
+}
+.showcase-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--brand);
+  margin-bottom: 24px;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.showcase-title::after {
+  content: '';
+  flex-grow: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+}
+.feature-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 18px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
+}
+.feature-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.feature-card:nth-child(2) .feature-icon-wrapper {
+  color: #0ea5e9;
+}
+.feature-card:nth-child(3) .feature-icon-wrapper {
+  color: #10b981;
+}
+.feature-details h4 {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+.feature-details p {
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+/* Fallback Initials Badges styling */
+.is-hidden {
+  display: none !important;
+}
+.school-initials.is-hidden,
+.initials-fallback.is-hidden,
+.card-initials.is-hidden {
+  display: none !important;
+}
+.card-initials {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.03);
+}
+.erp-card-logo .card-initials {
+  color: #10b981;
+}
+.initials-fallback {
+  font-size: 14px;
+  font-weight: 800;
+  color: #10b981;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>
 </head>
 <body>
@@ -1198,6 +1366,13 @@ body {
       </div>
       <div class="campus-slider-overlay"></div>
     </div>
+    {% else %}
+    <!-- Lucrative fallback background and features when no campus image is uploaded -->
+    <div class="branding-fallback-bg">
+      <div class="glowing-orb orb-1"></div>
+      <div class="glowing-orb orb-2"></div>
+      <div class="grid-overlay"></div>
+    </div>
     {% endif %}
 
     <!-- Foreground Content Wrapper -->
@@ -1205,7 +1380,10 @@ body {
       <div class="school-brand-banner">
         <div class="school-logo-container">
           {% if tenant.logo %}
-            <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
+            <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" onerror="handleImageError(this)">
+            <span class="school-initials is-hidden">
+              {{ tenant.name|slice:":2"|upper }}
+            </span>
           {% else %}
             <span class="school-initials">
               {{ tenant.name|slice:":2"|upper }}
@@ -1219,6 +1397,54 @@ body {
           {% endif %}
         </div>
       </div>
+
+      <!-- Feature/Portal Highlights (Rendered when no campus image is uploaded) -->
+      {% if not tenant.campus_image and not tenant.campus_image2 and not tenant.campus_image3 %}
+      <div class="portal-features-showcase">
+        <h3 class="showcase-title">Portal Highlights</h3>
+        <div class="feature-cards-grid">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
+            <div class="feature-details">
+              <h4>Academic Hub</h4>
+              <p>Keep track of curriculum, daily attendance, examinations, and performance reports seamlessly.</p>
+            </div>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+              </svg>
+            </div>
+            <div class="feature-details">
+              <h4>Fee & Finances</h4>
+              <p>Review fee schedules, pay dues securely online, and access printable receipts instantly.</p>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
+            <div class="feature-details">
+              <h4>Real-time Notifications</h4>
+              <p>Never miss important updates with instant school alerts and public announcement details.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
 
 
@@ -1246,9 +1472,10 @@ body {
       <div class="erp-mini-brand">
         <div class="erp-mini-logo">
           {% if settings.logo %}
-            <img src="{{ settings.logo.url }}" alt="ERP Logo">
+            <img src="{{ settings.logo.url }}" alt="ERP Logo" onerror="handleImageError(this)">
+            <span class="initials-fallback is-hidden">{{ settings.software_name|slice:":2"|upper }}</span>
           {% else %}
-            <span>{{ settings.software_name|slice:":2"|upper }}</span>
+            <span class="initials-fallback">{{ settings.software_name|slice:":2"|upper }}</span>
           {% endif %}
         </div>
         <span class="erp-mini-name">{{ settings.software_name|default:"SchoolERP" }}</span>
@@ -1264,18 +1491,24 @@ body {
       <div class="card-logo-row">
         {% if tenant.logo %}
         <div class="card-logo school-card-logo">
-          <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">
+          <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" onerror="handleImageError(this)">
+          <span class="card-initials is-hidden">{{ tenant.name|slice:":2"|upper }}</span>
+        </div>
+        {% else %}
+        <div class="card-logo school-card-logo">
+          <span class="card-initials">{{ tenant.name|slice:":2"|upper }}</span>
         </div>
         {% endif %}
-        
-        {% if settings.logo or tenant.logo %}
-
         
         {% if settings.logo %}
         <div class="card-logo erp-card-logo">
-          <img src="{{ settings.logo.url }}" alt="{{ settings.software_name }}">
+          <img src="{{ settings.logo.url }}" alt="{{ settings.software_name }}" onerror="handleImageError(this)">
+          <span class="card-initials is-hidden">{{ settings.software_name|slice:":2"|upper }}</span>
         </div>
-        {% endif %}
+        {% else %}
+        <div class="card-logo erp-card-logo">
+          <span class="card-initials">{{ settings.software_name|slice:":2"|upper }}</span>
+        </div>
         {% endif %}
       </div>
 
@@ -1433,6 +1666,17 @@ body {
 </style>
 
 <script>
+function handleImageError(img) {
+  img.style.display = 'none';
+  const container = img.parentElement;
+  if (container) {
+    const fallback = container.querySelector('.school-initials') || container.querySelector('.card-initials') || container.querySelector('.initials-fallback');
+    if (fallback) {
+      fallback.classList.remove('is-hidden');
+    }
+  }
+}
+
 function switchTab(type) {
   const staffForm = document.getElementById('loginForm');
   const studentForm = document.getElementById('studentLoginForm');
