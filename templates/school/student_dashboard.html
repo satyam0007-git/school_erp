@@ -220,6 +220,18 @@
       padding: 3px 8px;
       border-radius: 5px;
     }
+
+    .status-list {
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 2.0;
+    }
+    .status-list.text-success li::marker {
+      color: #166534;
+    }
+    .status-list.text-danger li::marker {
+      color: #991b1b;
+    }
     @media (max-width: 768px) {
       .kpi-row {
         grid-template-columns: 1fr;
@@ -287,9 +299,10 @@
     <!-- Main Grid: Profile & Fee History -->
     <div class="row g-4">
       
-      <!-- Student Profile -->
-      <div class="col-lg-5 col-md-6 d-flex align-items-stretch">
-        <div class="card-premium w-100 mb-0 d-flex flex-column">
+      <!-- Left Column: Profile & Paid Months -->
+      <div class="col-lg-5 col-md-6 d-flex flex-column gap-4">
+        <!-- Student Profile -->
+        <div class="card-premium mb-0 d-flex flex-column">
           <div class="card-title-premium">
             <span>👤</span> Student Profile
           </div>
@@ -299,8 +312,8 @@
               <span class="profile-value">{{ student.name }}</span>
             </div>
             <div class="profile-item">
-              <span class="profile-label">Admission/Roll Number</span>
-              <span class="profile-value">{{ student.roll_number }}</span>
+              <span class="profile-label">Mother's Name</span>
+              <span class="profile-value">{{ student.mother_name }}</span>
             </div>
             <div class="profile-item">
               <span class="profile-label">Class</span>
@@ -318,13 +331,34 @@
               <span class="profile-label">Father's Contact</span>
               <span class="profile-value">{{ student.father_phone }}</span>
             </div>
+            <div class="profile-item" style="grid-column: span 2;">
+              <span class="profile-label">Address</span>
+              <span class="profile-value">{{ student.address }}</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Paid Months Card -->
+        <div class="card-premium mb-0 d-flex flex-column">
+          <div class="card-title-premium">
+            <span style="color: #15803d;">🟢</span> Paid Months
+          </div>
+          {% if paid_lines %}
+            <ol class="ps-3 mb-0 status-list text-success">
+              {% for line in paid_lines %}
+                <li>{{ line }}</li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <div class="text-muted small">No months paid yet.</div>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Fee Receipts History -->
-      <div class="col-lg-7 col-md-6 d-flex align-items-stretch">
-        <div class="card-premium w-100 mb-0 d-flex flex-column">
+      <!-- Right Column: Receipts & Unpaid Months -->
+      <div class="col-lg-7 col-md-6 d-flex flex-column gap-4">
+        <!-- Fee Receipts History -->
+        <div class="card-premium mb-0 d-flex flex-column">
           <div class="card-title-premium">
             <span>📄</span> Fee Payment Receipts
           </div>
@@ -362,6 +396,22 @@
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Unpaid Months Card -->
+        <div class="card-premium mb-0 d-flex flex-column">
+          <div class="card-title-premium">
+            <span style="color: #b91c1c;">🔴</span> Unpaid Months
+          </div>
+          {% if unpaid_lines %}
+            <ol class="ps-3 mb-0 status-list text-danger">
+              {% for line in unpaid_lines %}
+                <li>{{ line }}</li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <div class="text-success fw-semibold small">All months paid!</div>
+          {% endif %}
         </div>
       </div>
 

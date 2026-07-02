@@ -6,9 +6,12 @@ from django.utils import timezone
 from django.db.models import Sum, Q
 
 from ..decorators import student_only
-from ..models import SchoolProfile, SchoolSessionRecord, Student, FeePayment, Notification
+from ..models import SchoolProfile, SchoolSessionRecord, Student, FeePayment, Notification, MONTH_CHOICES
 from ..session_utils import CAL_TO_MONTH, MONTH_TO_CAL, get_session_months
-from ..services.fee_service import get_monthly_tuition_fee, get_transport_fee, get_unpaid_exam_fees
+from ..services.fee_service import (
+    get_monthly_tuition_fee, get_transport_fee, get_unpaid_exam_fees,
+    _collect_paid_tokens, get_discount_covered_months
+)
 
 
 @student_only
@@ -75,6 +78,39 @@ def student_dashboard(request):
         Q(expiry_date__isnull=True) | Q(expiry_date__gte=today)
     )
 
+    # Calculate monthly status
+    paid_tokens, paid_exam_names = _collect_paid_tokens(student, selected_session)
+    paid_tokens |= get_discount_covered_months(student, school, profile)
+
+    month_map = dict(MONTH_CHOICES)
+    paid_lines = []
+    unpaid_lines = []
+
+    has_transport = bool(student.transport_opted and student.transport_amount)
+
+    for month_key in session_months:
+        month_name = month_map.get(month_key, month_key.title())
+        is_tuition_paid = month_key in paid_tokens
+
+        if has_transport:
+            is_transport_paid = f"{month_key}_transport" in paid_tokens
+
+            if is_tuition_paid and is_transport_paid:
+                paid_lines.append(f"{month_name}, {month_name} (Transport)")
+            elif is_tuition_paid and not is_transport_paid:
+                paid_lines.append(month_name)
+                unpaid_lines.append(f"{month_name} (Transport)")
+            elif not is_tuition_paid and is_transport_paid:
+                paid_lines.append(f"{month_name} (Transport)")
+                unpaid_lines.append(month_name)
+            else:
+                unpaid_lines.append(f"{month_name}, {month_name} (Transport)")
+        else:
+            if is_tuition_paid:
+                paid_lines.append(month_name)
+            else:
+                unpaid_lines.append(month_name)
+
     return render(request, 'school/student_dashboard.html', {
         'student': student,
         'school': school,
@@ -83,6 +119,9 @@ def student_dashboard(request):
         'pending_fee': balance,
         'receipts': receipts,
         'announcements': announcements,
+        'paid_lines': paid_lines,
+        'unpaid_lines': unpaid_lines,
+        'has_transport': has_transport,
     })
 
 
