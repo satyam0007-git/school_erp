@@ -127,21 +127,6 @@
     </div>
   </div>
 
-  <div class="kpi-card" style="background:#fefce8;border-color:#fde68a;min-width:190px;flex:1.6;">
-    <div class="kpi-body">
-      <div class="kpi-label" style="color:#ca8a04;">Class-wise{% if is_filtered %} (filtered){% endif %}</div>
-      <div class="d-flex align-items-center gap-2 mt-1">
-        <select class="form-select form-select-sm" id="classKpiSelect"
-                style="max-width:130px;border:1.5px solid #fde68a;background:#fefce8;color:#92400e;">
-          <option value="">Select Class</option>
-          {% for item in filtered_class_wise %}
-            <option value="{{ item.count }}">{{ item.school_class__name }} ({{ item.count }})</option>
-          {% endfor %}
-        </select>
-        <span class="kpi-value" id="classKpiCount" style="color:#92400e;">—</span>
-      </div>
-    </div>
-  </div>
 
 </div>
 {% endwith %}
@@ -458,11 +443,6 @@
     if (e.key === 'Escape') closeAllActMenus();
   });
 
-  // ── Class KPI select ───────────────────────────────────────────────────
-  document.getElementById('classKpiSelect').addEventListener('change', function () {
-    const el = document.getElementById('classKpiCount');
-    el.textContent = this.value !== '' ? this.value : '—';
-  });
 
   function showHallTicket(data) {
     const logoWrap = document.getElementById('ht-logo-wrap');
