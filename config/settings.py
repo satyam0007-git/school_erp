@@ -178,6 +178,10 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(name)s [school=%(school_subdomain)s school_id=%(school_id)s user=%(user_label)s role=%(user_role)s ip=%(ip_address)s method=%(request_method)s path=%(request_path)s status=%(response_status)s duration_ms=%(duration_ms)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S %Z',
         },
+        'simple': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
     },
     'handlers': {
         'queue': {
@@ -186,7 +190,7 @@ LOGGING = {
         },
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'ist',
+            'formatter': 'simple',
         },
     },
     'root': {
