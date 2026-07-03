@@ -184,40 +184,44 @@ LOGGING = {
             '()': 'schoolapp.logging_utils.make_queue_handler',
             'filters': ['request_context'],
         },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'ist',
+        },
     },
     'root': {
         'level': 'INFO',
-        'handlers': ['queue'],
+        'handlers': ['queue', 'console'],
     },
     'loggers': {
         'django': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
         'django.request': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
         'schoolapp.application': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
         'schoolapp.activity': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
         'schoolapp.errors': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
         'schoolapp.requests': {
             'level': 'INFO',
-            'handlers': ['queue'],
+            'handlers': ['queue', 'console'],
             'propagate': False,
         },
     },
