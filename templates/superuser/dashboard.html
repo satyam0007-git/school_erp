@@ -46,7 +46,6 @@
 <div class="filter-bar">
   <div class="d-flex gap-2 align-items-center w-100">
     <input class="form-control form-control-sm flex-grow-1" id="filter-name" placeholder="Search by name…" oninput="applyFilters()">
-    <input class="form-control form-control-sm flex-grow-1" id="filter-phone" placeholder="Phone…" oninput="applyFilters()">
     <select class="form-select form-select-sm flex-grow-1" id="filter-status" onchange="applyFilters()">
       <option value="">All Status</option>
       <option value="active">Active</option>
@@ -92,12 +91,9 @@
       <tr>
         <th class="ps-3">S.N</th>
         <th>School</th>
-        <th>Phone</th>
+        <th>Subscription (₹)</th>
+        <th>Subscription Period</th>
         <th>Students</th>
-        <th>Fee/Student (₹)</th>
-        <th>Session</th>
-        <th>Billing Session</th>
-        <th>Added On</th>
         <th>Status</th>
         <th class="text-center pe-3">Actions</th>
       </tr>
@@ -113,22 +109,21 @@
       >
         <td class="ps-3 text-muted row-sn"></td>
         <td><strong>{{ r.school.name }}</strong></td>
-        <td>{{ r.school.phone|default:"-" }}</td>
-        <td>
-          <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;">{{ r.student_count }}</span>
-        </td>
-        <td class="fw-semibold">{{ r.school.fee_per_student|floatformat:0 }}</td>
-        <td>
-          <span class="badge rounded-pill" style="background:#f0f9ff;color:#0369a1;font-size:11px;font-weight:600;border:1px solid #bae6fd;">
-            {{ r.session }}
-          </span>
+        <td class="fw-semibold">
+          {% if r.school.yearly_plan %}
+            {{ r.school.yearly_plan.name }} (₹{{ r.school.subscription_amount|floatformat:0 }})
+          {% else %}
+            Custom (₹{{ r.school.subscription_amount|floatformat:0 }})
+          {% endif %}
         </td>
         <td style="font-size:12px;color:#475569;font-weight:500;">
           <span class="badge rounded-pill" style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;border:1px solid #ddd6fe;">
-            {{ r.billing_start_month|capfirst }} &rarr; {{ r.billing_end_month|capfirst }}
+            {{ r.billing_period }}
           </span>
         </td>
-        <td style="color:#64748b;font-size:12px;">{{ r.school.created_at|date:"d M Y" }}</td>
+        <td>
+          <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;">{{ r.student_count }}</span>
+        </td>
         <td>
           {% if r.school.is_active %}
             <span class="status-pill status-active"><span class="status-dot"></span>Active</span>
@@ -176,7 +171,7 @@
       </tr>
       {% empty %}
       <tr id="empty-row">
-        <td colspan="11" class="text-center py-5 text-muted">No schools yet. Click "+ Add New School" to get started.</td>
+        <td colspan="7" class="text-center py-5 text-muted">No schools yet. Click "+ Add New School" to get started.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -247,7 +242,6 @@ var DEFAULT_SESSION = "{{ default_session|escapejs }}";
 
 function applyFilters() {
   const name    = document.getElementById('filter-name').value.trim().toLowerCase();
-  const phone   = document.getElementById('filter-phone').value.trim().toLowerCase();
   const status  = document.getElementById('filter-status').value;
   const session = DEFAULT_SESSION;
   const rows    = document.querySelectorAll('#schools-tbody tr[data-name]');
@@ -256,7 +250,6 @@ function applyFilters() {
   rows.forEach(row => {
     const show = (!session || row.dataset.session === session)
               && (!name   || row.dataset.name.includes(name))
-              && (!phone  || row.dataset.phone.includes(phone))
               && (!status || row.dataset.status === status);
     row.style.display = show ? '' : 'none';
     if (show) {
@@ -273,7 +266,7 @@ function applyFilters() {
   rows.forEach(row => {
     if (row.style.display === '') {
       totalSchools += 1;
-      const studentsEl = row.querySelector('td:nth-child(4) .badge');
+      const studentsEl = row.querySelector('td:nth-child(5) .badge');
       if (studentsEl) {
         const val = parseInt(studentsEl.textContent || '0', 10);
         if (!isNaN(val)) totalStudents += val;
@@ -294,14 +287,13 @@ function applyFilters() {
   if (elActive) elActive.textContent = activeCount;
   if (elInactive) elInactive.textContent = inactiveCount;
 
-  const isDirty = name || phone || status;
+  const isDirty = name || status;
   document.getElementById('no-results').style.display = (visible === 0 && isDirty) ? 'block' : 'none';
   document.getElementById('clear-btn').style.display = isDirty ? '' : 'none';
 }
 
 function clearFilters() {
   document.getElementById('filter-name').value    = '';
-  document.getElementById('filter-phone').value   = '';
   document.getElementById('filter-status').value  = '';
   applyFilters();
 }

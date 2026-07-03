@@ -82,8 +82,7 @@
       <tr>
         <th class="ps-3">S.N</th>
         <th>School</th>
-        <th>Session</th>
-        <th>Billing Period</th>
+        <th>Subscription Period</th>
         <th>Students</th>
         <th>Total Due (₹)</th>
         <th>Collected (₹)</th>
@@ -100,9 +99,6 @@
           data-current="{% if r.is_current_session %}true{% else %}false{% endif %}">
         <td class="ps-3 text-muted row-sn"></td>
         <td><strong>{{ r.school.name }}</strong></td>
-        <td>
-          <span class="badge rounded-pill" style="background:#f0f9ff;color:#0369a1;font-size:11px;font-weight:600;border:1px solid #bae6fd;">{{ r.session }}</span>
-        </td>
         <td>
           <span class="badge rounded-pill" style="background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;border:1px solid #ddd6fe;">{{ r.billing_period }}</span>
         </td>
@@ -129,7 +125,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="10" class="text-center py-5 text-muted">No active schools found.</td>
+        <td colspan="9" class="text-center py-5 text-muted">No active schools found.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -190,9 +186,9 @@ function applyFilters() {
   }
   rows.forEach(row => {
     if (row.style.display === '') {
-      const monthlyEl = row.querySelector('td:nth-child(6)');
-      const collectedEl = row.querySelector('td:nth-child(7)');
-      const balanceEl = row.querySelector('td:nth-child(8)');
+      const monthlyEl = row.querySelector('td:nth-child(5)');
+      const collectedEl = row.querySelector('td:nth-child(6)');
+      const balanceEl = row.querySelector('td:nth-child(7)');
       const m = monthlyEl ? parseNumber(monthlyEl.textContent) : 0;
       const c = collectedEl ? parseNumber(collectedEl.textContent) : 0;
       const b = balanceEl ? parseNumber(balanceEl.textContent) : 0;

@@ -1,11 +1,6 @@
-import re
-from decimal import Decimal
+from django.db.models import Count
 
-from django.db.models import Count, Sum
-
-from ..models import (
-    School, SchoolBillingPayment, SchoolProfile, SchoolSessionRecord, Student, User,
-)
+from ..models import SchoolProfile, SchoolSessionRecord, Student
 
 
 def get_all_school_profiles():
@@ -19,14 +14,6 @@ def get_all_session_records():
     }
 
 
-def get_active_student_counts_by_school_session():
-    return {
-        (r['school_id'], r['academic_session']): r['cnt']
-        for r in Student.objects.filter(status=Student.STATUS_ACTIVE)
-        .values('school_id', 'academic_session').annotate(cnt=Count('id'))
-    }
-
-
 def get_all_student_counts_by_school_session():
     return {
         (r['school_id'], r['academic_session']): r['cnt']
@@ -34,16 +21,3 @@ def get_all_student_counts_by_school_session():
         .annotate(cnt=Count('id'))
     }
 
-
-def get_school_billed_sessions(school):
-    return set(
-        SchoolBillingPayment.objects.filter(school=school)
-        .values_list('academic_session', flat=True).distinct()
-    )
-
-
-def get_school_billing_paid_total(school, session):
-    result = SchoolBillingPayment.objects.filter(
-        school=school, academic_session=session,
-    ).aggregate(t=Sum('amount_paid'))
-    return result['t'] or Decimal('0.00')

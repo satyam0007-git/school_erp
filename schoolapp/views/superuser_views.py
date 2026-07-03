@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings as django_settings
 from django.contrib import messages
-from django.db.models import Count, Sum
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -11,20 +11,17 @@ from ..logging_utils import log_activity_event
 from ..forms import SuperUserSettingsForm
 from ..models import (
     FeePayment, FeeStructure, School, SchoolBillingPayment, SchoolProfile,
-    SchoolSessionRecord, Student, SuperUserSettings, User, MONTH_CHOICES,
+    SchoolSessionRecord, Student, SuperUserSettings, User, MONTH_CHOICES, YearlyPlan,
 )
 from ..queries.superuser_queries import (
-    get_active_student_counts_by_school_session,
     get_all_school_profiles,
     get_all_session_records,
     get_all_student_counts_by_school_session,
-    get_school_billed_sessions,
 )
 from ..services.billing_service import (
     build_fee_dashboard_rows,
     build_superuser_dashboard_rows,
-    get_billing_period_info,
-    get_school_billing_months,
+    get_formatted_billing_period,
 )
 from ..session_utils import (
     format_academic_session, get_academic_session_choices, get_current_academic_session,
@@ -94,16 +91,46 @@ def super_collect_fee(request, school_pk):
     su_settings = SuperUserSettings.get_solo()
     system_session = get_current_academic_session()
     su_default_session = su_settings.default_session or system_session
-    current_session = su_default_session or profile.current_academic_session
-    fee_per_student = school.fee_per_student
+    current_session = request.GET.get('session') or su_default_session or profile.current_academic_session
+    is_current = (current_session == profile.current_academic_session)
 
-    is_current_profile_session = (current_session == profile.current_academic_session)
-    if is_current_profile_session:
-        num_students = Student.objects.filter(school=school, status=Student.STATUS_ACTIVE).count()
+    all_session_payments = SchoolBillingPayment.objects.filter(school=school, academic_session=current_session)
+    total_paid = all_session_payments.aggregate(t=Sum('amount_paid'))['t'] or Decimal('0.00')
+
+    if is_current:
+        total_due = school.subscription_amount
     else:
-        num_students = Student.objects.filter(school=school, academic_session=current_session).count()
-        if num_students == 0:
-            num_students = Student.objects.filter(school=school, status=Student.STATUS_ACTIVE).count()
+        total_due = total_paid
+    billing_period = get_formatted_billing_period(school, current_session)
+
+    balance = max(total_due - total_paid, Decimal('0.00'))
+
+    if request.method == 'POST':
+        payment_date = request.POST.get('payment_date')
+        amount_paid = Decimal(request.POST.get('amount_paid', '0.00'))
+        note = request.POST.get('note', '').strip()
+
+        if payment_date and amount_paid > 0:
+            SchoolBillingPayment.objects.create(
+                school=school, academic_session=current_session,
+                payment_date=payment_date, num_students=0,
+                fee_per_student=school.subscription_amount, payment_months=['annual_subscription'],
+                amount_paid=amount_paid, note=note,
+            )
+            log_activity_event(
+                request,
+                module='superuser',
+                action='billing_payment_create',
+                details={
+                    'school_id': school.pk,
+                    'school_name': school.name,
+                    'payment_type': 'annual_subscription',
+                    'amount_paid': str(amount_paid),
+                    'session': current_session,
+                },
+            )
+            messages.success(request, f'Subscription payment of ₹{amount_paid} recorded for {school.name}.')
+            return redirect('super_school_fee_dashboard')
 
     available_sessions = sorted(
         {profile.current_academic_session}
@@ -112,99 +139,23 @@ def super_collect_fee(request, school_pk):
         reverse=True,
     )
 
-    all_billing_months = get_school_billing_months(school, current_session)
-
-    regular_month_students = {}
-    adjustment_month_students = {}
-    all_session_payments = SchoolBillingPayment.objects.filter(school=school, academic_session=current_session)
-    for bp in all_session_payments:
-        for m in (bp.payment_months or []):
-            m = str(m)
-            if bp.is_adjustment:
-                adjustment_month_students[m] = adjustment_month_students.get(m, 0) + bp.num_students
-            else:
-                regular_month_students[m] = regular_month_students.get(m, 0) + bp.num_students
-
-    paid_months = set(regular_month_students.keys())
-    unpaid_months = [(val, label) for val, label in all_billing_months if val not in paid_months]
-
-    adjustment_rows = []
-    total_adjustment_due = Decimal('0.00')
-    for token, label in all_billing_months:
-        if token in paid_months:
-            covered = regular_month_students.get(token, 0) + adjustment_month_students.get(token, 0)
-            deficit = num_students - covered
-            if deficit > 0:
-                adj_amt = fee_per_student * deficit
-                adjustment_rows.append({'token': token, 'label': label, 'covered': covered, 'deficit': deficit, 'amount': adj_amt})
-                total_adjustment_due += adj_amt
-
-    if request.method == 'POST':
-        payment_date = request.POST.get('payment_date')
-        payment_type = request.POST.get('payment_type', 'regular')
-
-        if payment_type == 'adjustment':
-            adj_by_token = {r['token']: r for r in adjustment_rows}
-            selected = [m for m in request.POST.getlist('adjustment_months') if m in adj_by_token]
-            if payment_date and selected:
-                amount_paid = sum(adj_by_token[m]['amount'] for m in selected)
-                delta = max(adj_by_token[m]['deficit'] for m in selected)
-                month_labels = ', '.join(adj_by_token[m]['label'] for m in selected)
-                SchoolBillingPayment.objects.create(
-                    school=school, academic_session=current_session,
-                    payment_date=payment_date, num_students=delta,
-                    fee_per_student=fee_per_student, payment_months=selected,
-                    amount_paid=amount_paid, is_adjustment=True,
-                    note=f'Adjustment for {delta} additional student(s): {month_labels}',
-                )
-                log_activity_event(
-                    request,
-                    module='superuser',
-                    action='billing_payment_create',
-                    details={'school_id': school.pk, 'school_name': school.name, 'payment_type': 'adjustment', 'amount_paid': str(amount_paid), 'months': selected},
-                )
-                messages.success(request, f'Adjustment of ₹{amount_paid} recorded for {school.name}.')
-                return redirect('super_school_fee_dashboard')
-        else:
-            valid_tokens = {val for val, _ in all_billing_months}
-            selected = [m for m in request.POST.getlist('payment_months') if m in valid_tokens and m not in paid_months]
-            if payment_date and selected:
-                amount_paid = fee_per_student * num_students * len(selected)
-                SchoolBillingPayment.objects.create(
-                    school=school, academic_session=current_session,
-                    payment_date=payment_date, num_students=num_students,
-                    fee_per_student=fee_per_student, payment_months=selected,
-                    amount_paid=amount_paid,
-                )
-                log_activity_event(
-                    request,
-                    module='superuser',
-                    action='billing_payment_create',
-                    details={'school_id': school.pk, 'school_name': school.name, 'payment_type': 'regular', 'amount_paid': str(amount_paid), 'months': selected},
-                )
-                messages.success(request, f'Payment of ₹{amount_paid} recorded for {school.name} ({current_session}).')
-                return redirect('super_school_fee_dashboard')
-
     billing_history = all_session_payments.order_by('-payment_date')
-    total_billed = billing_history.aggregate(t=Sum('amount_paid'))['t'] or Decimal('0.00')
 
     return render(request, 'superuser/collect_fee.html', {
         'school': school,
-        'num_students': num_students,
-        'fee_per_student': fee_per_student,
-        'per_month_amount': fee_per_student * num_students,
-        'unpaid_months': unpaid_months,
-        'adjustment_rows': adjustment_rows,
-        'total_adjustment_due': total_adjustment_due,
+        'yearly_plan': school.yearly_plan,
+        'subscription_amount': school.subscription_amount,
+        'subscription_start_date': school.subscription_start_date,
+        'subscription_end_date': school.subscription_end_date,
+        'total_due': total_due,
+        'total_paid': total_paid,
+        'balance': balance,
+        'is_paid_up': balance <= Decimal('0.00'),
         'billing_history': billing_history,
-        'total_billed': total_billed,
-        'total_months': len(all_billing_months),
-        'paid_count': len(all_billing_months) - len(unpaid_months),
         'current_session': current_session,
-        'billing_start': all_billing_months[0][1] if all_billing_months else '',
-        'billing_end': all_billing_months[-1][1] if all_billing_months else '',
+        'billing_period': billing_period,
         'available_sessions': available_sessions,
-        'su_default_session': su_default_session,
+        'is_current': is_current,
     })
 
 
@@ -247,6 +198,19 @@ def super_promote_school(request, pk):
         ]
         if new_structures:
             FeeStructure.objects.bulk_create(new_structures)
+
+        # Advance subscription validity period by 1 year
+        if school.subscription_start_date:
+            try:
+                school.subscription_start_date = school.subscription_start_date.replace(year=school.subscription_start_date.year + 1)
+            except ValueError:
+                school.subscription_start_date = school.subscription_start_date + timezone.timedelta(days=365)
+        if school.subscription_end_date:
+            try:
+                school.subscription_end_date = school.subscription_end_date.replace(year=school.subscription_end_date.year + 1)
+            except ValueError:
+                school.subscription_end_date = school.subscription_end_date + timezone.timedelta(days=365)
+        school.save()
 
         profile.current_academic_session = next_session
         profile.save()
@@ -309,19 +273,51 @@ def school_add(request):
         password = request.POST['password']
         username = request.POST.get('username', '').strip().lower()
 
+        sub_start_str = request.POST.get('subscription_start_date', '').strip()
+        sub_end_str = request.POST.get('subscription_end_date', '').strip()
+
         if not name or not password or not username:
             messages.error(request, 'School name, username and password are required.')
+        elif not sub_start_str or not sub_end_str:
+            messages.error(request, 'Subscription start date and end date are required.')
         elif User.objects.filter(username=username).exists():
             messages.error(request, f'Username "{username}" is already taken.')
         else:
-            valid_months = {m for m, _ in MONTH_CHOICES}
-            billing_start = request.POST.get('billing_start_month', 'april')
-            billing_end = request.POST.get('billing_end_month', 'march')
-            session = request.POST.get('current_academic_session', session_choices[0][0])
-            if billing_start not in valid_months:
+            from datetime import datetime
+            from ..session_utils import CAL_TO_MONTH
+
+            start_dt = None
+            if sub_start_str:
+                try:
+                    start_dt = datetime.strptime(sub_start_str, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+
+            end_dt = None
+            if sub_end_str:
+                try:
+                    end_dt = datetime.strptime(sub_end_str, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+
+            if start_dt:
+                billing_start = CAL_TO_MONTH[start_dt.month]
+                session_start = billing_start
+            else:
                 billing_start = 'april'
-            if billing_end not in valid_months:
+                session_start = 'april'
+
+            if end_dt:
+                billing_end = CAL_TO_MONTH[end_dt.month]
+                session_end = billing_end
+            else:
                 billing_end = 'march'
+                session_end = 'march'
+
+            if start_dt:
+                session = get_current_academic_session(start_dt, session_start)
+            else:
+                session = default_session
 
             subdomain = request.POST.get('subdomain', '').strip().lower()
             if subdomain and School.objects.filter(subdomain=subdomain).exists():
@@ -329,6 +325,7 @@ def school_add(request):
                 return render(request, 'superuser/school_add.html', {
                     'session_choices': session_choices, 'month_choices': MONTH_CHOICES,
                     'default_session': default_session,
+                    'yearly_plans': YearlyPlan.objects.all().order_by('amount'),
                 })
 
             school = School.objects.create(
@@ -336,6 +333,10 @@ def school_add(request):
                 phone=request.POST.get('phone', ''), email=request.POST.get('email', ''),
                 address=request.POST.get('address', ''),
                 fee_per_student=request.POST.get('fee_per_student') or 0,
+                yearly_plan_id=request.POST.get('yearly_plan') or None,
+                subscription_amount=request.POST.get('subscription_amount') or 0,
+                subscription_start_date=request.POST.get('subscription_start_date') or None,
+                subscription_end_date=request.POST.get('subscription_end_date') or None,
                 logo=request.FILES.get('logo'),
                 motto=request.POST.get('motto', '').strip(),
                 theme_color=request.POST.get('theme_color', '#2563eb').strip(),
@@ -345,13 +346,14 @@ def school_add(request):
             )
             SchoolProfile.objects.create(
                 school=school, current_academic_session=session,
+                session_start_month=session_start, session_end_month=session_end,
                 billing_start_month=billing_start, billing_end_month=billing_end,
             )
             profile = SchoolProfile.objects.get(school=school)
             SchoolSessionRecord.objects.create(
                 school=school, academic_session=session,
-                session_start_month=profile.session_start_month,
-                session_end_month=profile.session_end_month,
+                session_start_month=session_start,
+                session_end_month=session_end,
                 billing_start_month=billing_start, billing_end_month=billing_end,
             )
             User.objects.create_user(username=username, password=password, role='school_admin', school=school)
@@ -370,6 +372,7 @@ def school_add(request):
     return render(request, 'superuser/school_add.html', {
         'session_choices': session_choices, 'month_choices': MONTH_CHOICES,
         'base_domain': base_domain, 'default_session': default_session,
+        'yearly_plans': YearlyPlan.objects.all().order_by('amount'),
     })
 
 
@@ -386,12 +389,19 @@ def school_edit(request, pk):
         ctx = {
             'school': school, 'admin_user': admin_user, 'base_domain': base_domain,
             'profile': profile, 'session_choices': session_choices, 'month_choices': MONTH_CHOICES,
+            'yearly_plans': YearlyPlan.objects.all().order_by('amount'),
         }
         if extra:
             ctx.update(extra)
         return render(request, 'superuser/school_form.html', ctx)
 
     if request.method == 'POST':
+        sub_start_str = request.POST.get('subscription_start_date', '').strip()
+        sub_end_str = request.POST.get('subscription_end_date', '').strip()
+        if not sub_start_str or not sub_end_str:
+            messages.error(request, 'Subscription start date and end date are required.')
+            return render_form()
+
         old_values = {
             'name': school.name,
             'phone': school.phone,
@@ -414,6 +424,10 @@ def school_edit(request, pk):
         school.theme_color = request.POST.get('theme_color', '#2563eb').strip()
         school.is_active = 'is_active' in request.POST
         school.fee_per_student = request.POST.get('fee_per_student') or 0
+        school.yearly_plan_id = request.POST.get('yearly_plan') or None
+        school.subscription_amount = request.POST.get('subscription_amount') or 0
+        school.subscription_start_date = request.POST.get('subscription_start_date') or None
+        school.subscription_end_date = request.POST.get('subscription_end_date') or None
         new_logo = request.FILES.get('logo')
         if new_logo:
             school.logo = new_logo
@@ -445,16 +459,47 @@ def school_edit(request, pk):
                 return render_form()
             school.subdomain = new_subdomain
         school.save()
+        from datetime import datetime
+        from ..session_utils import CAL_TO_MONTH
 
         old_session = profile.current_academic_session
-        new_session = request.POST.get('current_academic_session', old_session)
-        billing_start = request.POST.get('billing_start_month', profile.billing_start_month)
-        billing_end = request.POST.get('billing_end_month', profile.billing_end_month)
-        if billing_start not in valid_months:
-            billing_start = 'april'
-        if billing_end not in valid_months:
-            billing_end = 'march'
+
+        start_dt = None
+        if sub_start_str:
+            try:
+                start_dt = datetime.strptime(sub_start_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        end_dt = None
+        if sub_end_str:
+            try:
+                end_dt = datetime.strptime(sub_end_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        if start_dt:
+            billing_start = CAL_TO_MONTH[start_dt.month]
+            session_start = billing_start
+        else:
+            billing_start = profile.billing_start_month
+            session_start = profile.session_start_month
+
+        if end_dt:
+            billing_end = CAL_TO_MONTH[end_dt.month]
+            session_end = billing_end
+        else:
+            billing_end = profile.billing_end_month
+            session_end = profile.session_end_month
+
+        if start_dt:
+            new_session = get_current_academic_session(start_dt, session_start)
+        else:
+            new_session = old_session
+
         profile.current_academic_session = new_session
+        profile.session_start_month = session_start
+        profile.session_end_month = session_end
         profile.billing_start_month = billing_start
         profile.billing_end_month = billing_end
         profile.save()
@@ -464,8 +509,8 @@ def school_edit(request, pk):
         SchoolSessionRecord.objects.update_or_create(
             school=school, academic_session=new_session,
             defaults={
-                'session_start_month': profile.session_start_month,
-                'session_end_month': profile.session_end_month,
+                'session_start_month': session_start,
+                'session_end_month': session_end,
                 'billing_start_month': billing_start,
                 'billing_end_month': billing_end,
             },
@@ -571,3 +616,98 @@ def user_delete(request, pk):
         messages.success(request, 'Deleted.')
         return redirect('super_dashboard')
     return render(request, 'confirm_delete.html', {'name': user.username})
+
+
+@super_only
+def super_plans_dashboard(request):
+    plans = YearlyPlan.objects.all().order_by('amount')
+    return render(request, 'superuser/plans_dashboard.html', {
+        'plans': plans,
+    })
+
+
+@super_only
+def super_plan_add(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        amount = request.POST.get('amount')
+        duration_months = request.POST.get('duration_months', 12)
+        description = request.POST.get('description', '').strip()
+
+        if not name or not amount:
+            messages.error(request, 'Name and amount are required.')
+        elif YearlyPlan.objects.filter(name=name).exists():
+            messages.error(request, f'Plan with name "{name}" already exists.')
+        else:
+            plan = YearlyPlan.objects.create(
+                name=name, amount=amount,
+                duration_months=duration_months, description=description
+            )
+            log_activity_event(
+                request,
+                module='superuser',
+                action='plan_create',
+                record_id=plan.pk,
+                details={'name': name, 'amount': str(amount)},
+            )
+            messages.success(request, f'Yearly plan "{name}" created successfully.')
+            return redirect('super_plans_dashboard')
+
+    return render(request, 'superuser/plan_form.html', {
+        'title': 'Add Yearly Plan',
+    })
+
+
+@super_only
+def super_plan_edit(request, pk):
+    plan = get_object_or_404(YearlyPlan, pk=pk)
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        amount = request.POST.get('amount')
+        duration_months = request.POST.get('duration_months', 12)
+        description = request.POST.get('description', '').strip()
+
+        if not name or not amount:
+            messages.error(request, 'Name and amount are required.')
+        elif YearlyPlan.objects.filter(name=name).exclude(pk=pk).exists():
+            messages.error(request, f'Plan with name "{name}" already exists.')
+        else:
+            old_values = {'name': plan.name, 'amount': str(plan.amount)}
+            plan.name = name
+            plan.amount = amount
+            plan.duration_months = duration_months
+            plan.description = description
+            plan.save()
+            log_activity_event(
+                request,
+                module='superuser',
+                action='plan_update',
+                record_id=plan.pk,
+                old_values=old_values,
+                new_values={'name': name, 'amount': str(amount)},
+            )
+            messages.success(request, f'Yearly plan "{name}" updated successfully.')
+            return redirect('super_plans_dashboard')
+
+    return render(request, 'superuser/plan_form.html', {
+        'plan': plan,
+        'title': f'Edit Yearly Plan — {plan.name}',
+    })
+
+
+@super_only
+def super_plan_delete(request, pk):
+    plan = get_object_or_404(YearlyPlan, pk=pk)
+    if request.method == 'POST':
+        plan_snapshot = {'plan_id': plan.pk, 'name': plan.name, 'amount': str(plan.amount)}
+        plan.delete()
+        log_activity_event(
+            request,
+            module='superuser',
+            action='plan_delete',
+            record_id=plan_snapshot['plan_id'],
+            details=plan_snapshot,
+        )
+        messages.success(request, f'Yearly plan "{plan_snapshot["name"]}" deleted.')
+        return redirect('super_plans_dashboard')
+    return render(request, 'confirm_delete.html', {'name': plan.name})

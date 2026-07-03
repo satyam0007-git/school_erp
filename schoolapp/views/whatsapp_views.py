@@ -1,4 +1,5 @@
 import json
+import logging
 import urllib.error
 import urllib.request
 from datetime import date
@@ -13,6 +14,9 @@ from ..decorators import school_only
 from ..logging_utils import log_activity_event
 from ..models import FeePayment, FeeStructure, SchoolClass, SchoolProfile, Student, WhatsAppConfig
 from ..session_utils import MONTH_TO_CAL
+
+logger = logging.getLogger(__name__)
+
 
 
 @login_required
@@ -115,7 +119,7 @@ def whatsapp_send(request):
             ]}],
         },
     }
-    result = _send_whatsapp_message(wa_config, payload)
+    result = _send_whatsapp_message(wa_config, payload, request=request)
     try:
         response_payload = json.loads(result.content.decode('utf-8'))
     except Exception:
@@ -172,7 +176,7 @@ def whatsapp_announce(request):
             ]}],
         },
     }
-    result = _send_whatsapp_message(wa_config, payload)
+    result = _send_whatsapp_message(wa_config, payload, request=request)
     try:
         response_payload = json.loads(result.content.decode('utf-8'))
     except Exception:
@@ -250,7 +254,7 @@ def announcement_dashboard(request):
     })
 
 
-def _send_whatsapp_message(wa_config, payload):
+def _send_whatsapp_message(wa_config, payload, request=None):
     url = f"https://graph.facebook.com/v25.0/{wa_config.phone_number_id}/messages"
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(
@@ -270,11 +274,88 @@ def _send_whatsapp_message(wa_config, payload):
             err_msg = err_body
         return JsonResponse({'ok': False, 'error': err_msg})
     except Exception as e:
-        log_activity_event(
-            request,
-            module='communication',
-            action='whatsapp_send_raw',
-            status='failure',
-            details={'error': str(e)},
-        )
+        if request:
+            log_activity_event(
+                request,
+                module='communication',
+                action='whatsapp_send_raw',
+                status='failure',
+                details={'error': str(e)},
+            )
         return JsonResponse({'ok': False, 'error': str(e)})
+
+
+def send_welcome_message_safely(school, student, request=None):
+    try:
+        wa_config = WhatsAppConfig.objects.filter(school=school).first()
+        if not wa_config:
+            logger.warning(f"WhatsAppConfig not found for school {school.name} during welcome message sending.")
+            return
+
+        if not wa_config.is_active:
+            logger.info(f"WhatsApp welcome message skipped: config is not active for school {school.name}.")
+            return
+
+        template_name = wa_config.whatsapp_welcome_template_name.strip()
+        if not template_name:
+            logger.warning(f"WhatsApp welcome message template not configured for school {school.name}.")
+            return
+
+        phone = (student.father_phone or '').strip()
+        if not phone:
+            logger.warning(f"WhatsApp welcome message skipped: student {student.name} (ID: {student.pk}) has no whatsapp/father phone number.")
+            return
+
+        phone = phone.lstrip('+').replace(' ', '').replace('-', '')
+        if len(phone) == 10 and phone.isdigit():
+            phone = '91' + phone
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": phone,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": (wa_config.whatsapp_welcome_template_language or '').strip() or 'en_US'},
+            },
+        }
+
+        response = _send_whatsapp_message(wa_config, payload, request=request)
+        try:
+            res_data = json.loads(response.content.decode('utf-8'))
+        except Exception:
+            res_data = {}
+
+        if res_data.get('ok'):
+            if request:
+                log_activity_event(
+                    request,
+                    module='communication',
+                    action='whatsapp_welcome_send',
+                    status='success',
+                    details={'student_id': student.pk, 'student_name': student.name, 'success': True, 'message_id': res_data.get('message_id')}
+                )
+        else:
+            error_msg = res_data.get('error', 'Unknown error')
+            logger.error(f"Failed to send WhatsApp welcome message for student {student.pk}: {error_msg}")
+            if request:
+                log_activity_event(
+                    request,
+                    module='communication',
+                    action='whatsapp_welcome_send',
+                    status='failure',
+                    details={'student_id': student.pk, 'student_name': student.name, 'success': False, 'error': error_msg}
+                )
+    except Exception as e:
+        logger.exception(f"Unexpected error sending WhatsApp welcome message for student {student.pk}: {str(e)}")
+        if request:
+            try:
+                log_activity_event(
+                    request,
+                    module='communication',
+                    action='whatsapp_welcome_send',
+                    status='failure',
+                    details={'student_id': student.pk, 'student_name': student.name, 'success': False, 'error': str(e)}
+                )
+            except Exception as log_err:
+                logger.error(f"Failed to log activity event for welcome message failure: {str(log_err)}")

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     AdmissionBulkUploadHistory, FeeCategory, FeePayment, FeeStructure,
-    School, SchoolClass, SchoolProfile, Student, User,
+    School, SchoolClass, SchoolProfile, Student, User, YearlyPlan,
 )
 
 admin.site.register(School)
@@ -14,3 +14,4 @@ admin.site.register(FeeStructure)
 admin.site.register(Student)
 admin.site.register(FeePayment)
 admin.site.register(AdmissionBulkUploadHistory)
+admin.site.register(YearlyPlan)

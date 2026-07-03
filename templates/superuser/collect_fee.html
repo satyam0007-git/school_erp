@@ -4,26 +4,200 @@
 {% block page_title %}Collect Fee — {{ school.name }}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 <style>
-  .billing-card { background:#fff; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:24px; }
-  .form-label { font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.04em; }
-  .form-control, .form-select { border:1.5px solid #475569; font-size:14px; }
-  .form-control:focus, .form-select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
-  .input-group-text { background:#f8fafc; border-color:#475569; color:#64748b; }
-  .input-group .form-control { border-left:0; }
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+  
+  body {
+    font-family: 'Outfit', sans-serif;
+  }
 
-  .info-pill { display:inline-flex; align-items:center; gap:6px; background:#f0f9ff; border:1px solid #bae6fd; color:#0369a1; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600; }
-  .progress-bar-wrap { background:#e2e8f0; border-radius:999px; height:8px; overflow:hidden; }
-  .progress-bar-fill  { background:#3b82f6; height:100%; border-radius:999px; transition:width .4s; }
+  .billing-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    margin-bottom: 30px;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .billing-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+  }
 
-  .hist-table { border-collapse:separate; border-spacing:0; border:1.5px solid #cbd5e1; border-radius:10px; overflow:hidden; width:100%; }
-  .hist-table thead th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#374151; background:#f1f5f9; border-bottom:2px solid #cbd5e1; border-right:1px solid #e2e8f0; padding:10px 14px; white-space:nowrap; }
-  .hist-table thead th:last-child { border-right:none; }
-  .hist-table tbody td { font-size:13px; padding:10px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #f1f5f9; vertical-align:middle; }
-  .hist-table tbody td:last-child { border-right:none; }
-  .hist-table tbody tr:last-child td { border-bottom:none; }
-  .hist-table tbody tr:hover td { background:#f8fafc; }
+  .form-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+  .form-control, .form-select {
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 14px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  }
+  .input-group-text {
+    background: #e2e8f0;
+    border: 1.5px solid #cbd5e1;
+    border-right: none;
+    color: #475569;
+    font-weight: 600;
+    border-radius: 10px 0 0 10px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .input-group .form-control {
+    border-radius: 0 10px 10px 0;
+  }
+
+  /* Info Badges/Pills */
+  .info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0369a1;
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(3, 105, 161, 0.04);
+    transition: all 0.3s ease;
+  }
+  .info-pill:hover {
+    transform: translateY(-1px);
+  }
+  .info-pill.plan {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    color: #6d28d9;
+    box-shadow: 0 2px 4px rgba(109, 40, 217, 0.04);
+  }
+  .info-pill.amount {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+    box-shadow: 0 2px 4px rgba(21, 128, 61, 0.04);
+  }
+  .info-pill.balance {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+    box-shadow: 0 2px 4px rgba(185, 28, 28, 0.04);
+    animation: pulse-balance 2s infinite alternate;
+  }
+  
+  @keyframes pulse-balance {
+    0% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.2); }
+    100% { box-shadow: 0 0 0 6px rgba(185, 28, 28, 0); }
+  }
+
+  /* Payment History Table */
+  .hist-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .hist-table thead th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #475569;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    border-right: 1px solid #edf2f7;
+    padding: 14px 18px;
+    white-space: nowrap;
+  }
+  .hist-table thead th:last-child {
+    border-right: none;
+  }
+  .hist-table tbody td {
+    font-size: 13.5px;
+    padding: 12px 18px;
+    border-bottom: 1px solid #edf2f7;
+    border-right: 1px solid #f8fafc;
+    vertical-align: middle;
+    color: #334155;
+  }
+  .hist-table tbody td:last-child {
+    border-right: none;
+  }
+  .hist-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .hist-table tbody tr:hover td {
+    background: #f8fafc;
+  }
+
+  /* Custom Premium Buttons */
+  .btn-premium-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 24px;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    transition: all 0.3s ease;
+  }
+  .btn-premium-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    color: #ffffff;
+  }
+  
+  .btn-premium-secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 10px 24px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  .btn-premium-secondary:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+  }
+
+  .badge-premium-purple {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 50px;
+  }
+  .badge-premium-blue {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 50px;
+  }
 </style>
 {% endblock %}
 
@@ -34,200 +208,146 @@
   <a href="{% url 'super_school_fee_dashboard' %}" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;">
     ← Back to School Fee
   </a>
-  <span style="background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;border-radius:6px;padding:3px 10px;font-weight:700;font-size:12px;">
-    Session: {{ current_session }}
-  </span>
+  <div class="d-flex align-items-center gap-2">
+    <form method="get" class="d-flex align-items-center gap-1">
+      <span style="font-size:12px;font-weight:600;color:#475569;">View Session:</span>
+      <select name="session" onchange="this.form.submit()" class="form-select form-select-sm py-1" style="width:130px;min-height:30px;">
+        {% for s in available_sessions %}
+          <option value="{{ s }}" {% if s == current_session %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
 </div>
 
-{# ── Billing window info ──────────────────────────────────────────────────── #}
-<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
-  <span class="info-pill" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-    Billing: {{ billing_start }} → {{ billing_end }}
+{# ── Billing plan info ──────────────────────────────────────────────────── #}
+<div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+  <span class="info-pill plan">
+    📦 Plan: {% if yearly_plan %}{{ yearly_plan.name }}{% else %}Custom{% endif %}
   </span>
   <span class="info-pill">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-    {{ paid_count }} / {{ total_months }} months paid
+    📅 Billing Period: {{ billing_period }}
   </span>
-  <span class="info-pill" style="background:#f0fdf4;border-color:#bbf7d0;color:#15803d;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    {{ num_students }} students
+  <span class="info-pill amount">
+    💰 Annual Fee: ₹{{ total_due|indian_number }}
   </span>
-</div>
-
-{# ── Progress bar ─────────────────────────────────────────────────────────── #}
-{% if total_months %}
-<div class="progress-bar-wrap mb-4" title="{{ paid_count }} of {{ total_months }} months paid">
-  <div class="progress-bar-fill" style="width:{% widthratio paid_count total_months 100 %}%"></div>
-</div>
-{% endif %}
-
-<div class="billing-card p-4" id="feeForm-wrap">
-  <h5 class="fw-bold mb-3">Fee Collection Form</h5>
-
-  {% if unpaid_months %}
-  <form method="post" id="feeForm">
-    {% csrf_token %}
-    <input type="hidden" name="payment_type" value="regular">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">School</label>
-        <input type="text" class="form-control" value="{{ school.name }}" readonly style="background:#f8fafc;">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Active Students</label>
-        <input type="text" class="form-control" value="{{ num_students }}" readonly style="background:#f8fafc;">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Payment Date</label>
-        <input type="date" name="payment_date" class="form-control" required value="{% now 'Y-m-d' %}">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Payment Months</label>
-        <select name="payment_months" id="monthSelect" class="form-select month-multi-select" multiple required>
-          {% for val, label in unpaid_months %}
-            <option value="{{ val }}">{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Amount (₹{{ fee_per_student|floatformat:0 }} × {{ num_students }} students × months)</label>
-        <input type="text" id="amountDisplay" class="form-control" readonly
-               style="background:#f8fafc;" placeholder="Select months first">
-      </div>
-    </div>
-    <div class="mt-3 d-flex gap-2">
-      <button type="submit" class="btn btn-primary">Save Payment</button>
-      <a href="{% url 'super_school_fee_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-  </form>
+  <span class="info-pill amount" style="background:#ecfdf5;border-color:#a7f3d0;color:#047857;">
+    ✅ Paid: ₹{{ total_paid|indian_number }}
+  </span>
+  {% if balance > 0 %}
+  <span class="info-pill balance">
+    ⚠️ Balance: ₹{{ balance|indian_number }}
+  </span>
   {% else %}
-  <div class="alert alert-success mb-0">
-    All {{ total_months }} billing months have been paid for <strong>{{ school.name }}</strong>.
-  </div>
-  <div class="mt-3">
-    <a href="{% url 'super_school_fee_dashboard' %}" class="btn btn-outline-secondary">← Back</a>
-  </div>
+  <span class="info-pill" style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a;">
+    🎉 Fully Paid
+  </span>
   {% endif %}
+</div>
 
-  {# ── Adjustment Section ───────────────────────────────────────────────── #}
-  {% if adjustment_rows %}
-  <hr class="my-4">
-  <div class="d-flex align-items-center gap-2 mb-3">
-    <span style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;">
-      ⚠ Student Count Adjustment
-    </span>
-    <span style="font-size:13px;color:#64748b;">
-      New students were admitted after some months were already paid.
-    </span>
+<div class="billing-card">
+  <h5 class="fw-bold mb-4" style="color:#1e293b;">Collect Subscription Fee</h5>
+
+  {% if balance > 0 %}
+    {% if is_current %}
+      <form method="post" id="feeForm">
+        {% csrf_token %}
+        <div class="row g-4">
+          <div class="col-md-6">
+            <label class="form-label">School Name</label>
+            <input type="text" class="form-control" value="{{ school.name }}" readonly style="background:#f1f5f9;color:#475569;border-color:#e2e8f0;">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Active Academic Session</label>
+            <input type="text" class="form-control" value="{{ current_session }}" readonly style="background:#f1f5f9;color:#475569;border-color:#e2e8f0;">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Payment Date</label>
+            <input type="date" name="payment_date" class="form-control" required value="{% now 'Y-m-d' %}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Amount to Collect (₹)</label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" name="amount_paid" class="form-control" min="0.01" step="0.01" max="{{ balance }}" required value="{{ balance|stringformat:".2f" }}">
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Payment Note / Reference</label>
+            <input type="text" name="note" class="form-control" placeholder="e.g. Bank Transfer Ref: #1234">
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-premium-primary">✓ Save Payment</button>
+          <a href="{% url 'super_school_fee_dashboard' %}" class="btn btn-premium-secondary">Cancel</a>
+        </div>
+      </form>
+    {% else %}
+      <div class="alert alert-warning mb-0 border-0 shadow-sm" style="border-radius:12px;background:#fffbeb;color:#b45309;">
+        ⚠️ Outstanding balance of <strong>₹{{ balance|indian_number }}</strong> detected for past session <strong>{{ current_session }}</strong>. Fee collection is only active for the current academic session.
+      </div>
+    {% endif %}
+  {% else %}
+  <div class="alert alert-success mb-0 border-0 shadow-sm" style="border-radius:12px;background:#f0fdf4;color:#15803d;">
+    🎉 All dues have been paid in full for school <strong>{{ school.name }}</strong> in academic session <strong>{{ current_session }}</strong>.
   </div>
-
-  <div class="table-responsive mb-3">
-    <table class="hist-table">
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="adjCheckAll" title="Select all"></th>
-          <th>Month</th>
-          <th>Paid With</th>
-          <th>Current Students</th>
-          <th>New Students</th>
-          <th>Adjustment Due</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in adjustment_rows %}
-        <tr>
-          <td><input type="checkbox" class="adj-month-check" name="adj_check" value="{{ row.token }}" data-amount="{{ row.amount }}"></td>
-          <td><span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:600;">{{ row.label }}</span></td>
-          <td>{{ row.covered }} students</td>
-          <td>{{ num_students }} students</td>
-          <td class="fw-semibold text-warning">+{{ row.deficit }}</td>
-          <td class="fw-semibold text-danger">₹{{ row.amount|floatformat:0 }}</td>
-        </tr>
-        {% endfor %}
-        <tr style="background:#fef9c3;">
-          <td colspan="5" class="text-end fw-bold" style="font-size:13px;">Total Adjustment Due</td>
-          <td class="fw-bold text-danger" style="font-size:14px;">₹{{ total_adjustment_due|floatformat:0 }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <form method="post" id="adjForm">
-    {% csrf_token %}
-    <input type="hidden" name="payment_type" value="adjustment">
-    <div id="adjMonthsContainer"></div>
-    <div class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label">Payment Date</label>
-        <input type="date" name="payment_date" class="form-control" required value="{% now 'Y-m-d' %}">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Adjustment Amount</label>
-        <input type="text" id="adjAmountDisplay" class="form-control" readonly
-               style="background:#f8fafc;" placeholder="Select months above">
-      </div>
-      <div class="col-md-4 d-flex gap-2">
-        <button type="submit" id="adjSubmitBtn" class="btn btn-warning fw-semibold" disabled>
-          Collect Adjustment
-        </button>
-      </div>
-    </div>
-  </form>
   {% endif %}
 </div>
 
 {# ── Payment History ─────────────────────────────────────────────────────── #}
 {% if billing_history %}
 <div class="billing-card">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h6 class="fw-bold mb-0" style="color:#475569;">Payment History</h6>
-    <span class="fw-semibold text-success">Total Collected: ₹{{ total_billed|floatformat:0 }}</span>
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <h6 class="fw-bold mb-0" style="color:#1e293b;font-size:16px;">Payment History (Session: {{ current_session }})</h6>
+    <span class="fw-semibold text-success" style="font-size:15px;">Total Collected: ₹{{ total_paid|indian_number }}</span>
   </div>
   <div class="table-responsive">
     <table class="hist-table">
       <thead>
         <tr>
-          <th>S.N</th>
+          <th class="ps-3">S.N</th>
           <th>Date</th>
-          <th>Months Paid</th>
-          <th>Students</th>
-          <th>Fee/Student</th>
+          <th>Payment Type / Months</th>
+          <th>Plan Amount</th>
           <th>Amount Paid</th>
-          <th>Receipt</th>
+          <th>Note</th>
+          <th class="text-center pe-3">Receipt</th>
         </tr>
       </thead>
       <tbody>
         {% for p in billing_history %}
-        <tr{% if p.is_adjustment %} style="background:#fffbeb;"{% endif %}>
-          <td class="text-muted">{{ forloop.counter }}</td>
+        <tr>
+          <td class="ps-3 text-muted">{{ forloop.counter }}</td>
           <td>{{ p.payment_date|date:"d M Y" }}</td>
           <td>
-            {% for m in p.payment_months %}
-              <span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:600;margin-right:2px;">
-                {{ m|format_month_token }}
-              </span>
-            {% endfor %}
-            {% if p.is_adjustment %}
-              <span class="badge ms-1" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;border:1px solid #fde68a;">ADJ</span>
+            {% if p.payment_months %}
+              {% if p.payment_months.0 == 'annual_subscription' %}
+                <span class="badge-premium-purple">Annual Subscription</span>
+              {% else %}
+                {% for m in p.payment_months %}
+                  <span class="badge-premium-blue" style="margin-right:2px;">
+                    {{ m|format_month_token }}
+                  </span>
+                {% endfor %}
+              {% endif %}
+            {% else %}
+              <span class="badge-premium-purple">Annual Subscription</span>
             {% endif %}
           </td>
-          <td>
-            {% if p.is_adjustment %}+{% endif %}{{ p.num_students }}
-          </td>
           <td>₹{{ p.fee_per_student|floatformat:0 }}</td>
-          <td class="fw-semibold {% if p.is_adjustment %}text-warning{% else %}text-success{% endif %}">₹{{ p.amount_paid|floatformat:0 }}</td>
-          <td>
+          <td class="fw-semibold text-success">₹{{ p.amount_paid|floatformat:0 }}</td>
+          <td class="text-muted">{{ p.note|default:"—" }}</td>
+          <td class="text-center pe-3">
             <button class="btn btn-link p-0 receipt-btn"
-              style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:underline;"
+              style="font-size:13.5px;font-weight:600;color:#2563eb;text-decoration:underline;border:none;background:none;"
               data-receipt="{{ p.receipt_number|escape }}"
               data-school="{{ school.name|escape }}"
               data-date="{{ p.payment_date|date:'d M Y'|escape }}"
-              data-students="{{ p.num_students }}"
+              data-plan-name="{% if school.yearly_plan %}{{ school.yearly_plan.name|escape }}{% else %}Custom Yearly Plan{% endif %}"
               data-fee="{{ p.fee_per_student|floatformat:0 }}"
               data-amount="{{ p.amount_paid|floatformat:0 }}"
-              data-is-adjustment="{{ p.is_adjustment|yesno:'true,false' }}"
-              data-months="{% for m in p.payment_months %}{{ m|format_month_token }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+              data-note="{{ p.note|escape }}"
+              data-months="{% if p.payment_months %}{% if p.payment_months.0 == 'annual_subscription' %}Annual Subscription{% else %}{% for m in p.payment_months %}{{ m|format_month_token }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% else %}Annual Subscription{% endif %}"
             >{{ p.receipt_number }}</button>
           </td>
         </tr>
@@ -267,20 +387,24 @@
               <td style="padding:6px 0;color:#1e293b;border-top:1px solid #f1f5f9;" id="rc-date"></td>
             </tr>
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Months Paid</td>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Billing Details</td>
               <td style="padding:6px 0;color:#1e293b;border-top:1px solid #f1f5f9;" id="rc-months"></td>
             </tr>
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Students</td>
-              <td style="padding:6px 0;color:#1e293b;border-top:1px solid #f1f5f9;" id="rc-students"></td>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Subscription Plan</td>
+              <td style="padding:6px 0;color:#1e293b;border-top:1px solid #f1f5f9;" id="rc-plan-name"></td>
             </tr>
             <tr>
-              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Fee / Student</td>
+              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Plan Amount</td>
               <td style="padding:6px 0;color:#1e293b;border-top:1px solid #f1f5f9;">₹<span id="rc-fee"></span></td>
             </tr>
             <tr>
               <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Amount Paid</td>
               <td style="padding:6px 0;font-weight:800;font-size:16px;color:#16a34a;border-top:1px solid #f1f5f9;">₹<span id="rc-amount"></span></td>
+            </tr>
+            <tr id="rc-note-row">
+              <td style="padding:6px 0;color:#64748b;font-weight:600;border-top:1px solid #f1f5f9;">Note</td>
+              <td style="padding:6px 0;color:#64748b;border-top:1px solid #f1f5f9;font-size:11px;" id="rc-note"></td>
             </tr>
           </table>
           <div style="margin-top:20px;padding-top:12px;border-top:2px dashed #cbd5e1;text-align:center;font-size:11px;color:#94a3b8;">
@@ -295,81 +419,27 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
-(function () {
-  const perMonth = {{ per_month_amount|floatformat:2 }};
-  const monthSelect = document.getElementById('monthSelect');
-  const amountDisplay = document.getElementById('amountDisplay');
-
-  if (!monthSelect) return;
-
-  const choices = new Choices(monthSelect, {
-    removeItemButton: true,
-    searchEnabled: false,
-    shouldSort: false,
-    placeholderValue: 'Choose months…',
-  });
-
-  function updateAmount() {
-    const selected = choices.getValue(true);
-    amountDisplay.value = selected.length
-      ? '₹' + (perMonth * selected.length).toLocaleString('en-IN', {maximumFractionDigits: 0})
-      : '';
-  }
-
-  monthSelect.addEventListener('change', updateAmount);
-})();
-
-// ── Adjustment checkboxes ─────────────────────────────────────────────────────
-(function () {
-  const checks   = document.querySelectorAll('.adj-month-check');
-  const allCheck = document.getElementById('adjCheckAll');
-  const container = document.getElementById('adjMonthsContainer');
-  const display  = document.getElementById('adjAmountDisplay');
-  const submitBtn = document.getElementById('adjSubmitBtn');
-
-  if (!checks.length) return;
-
-  function recalc() {
-    let total = 0;
-    container.innerHTML = '';
-    checks.forEach(function(c) {
-      if (c.checked) {
-        total += parseFloat(c.dataset.amount || 0);
-        const h = document.createElement('input');
-        h.type = 'hidden';
-        h.name = 'adjustment_months';
-        h.value = c.value;
-        container.appendChild(h);
-      }
-    });
-    const hasSelection = total > 0;
-    display.value = hasSelection ? '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0}) : '';
-    submitBtn.disabled = !hasSelection;
-  }
-
-  checks.forEach(function(c) { c.addEventListener('change', recalc); });
-
-  if (allCheck) {
-    allCheck.addEventListener('change', function() {
-      checks.forEach(function(c) { c.checked = allCheck.checked; });
-      recalc();
-    });
-  }
-})();
-
 // ── Receipt modal ────────────────────────────────────────────────────────────
 document.querySelectorAll('.receipt-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    const isAdj = btn.dataset.isAdjustment === 'true';
-    document.getElementById('rc-receipt').textContent  = btn.dataset.receipt;
-    document.getElementById('rc-school').textContent   = btn.dataset.school;
-    document.getElementById('rc-date').textContent     = btn.dataset.date;
-    document.getElementById('rc-months').textContent   = btn.dataset.months + (isAdj ? ' (Adjustment)' : '');
-    document.getElementById('rc-students').textContent = (isAdj ? '+' : '') + btn.dataset.students;
-    document.getElementById('rc-fee').textContent      = btn.dataset.fee;
-    document.getElementById('rc-amount').textContent   = btn.dataset.amount;
+    document.getElementById('rc-receipt').textContent   = btn.dataset.receipt;
+    document.getElementById('rc-school').textContent    = btn.dataset.school;
+    document.getElementById('rc-date').textContent      = btn.dataset.date;
+    document.getElementById('rc-months').textContent    = btn.dataset.months;
+    document.getElementById('rc-plan-name').textContent = btn.dataset.planName;
+    document.getElementById('rc-fee').textContent       = btn.dataset.fee;
+    document.getElementById('rc-amount').textContent    = btn.dataset.amount;
+    
+    const note = btn.dataset.note;
+    const noteRow = document.getElementById('rc-note-row');
+    if (note && note !== 'None') {
+      document.getElementById('rc-note').textContent = note;
+      noteRow.style.display = '';
+    } else {
+      noteRow.style.display = 'none';
+    }
+
     new bootstrap.Modal(document.getElementById('receiptModal')).show();
   });
 });

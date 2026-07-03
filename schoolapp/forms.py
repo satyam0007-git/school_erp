@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Student, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings, Notification
+from .models import Student, FeePayment, MONTH_CHOICES, SchoolClass, SuperUserSettings, Notification, WhatsAppConfig
 
 
 def to_title_case(name: str) -> str:
@@ -105,6 +105,19 @@ class StudentForm(forms.ModelForm):
             first_class = qs.first()
             if first_class:
                 self.initial['school_class'] = first_class.pk
+
+            is_wa_active = False
+            if school:
+                wa_config = WhatsAppConfig.objects.filter(school=school).first()
+                if wa_config and wa_config.is_active and wa_config.whatsapp_welcome_template_name.strip():
+                    is_wa_active = True
+
+            self.fields['send_whatsapp_welcome'] = forms.BooleanField(
+                required=False,
+                initial=is_wa_active,
+                widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                label="Send WhatsApp Welcome Message"
+            )
 
         # When editing, pre-fill "Other" text boxes for non-standard saved values
         if self.instance.pk:
