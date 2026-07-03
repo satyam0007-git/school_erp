@@ -211,6 +211,8 @@ def config_view(request):
             wa_config.template_language = request.POST.get('template_language', 'en').strip()
             wa_config.announcement_template_name = request.POST.get('announcement_template_name', '').strip()
             wa_config.announcement_template_language = request.POST.get('announcement_template_language', 'en').strip()
+            wa_config.whatsapp_welcome_template_name = request.POST.get('whatsapp_welcome_template_name', '').strip()
+            wa_config.whatsapp_welcome_template_language = request.POST.get('whatsapp_welcome_template_language', 'en').strip()
             wa_config.is_active = bool(request.POST.get('is_active'))
             wa_config.save()
             log_activity_event(
@@ -225,6 +227,8 @@ def config_view(request):
                     'template_language': wa_config.template_language,
                     'announcement_template_name': wa_config.announcement_template_name,
                     'announcement_template_language': wa_config.announcement_template_language,
+                    'whatsapp_welcome_template_name': wa_config.whatsapp_welcome_template_name,
+                    'whatsapp_welcome_template_language': wa_config.whatsapp_welcome_template_language,
                     'is_active': wa_config.is_active,
                 },
             )

@@ -590,6 +590,10 @@
         <span class="ni ni-amber"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
         School Fee
       </a>
+      <a href="{% url 'super_plans_dashboard' %}" {% if request.resolver_match.url_name == 'super_plans_dashboard' or request.resolver_match.url_name == 'super_plan_add' or request.resolver_match.url_name == 'super_plan_edit' %}class="active"{% endif %}>
+        <span class="ni ni-purple"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span>
+        Subscriptions
+      </a>
     {% else %}
       <a href="{% url 'student_list' %}" {% if request.resolver_match.url_name == 'student_list' or request.resolver_match.url_name == 'student_create' or request.resolver_match.url_name == 'student_edit' or request.resolver_match.url_name == 'school_dashboard' %}class="active"{% endif %}>
         <span class="ni ni-green"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>

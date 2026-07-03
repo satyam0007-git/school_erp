@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-card { background:#fff; border-radius:10px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.08); border:1.5px solid #cbd5e1; }
+  .form-label { font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.04em; }
+  .form-control, .form-select { border:1.5px solid #475569; font-size:14px; }
+  .form-control:focus, .form-select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex mb-3">
+  <a href="{% url 'super_plans_dashboard' %}" style="font-size:13px;font-weight:600;color:#2563eb;text-decoration:none;">
+    ← Back to Subscriptions
+  </a>
+</div>
+
+<div class="form-card max-width-md" style="max-width:600px;">
+  <h5 class="fw-bold mb-4">{% if plan %}Edit Yearly Plan{% else %}New Yearly Plan{% endif %}</h5>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Plan Name <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Premium Plan" required value="{{ plan.name|default:'' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Annual Fee (₹) <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text">₹</span>
+          <input type="number" name="amount" class="form-control" placeholder="e.g. 50000" min="0" step="0.01" required value="{{ plan.amount|default:'' }}">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Duration (Months) <span class="text-danger">*</span></label>
+        <input type="number" name="duration_months" class="form-control" placeholder="e.g. 12" min="1" required value="{{ plan.duration_months|default:'12' }}">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Plan details or notes...">{{ plan.description|default:'' }}</textarea>
+      </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary px-4">✓ Save Plan</button>
+      <a href="{% url 'super_plans_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

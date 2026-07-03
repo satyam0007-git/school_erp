@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Subscriptions{% endblock %}
+{% block page_title %}Subscriptions{% endblock %}
+
+{% block extra_head %}
+<style>
+  .plan-table { border-collapse:separate; border-spacing:0; border:1.5px solid #94a3b8; border-radius:10px; overflow:hidden; width:100%; }
+  .plan-table thead th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#374151; background:#f1f5f9; border-bottom:2px solid #94a3b8; border-right:1px solid #cbd5e1; padding:12px 14px; white-space:nowrap; position:sticky; top:0; z-index:1; }
+  .plan-table thead th:last-child { border-right:none; }
+  .plan-table tbody td { vertical-align:middle; font-size:13px; padding:11px 14px; border-bottom:1px solid #e2e8f0; border-right:1px solid #f1f5f9; }
+  .plan-table tbody td:last-child { border-right:none; }
+  .plan-table tbody tr:last-child td { border-bottom:none; }
+  .plan-table tbody tr:hover td { background:#f8fafc; }
+
+  .filter-bar { background:#fff; border-radius:10px; padding:14px 18px; border:1.5px solid #94a3b8; box-shadow:0 2px 6px rgba(0,0,0,.06); margin-bottom:16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div style="font-size:14px; font-weight:600; color:#475569;">
+    Manage Subscriptions for schools
+  </div>
+  <a href="{% url 'super_plan_add' %}" class="btn btn-sm" style="background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 6px rgba(22,163,74,.25);padding:6px 28px;">+ Add Yearly Plan</a>
+</div>
+
+<div class="table-responsive" style="border-radius:10px;">
+  <table class="table mb-0 plan-table">
+    <thead>
+      <tr>
+        <th class="ps-3">S.N</th>
+        <th>Plan Name</th>
+        <th>Annual Fee (₹)</th>
+        <th>Duration (Months)</th>
+        <th>Description</th>
+        <th class="text-center pe-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for plan in plans %}
+      <tr>
+        <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+        <td><strong>{{ plan.name }}</strong></td>
+        <td class="fw-semibold" style="color:#1d4ed8;">{{ plan.amount }}</td>
+        <td>
+          <span class="badge rounded-pill" style="background:#f0f9ff;color:#0369a1;font-size:12px;font-weight:600;border:1px solid #bae6fd;">{{ plan.duration_months }} Months</span>
+        </td>
+        <td class="text-muted">{{ plan.description|default:"—" }}</td>
+        <td class="text-center pe-3">
+          <div class="dropdown">
+            <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:12px;font-weight:600;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:5px 14px;letter-spacing:.02em;box-shadow:0 2px 6px rgba(37,99,235,.25);">
+              Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:140px;border-radius:10px;border:1.5px solid #e2e8f0;">
+              <li>
+                <a class="dropdown-item" href="{% url 'super_plan_edit' plan.pk %}" style="font-size:13px;font-weight:500;color:#2563eb;">
+                  ✏️ Edit
+                </a>
+              </li>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li>
+                <a class="dropdown-item" href="{% url 'super_plan_delete' plan.pk %}" style="font-size:13px;font-weight:500;color:#dc2626;">
+                  🗑️ Delete
+                </a>
+              </li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center py-5 text-muted">No Subscriptions found. Create one to get started!</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.plan-table [data-bs-toggle="dropdown"]').forEach(function(el) {
+    new bootstrap.Dropdown(el, { popperConfig: { strategy: 'fixed' } });
+  });
+});
+</script>
+{% endblock %}

@@ -20,6 +20,27 @@ def _make_receipt_number(model_class, prefix_code, **scope_filter):
     return f"{prefix}{next_number:04d}"
 
 
+def school_logo_upload_to(instance, filename):
+    domain = instance.subdomain or (f"school_{instance.pk}" if instance.pk else "unknown")
+    return f"{domain}/school_logos/{filename}"
+
+
+def school_campus_upload_to(instance, filename):
+    domain = instance.subdomain or (f"school_{instance.pk}" if instance.pk else "unknown")
+    return f"{domain}/school_campus/{filename}"
+
+
+def superuser_logo_upload_to(instance, filename):
+    return f"superuser/software_logos/{filename}"
+
+
+def notification_attachment_upload_to(instance, filename):
+    domain = "unknown"
+    if instance.school:
+        domain = instance.school.subdomain or f"school_{instance.school.pk}"
+    return f"{domain}/notifications/{filename}"
+
+
 MONTH_CHOICES = [
     ('april', 'April'), ('may', 'May'), ('june', 'June'),
     ('july', 'July'), ('august', 'August'), ('september', 'September'),
@@ -30,6 +51,18 @@ MONTH_CHOICES = [
 
 # ── Tenant ────────────────────────────────────────────────────────────────────
 
+class YearlyPlan(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    duration_months = models.PositiveIntegerField(default=12, help_text="Validity duration in months")
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} (₹{self.amount})"
+
+
 class School(models.Model):
     name = models.CharField(max_length=200)
     subdomain = models.SlugField(
@@ -38,14 +71,18 @@ class School(models.Model):
     )
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
-    logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
+    logo = models.ImageField(upload_to=school_logo_upload_to, blank=True, null=True)
     address = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     fee_per_student = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    yearly_plan = models.ForeignKey(YearlyPlan, on_delete=models.SET_NULL, null=True, blank=True, related_name='schools')
+    subscription_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subscription_start_date = models.DateField(null=True, blank=True)
+    subscription_end_date = models.DateField(null=True, blank=True)
     motto = models.CharField(max_length=255, blank=True, default='')
-    campus_image = models.ImageField(upload_to='school_campus/', blank=True, null=True)
-    campus_image2 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
-    campus_image3 = models.ImageField(upload_to='school_campus/', blank=True, null=True)
+    campus_image = models.ImageField(upload_to=school_campus_upload_to, blank=True, null=True)
+    campus_image2 = models.ImageField(upload_to=school_campus_upload_to, blank=True, null=True)
+    campus_image3 = models.ImageField(upload_to=school_campus_upload_to, blank=True, null=True)
     theme_color = models.CharField(max_length=7, default='#2563eb', help_text='Primary theme color in hex, e.g. #2563eb')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -98,7 +135,7 @@ class SuperUserSettings(models.Model):
     superuser_name = models.CharField(max_length=150, blank=True)
     superuser_email = models.EmailField(blank=True)
     superuser_phone = models.CharField(max_length=20, blank=True)
-    logo = models.ImageField(upload_to='software_logos/', blank=True, null=True)
+    logo = models.ImageField(upload_to=superuser_logo_upload_to, blank=True, null=True)
     organization_address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
     default_session = models.CharField(max_length=20, blank=True, default='',
@@ -393,16 +430,24 @@ class WhatsAppConfig(models.Model):
     access_token = models.TextField(blank=True, help_text='Permanent Meta access token')
     template_name = models.CharField(max_length=100, blank=True, default='',
                                      help_text='Pre-approved WhatsApp template name')
-    template_language = models.CharField(max_length=20, blank=True, default='en_US',
-                                         help_text='Template language code, e.g. en_US')
+    template_language = models.CharField(max_length=20, blank=True, default='en',
+                                         help_text='Template language code, e.g. en')
     is_active = models.BooleanField(default=False, help_text='Enable WhatsApp sending')
     announcement_template_name = models.CharField(
         max_length=100, blank=True, default='',
         help_text='Pre-approved WhatsApp template for announcements (should have 1 body param {{1}})'
     )
     announcement_template_language = models.CharField(
-        max_length=20, blank=True, default='en_US',
-        help_text='Language code for announcement template, e.g. en_US'
+        max_length=20, blank=True, default='en',
+        help_text='Language code for announcement template, e.g. en'
+    )
+    whatsapp_welcome_template_name = models.CharField(
+        max_length=100, blank=True, default='',
+        help_text='Pre-approved WhatsApp template name for welcome messages'
+    )
+    whatsapp_welcome_template_language = models.CharField(
+        max_length=20, blank=True, default='en',
+        help_text='Language code for welcome template, e.g. en'
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -446,7 +491,7 @@ class Notification(models.Model):
     )
     is_published = models.BooleanField(default=True)
     is_pinned = models.BooleanField(default=False)
-    attachment = models.FileField(upload_to='notifications/', null=True, blank=True)
+    attachment = models.FileField(upload_to=notification_attachment_upload_to, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

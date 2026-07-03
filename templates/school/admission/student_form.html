@@ -313,6 +313,29 @@
       </div>
     </div>
 
+    {# ── Welcome Message ─────────────────────────────────────────────── #}
+    {% if not object %}
+    <div class="section-card">
+      <div class="section-header" style="background:#e0f2fe;color:#0369a1;border-bottom:1px solid #bae6fd;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Welcome Message <small class="fw-normal ms-1" style="font-size:11px;opacity:.7;">(optional)</small>
+      </div>
+      <div class="section-body">
+        <div class="row g-3 align-items-center">
+          <div class="col-12">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#f0f9ff;border:1px solid #bae6fd;">
+              {{ form.send_whatsapp_welcome }}
+              <label class="form-check-label fw-semibold" for="{{ form.send_whatsapp_welcome.id_for_label }}" style="cursor:pointer;font-size:14px;">
+                Send WhatsApp Welcome Message
+              </label>
+            </div>
+            {% if form.send_whatsapp_welcome.errors %}<div class="field-error">{{ form.send_whatsapp_welcome.errors|join:", " }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     {# Actions #}
     <div class="d-flex gap-2 mt-1">
       <button class="btn btn-save" type="submit">

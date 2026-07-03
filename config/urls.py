@@ -20,6 +20,12 @@ urlpatterns = [
     path('super/schools/<int:school_pk>/collect-fee/', views.super_collect_fee, name='super_collect_fee'),
     path('super/schools/<int:pk>/promote/', views.super_promote_school, name='super_promote_school'),
 
+    # Subscriptions
+    path('super/plans/', views.super_plans_dashboard, name='super_plans_dashboard'),
+    path('super/plans/add/', views.super_plan_add, name='super_plan_add'),
+    path('super/plans/<int:pk>/edit/', views.super_plan_edit, name='super_plan_edit'),
+    path('super/plans/<int:pk>/delete/', views.super_plan_delete, name='super_plan_delete'),
+
     # School
     path('school/', views.school_dashboard, name='school_dashboard'),
 

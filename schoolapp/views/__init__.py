@@ -41,6 +41,10 @@ from .superuser_views import (
     super_settings,
     user_add,
     user_delete,
+    super_plans_dashboard,
+    super_plan_add,
+    super_plan_edit,
+    super_plan_delete,
 )
 from .whatsapp_views import (
     announcement_dashboard,
@@ -77,6 +81,7 @@ __all__ = [
     'school_add', 'school_delete', 'school_edit', 'super_collect_fee',
     'super_dashboard', 'super_promote_school', 'super_school_fee_dashboard',
     'super_settings', 'user_add', 'user_delete',
+    'super_plans_dashboard', 'super_plan_add', 'super_plan_edit', 'super_plan_delete',
     'announcement_dashboard', 'whatsapp_announce', 'whatsapp_dashboard',
     'whatsapp_send', 'whatsapp_templates_debug',
     'notification_list', 'notification_create', 'notification_edit',

@@ -1,13 +1,18 @@
 import re
+import logging
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import FeePayment, SchoolClass, Student
+from ..models import FeePayment, SchoolClass, Student, WhatsAppConfig
 from ..session_utils import get_current_academic_session
 from ..utils.date_utils import parse_excel_date
 from .fee_service import distribute_lump_sum, get_available_advance
+from ..logging_utils import log_activity_event
+from ..views.whatsapp_views import send_welcome_message_safely
+
+logger = logging.getLogger(__name__)
 
 
 BULK_UPLOAD_HEADERS = [
@@ -17,6 +22,7 @@ BULK_UPLOAD_HEADERS = [
     'PEN Number', 'Transport Opted (Yes/No)', 'Transport Amount',
     'Discount Months (0-12)', 'Admission Date (DD-MM-YYYY)',
     'Paid Amount', 'Payment Date (DD-MM-YYYY)',
+    'Send WhatsApp Welcome (Yes/No)',
 ]
 
 VALID_BLOOD_GROUPS = {'O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'}
@@ -53,6 +59,7 @@ BULK_FIELD_INFO = [
     {'name': 'Admission Date',   'required': False},
     {'name': 'Paid Amount',      'required': False},
     {'name': 'Payment Date',     'required': False},
+    {'name': 'Send WhatsApp Welcome', 'required': False},
 ]
 
 
@@ -142,6 +149,7 @@ def _parse_bulk_row(row, class_map, session, batch_keys, school):
     adm_raw       = row[16] if len(row) > 16 else None
     paid_str      = gc(17, '')
     fee_date_raw  = row[18] if len(row) > 18 else None
+    send_welcome_str = gc(19, 'No')
 
     errors = []
 
@@ -249,6 +257,8 @@ def _parse_bulk_row(row, class_map, session, batch_keys, school):
     if errors:
         return None, errors
 
+    send_welcome = send_welcome_str.lower() in ('yes', 'y', '1', 'true')
+
     return {
         'name': name, 'dob': dob, 'school_class': school_class,
         'father_name': father_name, 'mother_name': mother_name,
@@ -258,6 +268,7 @@ def _parse_bulk_row(row, class_map, session, batch_keys, school):
         'transport_opted': transport_opted, 'transport_amount': transport_amount,
         'discount_months': discount_months, 'admission_dt': admission_dt,
         'paid_amount': paid_amount, 'fee_date': fee_date,
+        'send_welcome': send_welcome,
     }, []
 
 
@@ -279,8 +290,8 @@ def process_bulk_upload(workbook, school, profile, user):
             continue
         total += 1
 
-        raw_row = [str(v) if v is not None else '' for v in row[:19]]
-        while len(raw_row) < 19:
+        raw_row = [str(v) if v is not None else '' for v in row[:20]]
+        while len(raw_row) < 20:
             raw_row.append('')
 
         data, errors = _parse_bulk_row(row, class_map, session, batch_keys, school)
@@ -308,6 +319,9 @@ def process_bulk_upload(workbook, school, profile, user):
                 )
             success += 1
             successful_student_ids.append(student.pk)
+
+            if data.get('send_welcome'):
+                send_welcome_message_safely(school, student)
 
             if data['paid_amount'] and data['paid_amount'] > 0 and data['fee_date']:
                 try:
@@ -342,3 +356,4 @@ def process_bulk_upload(workbook, school, profile, user):
         'failed': len(failed_rows), 'has_errors': bool(failed_rows),
         'successful_student_ids': successful_student_ids,
     }, failed_rows
+

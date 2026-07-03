@@ -1,5 +1,6 @@
 import io
 import re
+import logging
 
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -15,11 +16,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from ..decorators import school_only
 from ..forms import StudentForm
 from ..logging_utils import log_activity_event
-from ..models import AdmissionBulkUploadHistory, SchoolClass, SchoolProfile, Student
+from ..models import AdmissionBulkUploadHistory, SchoolClass, SchoolProfile, Student, WhatsAppConfig
+
+logger = logging.getLogger(__name__)
 from ..services.student_service import (
     BULK_FIELD_INFO, BULK_UPLOAD_HEADERS,
     fail_student, process_bulk_upload, promote_student,
 )
+from .whatsapp_views import send_welcome_message_safely
+
 from ..utils.excel_utils import set_column_widths, style_data_cell, style_header_cell
 
 
@@ -32,6 +37,7 @@ def student_list(request):
     q = request.GET.get('q', '').strip()
     class_id = request.GET.get('class')
     status = request.GET.get('status')
+    transport = request.GET.get('transport')
 
     qs = Student.objects.filter(school=school, academic_session=session).select_related('school_class')
     if q:
@@ -40,6 +46,10 @@ def student_list(request):
         qs = qs.filter(school_class_id=class_id)
     if status:
         qs = qs.filter(status=status)
+    if transport == 'yes':
+        qs = qs.filter(transport_opted=True)
+    elif transport == 'no':
+        qs = qs.filter(transport_opted=False)
 
     all_students = Student.objects.filter(school=school).select_related('school_class')
     session_class_ids = (
@@ -66,8 +76,9 @@ def student_list(request):
         'filtered_fail': qs.filter(status='fail').count(),
         'selected_class': class_id or '',
         'selected_status': status or '',
+        'selected_transport': transport or '',
         'selected_q': q,
-        'has_filters': bool(q or class_id or status),
+        'has_filters': bool(q or class_id or status or transport in ['yes', 'no']),
     })
 
 
@@ -95,6 +106,12 @@ def student_create(request):
                 'discount_months': discount_months,
             },
         )
+
+        # Trigger WhatsApp welcome message if option is selected
+        send_welcome = form.cleaned_data.get('send_whatsapp_welcome', False)
+        if send_welcome:
+            send_welcome_message_safely(school, student, request=request)
+
         msg = f'Student admitted. First {discount_months} month(s) discounted.' if discount_months > 0 else 'Student admitted.'
         messages.success(request, msg)
         return redirect('student_list')
@@ -309,6 +326,7 @@ def admission_bulk_template(request):
     add_dropdown('"General,OBC,SC,ST,EWS,Other"', 'I')
     add_dropdown('"O+,O-,A+,A-,B+,B-,AB+,AB-"', 'J')
     add_dropdown('"Yes,No"', 'N')
+    add_dropdown('"Yes,No"', 'T')
 
     for col_idx in [2, 17, 19]:
         for row_num in range(1, 203):
@@ -475,7 +493,7 @@ def admission_bulk_errors_download(request):
         'Father WhatsApp', 'Address', 'Religion', 'Caste', 'Blood Group',
         'Previous School', 'Aadhaar Number', 'PEN Number', 'Transport Opted',
         'Transport Amount', 'Discount Months', 'Admission Date', 'Paid Amount',
-        'Payment Date', 'Error Remarks',
+        'Payment Date', 'Send WhatsApp Welcome', 'Error Remarks',
     ]
 
     wb = openpyxl.Workbook()
@@ -503,7 +521,7 @@ def admission_bulk_errors_download(request):
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
             else:
                 style_data_cell(cell, row_idx)
-            if col_idx in (2, 18, 20):
+            if col_idx in (2, 18, 21):
                 cell.number_format = '@'
 
     set_column_widths(ws, max_w=45)
