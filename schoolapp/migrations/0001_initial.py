@@ -263,8 +263,6 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=False, help_text='Enable WhatsApp sending')),
                 ('announcement_template_name', models.CharField(blank=True, default='', help_text='Pre-approved WhatsApp template for announcements (should have 1 body param {{1}})', max_length=100)),
                 ('announcement_template_language', models.CharField(blank=True, default='en', help_text='Language code for announcement template, e.g. en', max_length=20)),
-                ('whatsapp_welcome_template_name', models.CharField(blank=True, default='', help_text='Pre-approved WhatsApp template name for welcome messages', max_length=100)),
-                ('whatsapp_welcome_template_language', models.CharField(blank=True, default='en', help_text='Language code for welcome template, e.g. en', max_length=20)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('school', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='whatsapp_config', to='schoolapp.school')),
             ],
