@@ -150,6 +150,7 @@ body {
 .hero-section {
   position: relative;
   min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   padding: 140px 48px 80px;
   display: flex;
   align-items: center;
@@ -173,6 +174,17 @@ body {
     radial-gradient(ellipse 50% 50% at 90% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 55%);
   animation: meshAnim 15s ease-in-out infinite alternate;
 }
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  animation: orbFloat 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.hero-orb-1 { width: 500px; height: 500px; background: var(--brand); top: -10%; left: -10%; }
+.hero-orb-2 { width: 400px; height: 400px; background: #0ea5e9; bottom: -10%; right: -5%; animation-delay: -4s; }
+
 .hero-grid-overlay {
   position: absolute;
   inset: 0;
@@ -186,6 +198,10 @@ body {
 @keyframes meshAnim {
   0% { transform: scale(1) translate(0, 0); }
   100% { transform: scale(1.05) translate(1%, -1%); }
+}
+@keyframes orbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, -40px) scale(1.08); }
 }
 
 .hero-content {
@@ -969,6 +985,8 @@ body {
     {% else %}
     <div class="hero-bg-decorations">
       <div class="hero-bg-mesh"></div>
+      <div class="hero-orb hero-orb-1"></div>
+      <div class="hero-orb hero-orb-2"></div>
       <div class="hero-grid-overlay"></div>
     </div>
     {% endif %}
