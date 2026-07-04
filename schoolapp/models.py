@@ -34,6 +34,10 @@ def superuser_logo_upload_to(instance, filename):
     return f"superuser/software_logos/{filename}"
 
 
+def superuser_campus_upload_to(instance, filename):
+    return f"superuser/campus_images/{filename}"
+
+
 def notification_attachment_upload_to(instance, filename):
     domain = "unknown"
     if instance.school:
@@ -96,6 +100,16 @@ class School(models.Model):
             return f'{scheme}://{self.subdomain}.{base}'
         return f'{scheme}://{base}'
 
+    def get_subscription_years(self):
+        if self.subscription_start_date and self.subscription_end_date:
+            diff_days = (self.subscription_end_date - self.subscription_start_date).days + 1
+            calculated_years = round(diff_days / 365.0)
+            return max(1, calculated_years)
+        if self.yearly_plan and self.yearly_plan.duration_months:
+            return max(1, round(self.yearly_plan.duration_months / 12))
+        return 1
+
+
 
 class SchoolBillingPayment(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='billing_payments')
@@ -138,6 +152,9 @@ class SuperUserSettings(models.Model):
     logo = models.ImageField(upload_to=superuser_logo_upload_to, blank=True, null=True)
     organization_address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
+    campus_image = models.ImageField(upload_to=superuser_campus_upload_to, blank=True, null=True)
+    campus_image2 = models.ImageField(upload_to=superuser_campus_upload_to, blank=True, null=True)
+    campus_image3 = models.ImageField(upload_to=superuser_campus_upload_to, blank=True, null=True)
     default_session = models.CharField(max_length=20, blank=True, default='',
                                        help_text='Default academic session shown on superuser dashboard and school fee pages.')
     updated_at = models.DateTimeField(auto_now=True)

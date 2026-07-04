@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign In — {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</title>
+<title>{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %} — Enterprise SaaS School Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,62 +12,190 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
-  --brand:      #2563eb;
-  --brand-light:#3b82f6;
-  --brand-dark: #1d4ed8;
-  --brand-deep: #181c24;
-  --text-1:     #0f172a;
-  --text-2:     #475569;
-  --text-3:     #94a3b8;
-  --surface:    #ffffff;
-  --border:     #e2e8f0;
-  --white:      #ffffff;
-  --err-bg:     #fef2f2;
-  --err-border: #fca5a5;
-  --err-text:   #dc2626;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --brand:             #4f46e5; /* Indigo-600 */
+  --brand-light:       #6366f1; /* Indigo-500 */
+  --brand-glow:        rgba(79, 70, 229, 0.12);
+  --brand-deep:        #080a0f; /* Premium dark background */
+  --text-1:            #0f172a;
+  --text-2:            #475569;
+  --text-3:            #94a3b8;
+  --surface:           #ffffff;
+  --border:            #e2e8f0;
+  --white:             #ffffff;
+  --err-bg:            #fef2f2;
+  --err-border:        #fca5a5;
+  --err-text:          #dc2626;
+  --transition:        all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--brand-deep);
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow-x: hidden;
+  background-color: #f8fafc;
   color: var(--text-1);
+  overflow-x: hidden;
+  line-height: 1.5;
 }
 
-/* Background animated mesh and orbs */
-.bg-decorations {
+/* NAVBAR STYLE */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  z-index: 1000;
+  transition: var(--transition);
+}
+.navbar.scrolled {
+  height: 70px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-1);
+}
+.nav-logo-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+}
+.nav-logo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.nav-initials {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--brand);
+}
+.nav-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+.nav-link {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: var(--transition);
+}
+.nav-link:hover {
+  color: var(--brand);
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.nav-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.nav-btn-secondary {
+  color: var(--text-2);
+  border: 1.5px solid var(--border);
+  background: transparent;
+}
+.nav-btn-secondary:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-glow);
+}
+.nav-btn-primary {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 14px var(--brand-glow);
+}
+.nav-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px var(--brand-glow);
+}
+
+/* HERO SECTION */
+.hero-section {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0d14 0%, #151a26 100%);
+  padding: 140px 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 64px;
+  overflow: hidden;
+}
+
+/* Background animated mesh and orbs for Hero */
+.hero-bg-decorations {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
 }
-.bg-mesh {
+.hero-bg-mesh {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99, 102, 241, 0.12) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 60% at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
   animation: meshAnim 15s ease-in-out infinite alternate;
 }
-.orb {
+.hero-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(100px);
-  opacity: 0.25;
-  animation: orbFloat 10s ease-in-out infinite alternate;
+  opacity: 0.15;
+  animation: orbFloat 12s ease-in-out infinite alternate;
 }
-.orb-1 { width: 450px; height: 450px; background: #3b82f6; top: -10%; left: -10%; animation-delay: 0s; }
-.orb-2 { width: 350px; height: 350px; background: #6366f1; bottom: -10%; right: -5%; animation-delay: -3s; }
+.hero-orb-1 { width: 500px; height: 500px; background: var(--brand); top: -10%; left: -10%; }
+.hero-orb-2 { width: 400px; height: 400px; background: #0ea5e9; bottom: -10%; right: -5%; animation-delay: -4s; }
+.hero-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+}
 
 @keyframes meshAnim {
   0% { transform: scale(1) translate(0, 0); }
@@ -75,194 +203,165 @@ body {
 }
 @keyframes orbFloat {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(30px, -30px) scale(1.08); }
+  100% { transform: translate(40px, -40px) scale(1.08); }
 }
 
-/* Main Container Layout - Full screen split */
-.app-container {
-  width: 100vw;
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  background: #f9fafb;
-  z-index: 10;
-  position: relative;
-  animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* LEFT COLUMN - SaaS Product Branding & Features */
-.marketing-panel {
-  background: linear-gradient(135deg, #181c24 0%, #2a303c 100%);
-  padding: 64px 48px;
-  color: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Decorative glass circle */
-.marketing-panel::before {
-  content: '';
-  position: absolute;
-  top: -10%; right: -10%;
-  width: 320px; height: 320px;
-  border-radius: 50%;
-  border: 45px solid rgba(255, 255, 255, 0.02);
-  pointer-events: none;
-}
-
-.marketing-header {
+.hero-content {
   position: relative;
   z-index: 2;
-}
-.system-logo-bar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
-}
-.system-logo-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.05);
-}
-.system-logo-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-}
-.system-initials {
-  font-size: 22px;
-  font-weight: 800;
   color: #ffffff;
-  letter-spacing: -0.5px;
 }
-.system-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.5px;
-}
-.system-tag {
+.hero-tag {
   display: inline-flex;
   align-items: center;
-  background: rgba(37, 99, 235, 0.15);
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  color: #93c5fd;
-  font-size: 11px;
-  font-weight: 600;
+  gap: 8px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  padding: 6px 16px;
+  border-radius: 30px;
+  margin-bottom: 24px;
+}
+.hero-heading {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #ffffff, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-motto {
+  font-size: 17px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+/* Slider container inside hero */
+.hero-right {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+.hero-slider-wrap {
+  width: 100%;
+  height: 380px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+.hero-slider-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.hero-slide-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 1.2s ease-in-out, transform 8s ease-out;
+  opacity: 0;
+}
+.hero-slide-img.active {
+  opacity: 1;
+  transform: scale(1.04);
+}
+.hero-slider-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 13, 20, 0.8), transparent);
+  z-index: 2;
+}
+.hero-slider-label {
+  position: absolute;
+  bottom: 16px; left: 20px;
+  z-index: 3;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
   padding: 4px 12px;
   border-radius: 20px;
-  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
 }
-.system-motto {
-  font-size: 15px;
-  color: #cbd5e1;
-  line-height: 1.6;
-  max-width: 520px;
-  margin-top: 8px;
+.hero-slider-indicators {
+  position: absolute;
+  bottom: 20px; right: 20px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
 }
 
-/* Features Grid Showcase */
-.features-container {
-  margin: 40px 0;
-  position: relative;
-  z-index: 2;
-}
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-.feature-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  padding: 18px;
+/* LOGIN MODAL OVERLAY */
+.login-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(10, 13, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  transition: var(--transition);
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 20px;
 }
-.feature-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+.login-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }
-.feature-icon-wrapper {
+.login-modal-overlay .login-card {
+  transform: translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.login-modal-overlay.active .login-card {
+  transform: translateY(0);
+}
+
+/* Forms & Cards */
+.login-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+.close-modal-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 24px;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  background: rgba(37, 99, 235, 0.12);
-  border: 1px solid rgba(37, 99, 235, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
+  border-radius: 50%;
+  transition: var(--transition);
+  z-index: 10;
 }
-.feature-info {
-  display: flex;
-  flex-direction: column;
-}
-.feature-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 2px;
-}
-.feature-desc {
-  font-size: 12px;
-  color: #94a3b8;
-  line-height: 1.4;
-}
-
-.marketing-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  color: #64748b;
-  position: relative;
-  z-index: 2;
-}
-.marketing-footer svg {
-  color: #22c55e;
-  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.3));
-}
-
-/* RIGHT COLUMN - Login Form Panel */
-.form-panel {
-  background: #f8fafc;
-  padding: 64px 48px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-}
-
-.form-panel-inner {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+.close-modal-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--text-1);
 }
 
 .form-header-group {
@@ -278,10 +377,10 @@ body {
   display: block;
 }
 .form-heading {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-1);
-  letter-spacing: -0.8px;
+  letter-spacing: -0.5px;
   margin-bottom: 6px;
 }
 .form-sub {
@@ -289,32 +388,15 @@ body {
   color: var(--text-2);
   line-height: 1.5;
 }
-
-/* Modern Card for login forms */
-.login-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 32px 28px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.01);
-  transition: var(--transition);
-  margin-bottom: 24px;
-}
-.login-card:hover {
-  box-shadow: 0 16px 35px rgba(15, 23, 42, 0.05);
-}
-
-/* Forms & Fields */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .form-label {
   display: block;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-1);
-  margin-bottom: 7px;
-  letter-spacing: 0.1px;
+  margin-bottom: 8px;
 }
 .input-wrapper {
   position: relative;
@@ -330,7 +412,7 @@ body {
 }
 .form-control {
   width: 100%;
-  padding: 12px 14px 12px 42px;
+  padding: 13px 14px 13px 44px;
   border: 1.5px solid var(--border);
   border-radius: 12px;
   font-size: 14px;
@@ -349,13 +431,12 @@ body {
 .form-control:focus {
   border-color: var(--brand);
   background-color: var(--white);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 4px var(--brand-glow);
 }
 .form-control:focus + .input-icon-left {
   color: var(--brand);
 }
 
-/* Password inputs */
 .has-password-toggle {
   padding-right: 48px !important;
 }
@@ -379,39 +460,34 @@ body {
 }
 .btn-password-toggle:hover {
   color: var(--brand);
-  background-color: rgba(37, 99, 235, 0.06);
+  background-color: var(--brand-glow);
 }
 
-/* Submit button */
 .btn-submit {
   width: 100%;
   padding: 14px 24px;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
   color: var(--white);
   border: none;
   border-radius: 12px;
-  font-size: 15.0px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 14px var(--brand-glow);
   transition: var(--transition);
-  position: relative;
 }
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-  filter: brightness(1.04);
+  box-shadow: 0 8px 20px var(--brand-glow);
 }
 .btn-submit:active {
   transform: translateY(1px);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
-/* Secure Login notice */
 .secure-notice {
   display: flex;
   flex-direction: column;
@@ -463,189 +539,733 @@ body {
   75% { transform: translateX(4px); }
 }
 
-/* Responsive Styles */
-@media (max-width: 960px) {
-  .app-container {
-    grid-template-columns: 1fr;
-    width: 100%;
-    min-height: 100vh;
-  }
-  .marketing-panel {
-    padding: 48px 32px 32px;
-  }
-  .features-container {
-    display: none;
-  }
-  .form-panel {
-    padding: 40px 32px 48px;
-  }
-  .system-logo-bar {
-    margin-bottom: 12px;
-  }
+/* SECTION GLOBAL STYLE */
+.section {
+  padding: 100px 48px;
+  position: relative;
+}
+.section-header {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 64px;
+}
+.section-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--text-1);
+  margin-bottom: 16px;
+}
+.section-desc {
+  font-size: 16px;
+  color: var(--text-2);
+  line-height: 1.6;
 }
 
-@media (max-width: 480px) {
-  .marketing-panel {
-    padding: 32px 20px 20px;
+/* FEATURES SECTION */
+.features-section {
+  background: #ffffff;
+}
+.features-grid-web {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.feature-card-web {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 30px;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.feature-card-web:hover {
+  background: #ffffff;
+  border-color: var(--brand);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+.feature-web-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--brand-glow);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.feature-card-web h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-1);
+}
+.feature-card-web p {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* PRICING SECTION */
+.pricing-section {
+  background: #f1f5f9;
+}
+.pricing-grid-web {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 32px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.pricing-card-web {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 360px;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.pricing-card-web.featured {
+  border-color: var(--brand);
+  box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.04);
+}
+.pricing-card-web.featured::before {
+  content: 'POPULAR CHOICE';
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+.pricing-card-web:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 30px rgba(0,0,0,0.05);
+}
+.price-header h4 {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+.price-amount {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+}
+.price-amount span {
+  font-size: 14px;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-left: 4px;
+}
+.price-desc {
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: 24px;
+  min-height: 40px;
+}
+.price-features {
+  list-style: none;
+  margin-bottom: 32px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.price-features li {
+  font-size: 13.5px;
+  color: var(--text-2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.price-features li svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+.price-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 24px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: var(--transition);
+}
+.price-btn-secondary {
+  border: 1.5px solid var(--border);
+  color: var(--brand);
+  background: transparent;
+}
+.price-btn-secondary:hover {
+  background: var(--brand-glow);
+  border-color: var(--brand);
+}
+.price-btn-primary {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--brand-glow);
+}
+.price-btn-primary:hover {
+  box-shadow: 0 8px 20px var(--brand-glow);
+}
+
+/* CONTACT SECTION */
+.contact-section {
+  background: #ffffff;
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.contact-card-web {
+  text-align: center;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.contact-web-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  font-size: 20px;
+}
+.contact-card-web h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.contact-card-web p {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+/* FOOTER */
+.web-footer {
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 64px 48px;
+  border-top: 1px solid #1e293b;
+}
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffffff;
+  text-decoration: none;
+}
+.footer-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.footer-text {
+  font-size: 13.5px;
+}
+
+/* RESPONSIVE LAYOUT */
+@media (max-width: 960px) {
+  .navbar {
+    padding: 0 24px;
   }
-  .system-logo-bar {
-    gap: 10px;
+  .nav-links {
+    display: none;
   }
-  .system-name {
-    font-size: 21px;
+  .hero-section {
+    grid-template-columns: 1fr;
+    padding: 120px 24px 60px;
+    gap: 48px;
+    text-align: center;
   }
-  .form-panel {
-    padding: 32px 20px;
+  .hero-content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  .form-heading {
-    font-size: 22px;
+  .features-grid-web {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }
-.is-hidden {
-  display: none !important;
+@media (max-width: 640px) {
+  .features-grid-web {
+    grid-template-columns: 1fr;
+  }
+  .section {
+    padding: 64px 20px;
+  }
+}
+@media (max-width: 580px) {
+  .navbar .nav-title,
+  .navbar .nav-actions span {
+    display: none !important;
+  }
+  .navbar {
+    padding: 0 16px;
+  }
+}
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+  .form-header-group {
+    margin-bottom: 16px;
+  }
+  .form-heading {
+    font-size: 18px;
+  }
+  .form-sub {
+    font-size: 12px;
+  }
+  .close-modal-btn {
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
 }
 </style>
 </head>
 <body>
 
-<div class="app-container">
-
-  <!-- LEFT PANEL - Branding / Marketing -->
-  <div class="marketing-panel">
-    <div class="marketing-header">
-      <div class="system-logo-bar">
-        <div class="system-logo-wrap">
-          {% if settings.logo %}
-            <img src="{{ settings.logo.url }}" alt="Logo" onerror="handleImageError(this)">
-            <span class="system-initials is-hidden">
-              {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
-            </span>
-          {% else %}
-            <span class="system-initials">
-              {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
-            </span>
-          {% endif %}
-        </div>
-        <span class="system-name">{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+  <!-- WEBSITE NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="nav-brand">
+      <div class="nav-logo-wrap">
+        {% if settings.logo %}
+          <img src="{{ settings.logo.url }}" alt="Logo" onerror="handleImageError(this)">
+          <span class="nav-initials is-hidden">
+            {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
+          </span>
+        {% else %}
+          <span class="nav-initials">
+            {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}SE{% endif %}
+          </span>
+        {% endif %}
       </div>
+      <span class="nav-title">{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features" class="nav-link">Modules</a></li>
+      <li><a href="#pricing" class="nav-link">Plans & Pricing</a></li>
+      <li><a href="#support" class="nav-link">Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-primary">Console Sign In</a>
+    </div>
+  </nav>
 
-      <span class="system-tag">Enterprise SaaS Suite</span>
-      <p class="system-motto">
+  <!-- HERO SECTION WITH SLIDESHOW PREVIEW -->
+  <header class="hero-section" id="home">
+    <div class="hero-bg-decorations">
+      <div class="hero-bg-mesh"></div>
+      <div class="hero-orb hero-orb-1"></div>
+      <div class="hero-orb hero-orb-2"></div>
+      <div class="hero-grid-overlay"></div>
+    </div>
+
+    <!-- Left side: SaaS value proposition -->
+    <div class="hero-content">
+      <span class="hero-tag">🌟 Secure SaaS Platform</span>
+      <h1 class="hero-heading">Centralized School Administration Made Easy</h1>
+      <p class="hero-motto">
         {% if settings.organization_address %}
           "{{ settings.organization_address }}"
         {% else %}
-          An integrated School ERP platform designed to simplify administration, academics, finance, examinations, communication, and reporting.
+          An integrated, enterprise-level ERP solution designed to handle student portfolios, collections, academics, and automated reporting.
         {% endif %}
       </p>
-    </div>
 
-    <!-- Product Features list -->
-    <div class="features-container">
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">🎓</div>
-          <div class="feature-info">
-            <span class="feature-title">Academics & Students</span>
-            <span class="feature-desc">Rolls, profiles, admissions, and promotions.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">💳</div>
-          <div class="feature-info">
-            <span class="feature-title">Fee Management</span>
-            <span class="feature-desc">Automated collections, invoices, and billing.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">📊</div>
-          <div class="feature-info">
-            <span class="feature-title">Reports & Insights</span>
-            <span class="feature-desc">Detailed accounting and academic sheets.</span>
-          </div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon-wrapper">☁️</div>
-          <div class="feature-info">
-            <span class="feature-title">Secure Cloud Access</span>
-            <span class="feature-desc">256-bit encryption with role-based access.</span>
-          </div>
-        </div>
+      <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
+        <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-primary" style="padding: 14px 28px; font-size: 15px;">Console Sign In</a>
+        <a href="#features" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #fff; border-color: rgba(255,255,255,0.25);">Explore Modules</a>
       </div>
     </div>
 
-    <div class="marketing-footer">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-      <span>Fully encrypted connection. All sessions secured.</span>
-    </div>
-  </div>
-
-  <!-- RIGHT PANEL - Login Form -->
-  <div class="form-panel">
-    <div class="form-panel-inner">
-
-      <div class="form-header-group">
-        <span class="welcome-badge">Welcome back</span>
-        <h1 class="form-heading">Sign In to continue</h1>
-        <p class="form-sub">Please enter your credentials to access the console.</p>
+    <!-- Right side: Slideshow of UI Backdrops -->
+    <div class="hero-right">
+      {% if settings.campus_image or settings.campus_image2 or settings.campus_image3 %}
+      <div class="hero-slider-wrap">
+        <div class="hero-slider-inner">
+          {% if settings.campus_image %}
+            <img src="{{ settings.campus_image.url }}" alt="UI Slide 1" class="hero-slide-img active" data-index="0">
+          {% endif %}
+          {% if settings.campus_image2 %}
+            <img src="{{ settings.campus_image2.url }}" alt="UI Slide 2" class="hero-slide-img" data-index="1" style="display: none; opacity: 0;">
+          {% endif %}
+          {% if settings.campus_image3 %}
+            <img src="{{ settings.campus_image3.url }}" alt="UI Slide 3" class="hero-slide-img" data-index="2" style="display: none; opacity: 0;">
+          {% endif %}
+        </div>
+        <div class="hero-slider-overlay"></div>
+        <div class="hero-slider-label">Console Backdrop Showcase</div>
+        <div class="hero-slider-indicators">
+          {% if settings.campus_image %}
+            <button type="button" class="indicator-dot active" onclick="switchSlide(0)" aria-label="UI Image 1" style="width:8px;height:8px;border-radius:50%;border:none;background:#ffffff;"></button>
+          {% endif %}
+          {% if settings.campus_image2 %}
+            <button type="button" class="indicator-dot" onclick="switchSlide(1)" aria-label="UI Image 2" style="width:8px;height:8px;border-radius:50%;border:none;background:#ffffff50;"></button>
+          {% endif %}
+          {% if settings.campus_image3 %}
+            <button type="button" class="indicator-dot" onclick="switchSlide(2)" aria-label="UI Image 3" style="width:8px;height:8px;border-radius:50%;border:none;background:#ffffff50;"></button>
+          {% endif %}
+        </div>
       </div>
-
-      <!-- Modern Card for Login Forms -->
-      <div class="login-card">
-        {% for msg in messages %}
-        <div class="alert-error">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+      {% else %}
+      <!-- Glowing active dashboard preview card if no images -->
+      <div class="hero-slider-wrap" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);backdrop-filter:blur(8px);">
+        <div style="text-align:center;padding:40px;color:#fff;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px;">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+            <path d="M12 17h.01"/>
           </svg>
-          <span>{{ msg }}</span>
+          <h4 style="font-size:18px;margin-bottom:8px;font-weight:700;">Secure Cloud Console</h4>
+          <p style="font-size:13px;color:#94a3b8;">Centralized management dashboard for SaaS school portals</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- FEATURES / ERP MODULES SECTION -->
+  <section class="section features-section" id="features">
+    <div class="section-header">
+      <span class="section-tag">Core Modules</span>
+      <h2 class="section-title">Built to Handle Every Department</h2>
+      <p class="section-desc">Get a complete suite of academic, financial, administrative, and cloud management tools designed to scale.</p>
+    </div>
+
+    <div class="features-grid-web">
+      <!-- Feature Card 1 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h4>Academic Portfolios</h4>
+        <p>Manage courses, classes, sections, roll schedules, promotions, and teacher allocations easily from a unified dashboard.</p>
+      </div>
+
+      <!-- Feature Card 2 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        </div>
+        <h4>Smart Invoicing & Fees</h4>
+        <p>Configure fee categories, assign dynamic fee structures, generate invoices, record payments, and print formatted receipts.</p>
+      </div>
+
+      <!-- Feature Card 3 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h4>Accounting & Reports</h4>
+        <p>Access automated financial logs, student roll spreadsheets, admission records, and class fee summaries in real time.</p>
+      </div>
+
+      <!-- Feature Card 4 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h4>Multi-Tenant Security</h4>
+        <p>School data isolation guarantees complete privacy, with custom subdomains, TLS encryption, and secure database boundaries.</p>
+      </div>
+
+      <!-- Feature Card 5 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h4>Notification Alerts</h4>
+        <p>Announce schedules, release dates, and general notifications through local alerts or automated channels.</p>
+      </div>
+
+      <!-- Feature Card 6 -->
+      <div class="feature-card-web">
+        <div class="feature-web-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h4>Centralized Support</h4>
+        <p>Administrators have absolute override capabilities, system overrides, tenant setups, and support setups from a single panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING PLANS SECTION -->
+  <section class="section pricing-section" id="pricing">
+    <div class="section-header">
+      <span class="section-tag">Pricing Plans</span>
+      <h2 class="section-title">Transparent & Scalable Pricing</h2>
+      <p class="section-desc">Choose the yearly subscription plan that best fits your school's size and feature requirements.</p>
+    </div>
+
+    <div class="pricing-grid-web">
+      {% if yearly_plans %}
+        {% for plan in yearly_plans %}
+        <div class="pricing-card-web {% if forloop.counter == 2 %}featured{% endif %}">
+          <div class="price-header">
+            <h4>{{ plan.name }}</h4>
+            <div class="price-amount">
+              ₹{{ plan.amount }}
+              <span>/ {{ plan.duration_months }} Months</span>
+            </div>
+            <p class="price-desc">{{ plan.description|default:"Full access to all administrative and academic modules." }}</p>
+          </div>
+          <ul class="price-features">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Full Student Directories
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Automatic Billing & Invoicing
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Academic Results & Promotions
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Custom Tenant Subdomain
+            </li>
+          </ul>
+          <a href="javascript:void(0)" onclick="openLoginModal(event)" class="price-btn {% if forloop.counter == 2 %}price-btn-primary{% else %}price-btn-secondary{% endif %}">
+            Get Started
+          </a>
         </div>
         {% endfor %}
-
-        <form method="post" id="loginForm">
-          {% csrf_token %}
-
-          <div class="form-group">
-            <label class="form-label" for="id_username">Username</label>
-            <div class="input-wrapper">
-              <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
+      {% else %}
+        <!-- Fallback Plans if DB is empty -->
+        <div class="pricing-card-web">
+          <div class="price-header">
+            <h4>Standard Plan</h4>
+            <div class="price-amount">
+              ₹15,000
+              <span>/ 12 Months</span>
             </div>
+            <p class="price-desc">Perfect for smaller schools looking to digitize their admissions and fees.</p>
           </div>
+          <ul class="price-features">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Admissions & Student Rolls
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Standard Fee Collection
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Email Notifications
+            </li>
+          </ul>
+          <a href="javascript:void(0)" onclick="openLoginModal(event)" class="price-btn price-btn-secondary">Get Started</a>
+        </div>
 
-          <div class="form-group">
-            <label class="form-label" for="id_password">Password</label>
-            <div class="input-wrapper">
-              <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
-                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
+        <div class="pricing-card-web featured">
+          <div class="price-header">
+            <h4>Premium Plan</h4>
+            <div class="price-amount">
+              ₹35,000
+              <span>/ 12 Months</span>
             </div>
+            <p class="price-desc">Complete administrative solution with priority support and database isolation.</p>
           </div>
+          <ul class="price-features">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Everything in Standard
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Full Invoicing & Accounting
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Custom Subdomain & Theme Color
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Priority WhatsApp Alerts
+            </li>
+          </ul>
+          <a href="javascript:void(0)" onclick="openLoginModal(event)" class="price-btn price-btn-primary">Get Started</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
 
-          <button type="submit" class="btn-submit">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Login
-          </button>
-        </form>
+  <!-- SUPPORT / CONTACT SECTION -->
+  <section class="section contact-section" id="support">
+    <div class="section-header">
+      <span class="section-tag">Direct Support</span>
+      <h2 class="section-title">We are Here to Help</h2>
+      <p class="section-desc">Reach out to our SaaS administration team for any queries regarding school registrations, plan renewals, or custom development request.</p>
+    </div>
+
+    <div class="contact-grid">
+      <!-- Support Block 1: Superuser Name -->
+      <div class="contact-card-web">
+        <div class="contact-web-icon">👤</div>
+        <h4>Administration Head</h4>
+        <p>{% if settings.superuser_name %}{{ settings.superuser_name }}{% else %}Superuser Admin{% endif %}</p>
       </div>
+
+      <!-- Support Block 2: Phone -->
+      <div class="contact-card-web">
+        <div class="contact-web-icon">📞</div>
+        <h4>Phone Support</h4>
+        <p>{% if settings.superuser_phone %}{{ settings.superuser_phone }}{% else %}Not Configured{% endif %}</p>
+      </div>
+
+      <!-- Support Block 3: Email -->
+      <div class="contact-card-web">
+        <div class="contact-web-icon">✉️</div>
+        <h4>Email Address</h4>
+        <p>{% if settings.superuser_email %}{{ settings.superuser_email }}{% else %}support@schoolerp.com{% endif %}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEBSITE FOOTER -->
+  <footer class="web-footer">
+    <div class="footer-container">
+      <a href="#" class="footer-logo">
+        {% if settings.logo %}
+          <img src="{{ settings.logo.url }}" alt="Logo" onerror="handleImageError(this)">
+        {% endif %}
+        <span>{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+      </a>
+      <div class="footer-text">
+        &copy; {% now "Y" %} {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}. All rights reserved. Encrypted Connection.
+      </div>
+    </div>
+  </footer>
+
+  <!-- DYNAMIC LOGIN MODAL OVERLAY -->
+  <div class="login-modal-overlay" id="loginModal" onclick="closeLoginModalOnBackdrop(event)">
+    <div class="login-card">
+      <button class="close-modal-btn" onclick="closeLoginModal()" aria-label="Close modal">&times;</button>
+      
+      <div class="form-header-group">
+        <span class="welcome-badge">Console Login</span>
+        <h2 class="form-heading">Sign In</h2>
+        <p class="form-sub">Please enter your superuser credentials to manage the platform settings.</p>
+      </div>
+
+      {% for msg in messages %}
+      <div class="alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+      {% endfor %}
+
+      <form method="post" id="loginForm">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <div class="input-wrapper">
+            <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_password">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" style="margin-top: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Login
+        </button>
+      </form>
 
       <div class="secure-notice">
         <div class="secure-heading">
@@ -653,22 +1273,19 @@ body {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          Secure Login
+          Secure Session
         </div>
-        <span class="secure-text">Protected by encrypted authentication.</span>
+        <span class="secure-text">Encrypted console authentication.</span>
       </div>
-
     </div>
   </div>
-
-</div>
 
 <script>
 function handleImageError(img) {
   img.style.display = 'none';
   const container = img.parentElement;
   if (container) {
-    const fallback = container.querySelector('.system-initials');
+    const fallback = container.querySelector('.nav-initials') || container.querySelector('.initials-fallback');
     if (fallback) {
       fallback.classList.remove('is-hidden');
     }
@@ -691,6 +1308,113 @@ function togglePw() {
     icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
   }
 }
+
+// Modal open/close actions
+function openLoginModal(e) {
+  if (e) e.preventDefault();
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Disable scroll under modal
+    
+    // Focus the first input inside the modal
+    setTimeout(() => {
+      const usernameInput = document.getElementById('id_username');
+      if (usernameInput) usernameInput.focus();
+    }, 100);
+  }
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scroll
+  }
+}
+
+function closeLoginModalOnBackdrop(e) {
+  const modal = document.getElementById('loginModal');
+  if (e.target === modal) {
+    closeLoginModal();
+  }
+}
+
+// Scrolled Navbar Effect
+window.addEventListener('scroll', function() {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+});
+
+// Slideshow Autoplay logic
+let slideInterval;
+function startAutoSlide() {
+  if (slideInterval) clearInterval(slideInterval);
+  slideInterval = setInterval(() => {
+    const images = Array.from(document.querySelectorAll('.hero-slider-inner .hero-slide-img'));
+    if (!images.length) return;
+    const activeIdx = images.findIndex(img => img.classList.contains('active'));
+    if (activeIdx !== -1) {
+      switchSlide(activeIdx + 1, false);
+    }
+  }, 6000);
+}
+
+function switchSlide(index, resetTimer = true) {
+  const images = Array.from(document.querySelectorAll('.hero-slider-inner .hero-slide-img'));
+  const dots = Array.from(document.querySelectorAll('.hero-slider-indicators .indicator-dot'));
+  if (!images.length) return;
+  
+  if (resetTimer) {
+    startAutoSlide();
+  }
+  
+  if (index < 0) {
+    index = images.length - 1;
+  } else if (index >= images.length) {
+    index = 0;
+  }
+  
+  images.forEach((img, idx) => {
+    if (idx === index) {
+      img.classList.add('active');
+      img.style.display = 'block';
+      img.offsetHeight; // force reflow
+      img.style.opacity = '1';
+    } else {
+      img.classList.remove('active');
+      img.style.opacity = '0';
+      setTimeout(() => {
+        if (!img.classList.contains('active')) {
+          img.style.display = 'none';
+        }
+      }, 1200);
+    }
+  });
+  
+  dots.forEach((dot, dotIdx) => {
+    if (dotIdx === index) {
+      dot.classList.add('active');
+      dot.style.background = '#ffffff';
+    } else {
+      dot.classList.remove('active');
+      dot.style.background = '#ffffff50';
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  startAutoSlide();
+  
+  // Auto-open modal if there are django message alerts present
+  {% if messages %}
+  openLoginModal();
+  {% endif %}
+});
 </script>
 
 </body>

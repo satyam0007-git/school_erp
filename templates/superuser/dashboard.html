@@ -154,7 +154,8 @@
                 <button class="dropdown-item renew-btn" type="button" style="font-size:13px;font-weight:500;color:#16a34a;"
                   data-pk="{{ r.school.pk }}"
                   data-name="{{ r.school.name|escape }}"
-                  data-session="{{ r.session }}">
+                  data-session="{{ r.session }}"
+                  data-subscription-years="{{ r.subscription_years }}">
                   🔄 Renew
                 </button>
               </li>
@@ -217,10 +218,10 @@ function toggleKPI(element) {
 }
 
 // ── Renew modal ───────────────────────────────────────────────────────────────
-function nextSession(session) {
+function nextSession(session, years) {
   const m = session.match(/^(\d{4})-(\d{2})$/);
   if (!m) return '';
-  const y = parseInt(m[1]) + 1;
+  const y = parseInt(m[1]) + parseInt(years || 1);
   return y + '-' + String((y + 1) % 100).padStart(2, '0');
 }
 
@@ -229,11 +230,12 @@ document.querySelectorAll('.renew-btn').forEach(function(btn) {
     const name    = btn.dataset.name;
     const session = btn.dataset.session;
     const pk      = btn.dataset.pk;
-    const next    = nextSession(session);
+    const years   = btn.dataset.subscriptionYears;
+    const next    = nextSession(session, years);
     document.getElementById('promote-school-name').textContent = name;
     document.getElementById('promote-from-session').textContent = session;
     document.getElementById('promote-to-session').textContent  = next;
-    document.getElementById('renewForm').action = '/super/schools/' + pk + '/promote/';
+    document.getElementById('renewForm').action = '/super/schools/' + pk + '/renew/';
     new bootstrap.Modal(document.getElementById('renewModal')).show();
   });
 });

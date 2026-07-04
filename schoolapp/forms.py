@@ -269,6 +269,7 @@ class SuperUserSettingsForm(forms.ModelForm):
         fields = [
             'software_name', 'superuser_name', 'superuser_email', 'superuser_phone',
             'logo', 'organization_address', 'notes',
+            'campus_image', 'campus_image2', 'campus_image3',
         ]
         widgets = {
             'software_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ERP software name', 'required': 'required'}),
@@ -278,6 +279,9 @@ class SuperUserSettingsForm(forms.ModelForm):
             'logo': forms.FileInput(attrs={'id': 'logo-input', 'accept': 'image/*', 'style': 'display:none;'}),
             'organization_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Office or business address', 'required': 'required'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Internal notes, support details, or future-use information'}),
+            'campus_image': forms.FileInput(attrs={'id': 'campus-input', 'accept': 'image/*', 'style': 'display:none;'}),
+            'campus_image2': forms.FileInput(attrs={'id': 'campus2-input', 'accept': 'image/*', 'style': 'display:none;'}),
+            'campus_image3': forms.FileInput(attrs={'id': 'campus3-input', 'accept': 'image/*', 'style': 'display:none;'}),
         }
 
     def __init__(self, *args, **kwargs):

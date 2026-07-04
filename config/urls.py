@@ -18,7 +18,7 @@ urlpatterns = [
     path('super/users/<int:pk>/delete/', views.user_delete, name='user_delete'),
     path('super/school-fee/', views.super_school_fee_dashboard, name='super_school_fee_dashboard'),
     path('super/schools/<int:school_pk>/collect-fee/', views.super_collect_fee, name='super_collect_fee'),
-    path('super/schools/<int:pk>/promote/', views.super_promote_school, name='super_promote_school'),
+    path('super/schools/<int:pk>/renew/', views.super_renew_school, name='super_renew_school'),
 
     # Subscriptions
     path('super/plans/', views.super_plans_dashboard, name='super_plans_dashboard'),
