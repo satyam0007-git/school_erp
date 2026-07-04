@@ -92,6 +92,7 @@ def build_superuser_dashboard_rows(schools, profiles, session_records, student_c
                 'student_count': active_students,
                 'fee_per_student': school.fee_per_student,
                 'billing_period': get_formatted_billing_period(school, session),
+                'subscription_years': school.get_subscription_years(),
             })
     return rows
 

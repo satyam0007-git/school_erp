@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from ..decorators import school_only
-from ..models import SuperUserSettings
+from ..models import SuperUserSettings, YearlyPlan
 
 
 def login_view(request):
@@ -99,13 +99,15 @@ def login_view(request):
             Q(expiry_date__isnull=True) | Q(expiry_date__gte=today)
         )[:5]
 
+    yearly_plans = YearlyPlan.objects.all().order_by('amount')
     app_settings = SuperUserSettings.get_solo()
     template = 'school/login.html' if tenant else 'login.html'
     return render(request, template, {
         'settings': app_settings,
         'tenant': tenant,
         'public_notifications': public_notifications,
-        'active_tab': active_tab
+        'active_tab': active_tab,
+        'yearly_plans': yearly_plans,
     })
 
 

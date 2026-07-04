@@ -160,16 +160,19 @@ def super_collect_fee(request, school_pk):
 
 
 @super_only
-def super_promote_school(request, pk):
+def super_renew_school(request, pk):
     if request.method == 'POST':
         school = get_object_or_404(School, pk=pk)
         profile = SchoolProfile.get_for_school(school)
         current_session = profile.current_academic_session
+        
+        subscription_years = school.get_subscription_years()
+
         try:
             start_year = int(current_session.split('-')[0])
         except (ValueError, IndexError):
             start_year = get_session_start_year(timezone.localdate(), profile.session_start_month)
-        next_session = format_academic_session(start_year + 1)
+        next_session = format_academic_session(start_year + subscription_years)
 
         if profile.current_academic_session == next_session:
             messages.warning(request, f'{school.name} is already on session {next_session}.')
@@ -199,17 +202,17 @@ def super_promote_school(request, pk):
         if new_structures:
             FeeStructure.objects.bulk_create(new_structures)
 
-        # Advance subscription validity period by 1 year
+        # Advance subscription validity period by subscription years
         if school.subscription_start_date:
             try:
-                school.subscription_start_date = school.subscription_start_date.replace(year=school.subscription_start_date.year + 1)
+                school.subscription_start_date = school.subscription_start_date.replace(year=school.subscription_start_date.year + subscription_years)
             except ValueError:
-                school.subscription_start_date = school.subscription_start_date + timezone.timedelta(days=365)
+                school.subscription_start_date = school.subscription_start_date + timezone.timedelta(days=365 * subscription_years)
         if school.subscription_end_date:
             try:
-                school.subscription_end_date = school.subscription_end_date.replace(year=school.subscription_end_date.year + 1)
+                school.subscription_end_date = school.subscription_end_date.replace(year=school.subscription_end_date.year + subscription_years)
             except ValueError:
-                school.subscription_end_date = school.subscription_end_date + timezone.timedelta(days=365)
+                school.subscription_end_date = school.subscription_end_date + timezone.timedelta(days=365 * subscription_years)
         school.save()
 
         profile.current_academic_session = next_session
@@ -232,8 +235,29 @@ def super_settings(request):
         form = SuperUserSettingsForm(request.POST, request.FILES, instance=settings_obj)
         if form.is_valid():
             instance = form.save(commit=False)
-            if not request.FILES.get('logo'):
+            if not request.FILES.get('logo') and request.POST.get('clear_logo') != '1':
                 instance.logo = settings_obj.logo
+            elif request.POST.get('clear_logo') == '1':
+                instance.logo = None
+
+            # Handle campus image 1
+            if not request.FILES.get('campus_image') and request.POST.get('clear_campus_image') != '1':
+                instance.campus_image = settings_obj.campus_image
+            elif request.POST.get('clear_campus_image') == '1':
+                instance.campus_image = None
+
+            # Handle campus image 2
+            if not request.FILES.get('campus_image2') and request.POST.get('clear_campus_image2') != '1':
+                instance.campus_image2 = settings_obj.campus_image2
+            elif request.POST.get('clear_campus_image2') == '1':
+                instance.campus_image2 = None
+
+            # Handle campus image 3
+            if not request.FILES.get('campus_image3') and request.POST.get('clear_campus_image3') != '1':
+                instance.campus_image3 = settings_obj.campus_image3
+            elif request.POST.get('clear_campus_image3') == '1':
+                instance.campus_image3 = None
+
             instance.default_session = request.POST.get('default_session', '').strip()
             instance.save()
             settings_obj = SuperUserSettings.get_solo()

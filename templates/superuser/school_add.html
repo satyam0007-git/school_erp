@@ -318,7 +318,7 @@
             <div class="input-wrap">
               <span class="input-icon">📦</span>
               <select name="yearly_plan" id="id_yearly_plan">
-                <option value="" data-amount="0.00">-- Select Plan (or Custom) --</option>
+                <option value="" data-amount="0.00">Select Plan (or Custom)</option>
                 {% for plan in yearly_plans %}
                   <option value="{{ plan.id }}" data-amount="{{ plan.amount }}">{{ plan.name }} (₹{{ plan.amount|floatformat:0 }})</option>
                 {% endfor %}
@@ -330,7 +330,7 @@
             <label>Subscription Amount (₹) <span class="req">*</span></label>
             <div class="input-wrap">
               <span class="input-icon" style="font-size:13px;font-weight:700;color:#374151;">₹</span>
-              <input type="number" name="subscription_amount" id="id_subscription_amount" placeholder="e.g. 50000" min="0" step="0.01" required value="0.00">
+              <input type="number" name="subscription_amount" id="id_subscription_amount" placeholder="e.g. 50000" min="0" step="1" required value="0">
             </div>
             <span class="hint">Annual subscription charge for the academic year</span>
           </div>

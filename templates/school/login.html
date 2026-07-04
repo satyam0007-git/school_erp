@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ tenant.name }} — Portal Login</title>
+<title>{{ tenant.name }} — Powered by {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,12 +12,15 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
-  /* Dynamic branding colors injected from school tenant settings */
-  --brand:             {{ tenant.theme_color|default:'#2563eb' }};
-  --brand-light:       {{ tenant.theme_color|default:'#2563eb' }}e0;
-  --brand-glow:        {{ tenant.theme_color|default:'#2563eb' }}1e;
-  --brand-deep:        #181c24;
+  --brand:             {{ tenant.theme_color|default:"#2563eb" }};
+  --brand-light:       {{ tenant.theme_color|default:"#3b82f6" }};
+  --brand-glow:        rgba(37, 99, 235, 0.08);
+  --brand-deep:        #080a0f;
   --text-1:            #0f172a;
   --text-2:            #475569;
   --text-3:            #94a3b8;
@@ -32,160 +35,209 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--brand-deep);
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow-x: hidden;
+  background-color: #f8fafc;
   color: var(--text-1);
+  overflow-x: hidden;
+  line-height: 1.5;
 }
 
-/* Background animated mesh and orbs */
-.bg-decorations {
+/* NAVBAR STYLE */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  z-index: 1000;
+  transition: var(--transition);
+}
+.navbar.scrolled {
+  height: 70px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-1);
+}
+.nav-logo-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+}
+.nav-logo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.nav-initials {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--brand);
+}
+.nav-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+.nav-link {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: var(--transition);
+}
+.nav-link:hover {
+  color: var(--brand);
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.nav-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+}
+.nav-btn-secondary {
+  color: var(--text-2);
+  border: 1.5px solid var(--border);
+  background: transparent;
+}
+.nav-btn-secondary:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-glow);
+}
+.nav-btn-primary {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #ffffff;
+  border: none;
+}
+.nav-btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+/* HERO SECTION WITH FULL BACKDROP SLIDESHOW */
+.hero-section {
+  position: relative;
+  min-height: 100vh;
+  padding: 140px 48px 80px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+/* Background animated mesh and orbs for Hero */
+.hero-bg-decorations {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
 }
-.bg-mesh {
+.hero-bg-mesh {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 10% 20%, {{ tenant.theme_color|default:'#2563eb' }}25 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 60% at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 55%);
   animation: meshAnim 15s ease-in-out infinite alternate;
 }
-.orb {
+.hero-grid-overlay {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.22;
-  animation: orbFloat 10s ease-in-out infinite alternate;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
 }
-.orb-1 { width: 450px; height: 450px; background: var(--brand); top: -10%; left: -10%; animation-delay: 0s; }
-.orb-2 { width: 350px; height: 350px; background: #6366f1; bottom: -10%; right: -5%; animation-delay: -3s; }
 
 @keyframes meshAnim {
   0% { transform: scale(1) translate(0, 0); }
   100% { transform: scale(1.05) translate(1%, -1%); }
 }
-@keyframes orbFloat {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(30px, -30px) scale(1.08); }
-}
 
-/* Main Container Layout - Full screen split */
-.app-container {
-  width: 100vw;
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  background: #f9fafb;
-  z-index: 10;
-  position: relative;
-  animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* LEFT COLUMN - School Website Showcase */
-.branding-panel {
-  background: linear-gradient(135deg, #181c24 0%, #2a303c 100%);
-  padding: 64px 48px;
-  color: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Decorative glass circle */
-.branding-panel::before {
-  content: '';
-  position: absolute;
-  top: -10%; right: -10%;
-  width: 320px; height: 320px;
-  border-radius: 50%;
-  border: 50px solid rgba(255, 255, 255, 0.015);
-  pointer-events: none;
-}
-
-.school-brand-banner {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+.hero-content {
   position: relative;
   z-index: 2;
-  margin-bottom: 28px;
-}
-.school-logo-container {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  flex-shrink: 0;
-}
-.school-logo-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-}
-.school-initials {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--brand);
-}
-.school-title-group {
-  display: flex;
-  flex-direction: column;
-}
-.school-name-heading {
-  font-size: 24px;
-  font-weight: 800;
   color: #ffffff;
-  letter-spacing: -0.5px;
-  line-height: 1.25;
 }
-.school-motto-text {
-  font-size: 13.5px;
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 6px 16px;
+  border-radius: 30px;
+  margin-bottom: 24px;
+}
+.hero-heading {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #ffffff, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-motto {
+  font-size: 17px;
   color: #94a3b8;
-  font-style: italic;
-  margin-top: 4px;
-  font-weight: 300;
-  line-height: 1.4;
-  border-left: 2px solid var(--brand);
-  padding-left: 8px;
+  line-height: 1.6;
+  margin-bottom: 36px;
 }
 
-/* Campus Preview Image Slider (Full Background) */
-.campus-bg-slider {
+/* Full backdrop slider container */
+.hero-bg-slider {
   position: absolute;
   inset: 0;
   z-index: 1;
   overflow: hidden;
 }
-.campus-bg-slider .slider-wrapper {
+.hero-slider-inner {
   position: relative;
   width: 100%;
   height: 100%;
 }
-.campus-bg-slider .campus-img {
+.hero-slide-img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -193,224 +245,110 @@ body {
   object-fit: cover;
   transition: opacity 1.2s ease-in-out, transform 8s ease-out;
   opacity: 0;
-  transform: scale(1);
 }
-.campus-bg-slider .campus-img.active {
+.hero-slide-img.active {
   opacity: 1;
   transform: scale(1.06);
 }
-.campus-slider-overlay {
+.hero-slider-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(20, 24, 33, 0.75) 50%, rgba(15, 23, 42, 0.92) 100%);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(20, 24, 33, 0.75) 50%, rgba(15, 23, 42, 0.93) 100%);
   z-index: 2;
 }
-.branding-content {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  flex: 1;
-}
-
-/* Centered Welcome Badge */
-.branding-middle {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 3;
-  margin: 32px 0;
-}
-.welcome-campus-badge {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50px;
-  padding: 10px 22px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  transition: var(--transition);
-}
-.welcome-campus-badge:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-.welcome-campus-badge span {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #ffffff;
-}
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--brand);
-  border-radius: 50%;
-  position: relative;
-}
-.pulse-dot::after {
-  content: '';
+.hero-slider-indicators {
   position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 2px solid var(--brand);
-  animation: pulse 2s infinite;
-  opacity: 0.8;
-}
-@keyframes pulse {
-  0% { transform: scale(0.8); opacity: 0.8; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-
-/* Modern Pill Indicators */
-.slider-indicators-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: auto;
-  padding-bottom: 8px;
-  position: relative;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 3;
-}
-.slider-indicators {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 8px 16px;
   border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
-.indicator-dot {
+.hero-slider-indicators .indicator-dot {
   width: 8px;
   height: 8px;
-  border-radius: 4px;
+  border-radius: 50%;
   border: none;
-  background-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.3);
   cursor: pointer;
-  padding: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s ease;
 }
-.indicator-dot:hover {
-  background-color: rgba(255, 255, 255, 0.6);
-}
-.indicator-dot.active {
+.hero-slider-indicators .indicator-dot.active {
   width: 24px;
-  background-color: var(--brand);
   border-radius: 4px;
-  box-shadow: 0 0 10px var(--brand-glow);
+  background: var(--brand);
 }
 
-/* Powered by ERP Footer */
-.powered-by-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 12px;
-  color: #475569;
-  position: relative;
-  z-index: 2;
-}
-.powered-text {
-  font-size: 11px;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.erp-mini-brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.erp-mini-logo {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+/* LOGIN MODAL OVERLAY */
+.login-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(10, 13, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 20px;
 }
-.erp-mini-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 2px;
+.login-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }
-.erp-mini-logo span {
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
+.login-modal-overlay .login-card {
+  transform: translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.erp-mini-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #94a3b8;
+.login-modal-overlay.active .login-card {
+  transform: translateY(0);
 }
 
-/* RIGHT COLUMN - Login Form Panel */
-.form-panel {
-  background: #f8fafc;
-  padding: 64px 48px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-}
-.form-panel-inner {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-/* Dual Logo Header Row */
-.card-logo-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  width: 100%;
-}
-.card-logo {
-  width: 54px;
-  height: 54px;
-  border-radius: 12px;
-  background: var(--white);
+/* Forms & Cards */
+.login-card {
+  background: #ffffff;
   border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 445px;
+  position: relative;
+}
+.close-modal-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  border-radius: 50%;
+  transition: var(--transition);
+  z-index: 10;
 }
-.card-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 4px;
-}
-.logo-connector {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-3);
+.close-modal-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--text-1);
 }
 
 .form-header-group {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 .welcome-badge {
   font-size: 11px;
@@ -422,66 +360,45 @@ body {
   display: block;
 }
 .form-heading {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--text-1);
-  letter-spacing: -0.8px;
+  letter-spacing: -0.5px;
   margin-bottom: 6px;
 }
 .form-sub {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-2);
   line-height: 1.5;
 }
 
-/* Modern Card for login forms */
-.login-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 32px 28px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.03), 0 1px 3px rgba(15, 23, 42, 0.01);
-  transition: var(--transition);
-  margin-bottom: 24px;
-}
-.login-card:hover {
-  box-shadow: 0 16px 35px rgba(15, 23, 42, 0.05);
-}
-
-/* Modern Segmented Login Tabs */
+/* Tabs for Staff/Student Portals */
 .login-tabs {
   display: flex;
   background: #f1f5f9;
-  padding: 4px;
   border-radius: 12px;
+  padding: 4px;
   margin-bottom: 24px;
-  position: relative;
+  border: 1px solid var(--border);
 }
 .login-tab-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 10px;
   border: none;
   background: none;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-2);
+  border-radius: 9px;
   cursor: pointer;
-  border-radius: 8px;
   transition: var(--transition);
-  outline: none;
-  text-align: center;
-}
-.login-tab-btn:hover {
-  color: var(--text-1);
 }
 .login-tab-btn.active {
-  color: var(--brand) !important;
-  background: var(--white);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-  font-weight: 700;
+  background: #ffffff;
+  color: var(--brand);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Forms & Fields */
 .form-group {
   margin-bottom: 18px;
 }
@@ -490,7 +407,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-1);
-  margin-bottom: 7px;
+  margin-bottom: 6px;
 }
 .input-wrapper {
   position: relative;
@@ -531,7 +448,6 @@ body {
   color: var(--brand);
 }
 
-/* Password visibility toggle */
 .has-password-toggle {
   padding-right: 48px !important;
 }
@@ -558,44 +474,34 @@ body {
   background-color: var(--brand-glow);
 }
 
-/* Submit button */
 .btn-submit {
   width: 100%;
-  padding: 14px 24px;
+  padding: 13px 24px;
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
   color: var(--white);
   border: none;
   border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 14px var(--brand-glow);
   transition: var(--transition);
-  position: relative;
 }
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px var(--brand-glow);
-  filter: brightness(1.04);
-}
-.btn-submit:active {
-  transform: translateY(1px);
-  box-shadow: 0 4px 10px var(--brand-glow);
 }
 
-/* Secure Login footer badge */
 .secure-notice {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-top: 24px;
-  padding-top: 20px;
+  margin-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 .secure-heading {
@@ -607,7 +513,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .secure-text {
   font-size: 11px;
@@ -622,9 +528,9 @@ body {
   background-color: var(--err-bg);
   border: 1px solid var(--err-border);
   border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 20px;
-  font-size: 13px;
+  padding: 10px 12px;
+  margin-bottom: 18px;
+  font-size: 12.5px;
   color: var(--err-text);
   line-height: 1.4;
   animation: shake 0.4s ease;
@@ -633,996 +539,701 @@ body {
   flex-shrink: 0;
   margin-top: 2px;
 }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
 
-/* Responsive Layout */
-@media (max-width: 960px) {
-  .app-container {
-    grid-template-columns: 1fr;
-    width: 100%;
-    min-height: 100vh;
-  }
-  .branding-panel {
-    padding: 48px 32px 32px;
-  }
-  .form-panel {
-    padding: 40px 32px 48px;
-  }
-  .school-brand-banner {
-    margin-bottom: 12px;
-  }
-  .school-logo-container {
-    width: 60px;
-    height: 60px;
-  }
-  .school-name-heading {
-    font-size: 21px;
-  }
-}
-
-@media (max-width: 480px) {
-  .branding-panel {
-    padding: 32px 20px 20px;
-  }
-  .school-logo-container {
-    width: 48px;
-    height: 48px;
-  }
-  .school-name-heading {
-    font-size: 18px;
-  }
-  .form-panel {
-    padding: 32px 20px;
-  }
-  .form-heading {
-    font-size: 22px;
-  }
-}
-
-/* Floating actions at top right */
-.floating-actions-container {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  z-index: 1000;
-  display: flex;
-  gap: 12px;
-}
-.action-dropdown-wrapper {
+/* SECTION GLOBAL STYLE */
+.section {
+  padding: 100px 48px;
   position: relative;
 }
-.action-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  color: var(--text-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  outline: none;
+.section-header {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 64px;
 }
-.action-btn:hover {
-  background: var(--brand-glow);
-  border-color: var(--brand);
+.section-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
   color: var(--brand);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--brand-glow);
-}
-.action-btn:active {
-  transform: translateY(0);
-}
-.action-btn svg {
-  transition: transform 0.3s ease;
-}
-.notification-bell-btn:hover svg {
-  transform: rotate(15deg);
-}
-.bell-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  border: 2px solid var(--white);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-.notification-dropdown {
-  position: absolute;
-  top: 54px;
-  right: 0;
-  width: 360px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  display: none;
-  flex-direction: column;
-  z-index: 1001;
-  transform-origin: top right;
-  animation: dropdownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-.notification-dropdown.active {
-  display: flex;
-}
-.about-dropdown {
-  position: absolute;
-  top: 54px;
-  right: 0;
-  width: 320px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  display: none;
-  flex-direction: column;
-  z-index: 1001;
-  transform-origin: top right;
-  animation: dropdownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  padding: 16px;
-}
-.about-dropdown.active {
-  display: flex;
-}
-.about-dropdown .dropdown-header {
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   margin-bottom: 12px;
 }
-.about-dropdown .dropdown-header h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0;
+.section-title {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--text-1);
+  margin-bottom: 16px;
 }
-.about-dropdown .dropdown-list {
+.section-desc {
+  font-size: 16px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* NOTICE BOARD SECTION */
+.notices-section {
+  background: #ffffff;
+}
+.notices-grid-web {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.notice-card-web {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  transition: var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  cursor: pointer;
 }
-@keyframes dropdownFade {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.notice-card-web:hover {
+  background: #ffffff;
+  border-color: var(--brand);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
 }
-.notification-dropdown.active {
+.notice-card-meta {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
-.dropdown-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+.notice-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.notice-badge.general { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+.notice-badge.exam { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.notice-badge.event { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.notice-date {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.notice-card-web h4 {
+  font-size: 16.5px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+.notice-card-web p {
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notice-card-footer {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ABOUT / INFORMATION SECTION */
+.about-section {
+  background: #f1f5f9;
+}
+.about-grid-web {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.about-info-block {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.about-item-web {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.about-item-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--brand-glow);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.about-item-detail h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.about-item-detail p {
+  font-size: 15px;
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+/* SaaS Info Block */
+.saas-info-block {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.saas-info-header h3 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.saas-info-header p {
+  font-size: 14.5px;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+.saas-badge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 24px;
+}
+.saas-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.saas-badge-item svg {
+  color: #10b981;
+}
+
+/* DETAIL NOTICE MODAL */
+.notice-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.notice-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+.notice-modal-header {
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.dropdown-header h3 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
+.notice-modal-card h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-1);
+  line-height: 1.35;
+  margin-bottom: 16px;
 }
-.dropdown-header-badge {
+.notice-modal-body {
+  font-size: 14.5px;
+  color: var(--text-2);
+  line-height: 1.7;
+  white-space: pre-line;
+}
+.notice-modal-attachment {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.attachment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--brand-glow);
   color: var(--brand);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.dropdown-list {
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.dropdown-list::-webkit-scrollbar {
-  width: 6px;
-}
-.dropdown-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.dropdown-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-.dropdown-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-.dropdown-item {
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  text-align: left;
-}
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-@media (max-width: 960px) {
-  .floating-actions-container {
-    top: 16px;
-    right: 16px;
-  }
-}
-@media (max-width: 480px) {
-  .notification-dropdown {
-    width: calc(100vw - 32px);
-    right: 0;
-  }
-}
-
-/* Announcement Ticker Bar */
-.announcement-ticker-bar {
-  width: 100%;
-  height: 40px;
-  background: var(--brand);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  z-index: 1002;
-  position: relative;
-  flex-shrink: 0;
-}
-.ticker-label-container {
-  position: relative;
-  height: 100%;
-  z-index: 1003;
-}
-.ticker-label {
-  background: rgba(0, 0, 0, 0.15);
-  color: #ffffff;
-  padding: 0 16px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  z-index: 10;
-  box-shadow: 4px 0 10px rgba(0,0,0,0.15);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.ticker-label:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-.ticker-label.active {
-  background: rgba(0, 0, 0, 0.3);
-}
-.ticker-label.active #tickerChevron {
-  transform: rotate(180deg);
-}
-.ticker-label-icon {
+  padding: 10px 18px;
+  border-radius: 8px;
   font-size: 13px;
-  animation: bellRing 1.5s ease infinite;
+  font-weight: 700;
+  text-decoration: none;
 }
-@keyframes bellRing {
-  0%, 100% { transform: rotate(0); }
-  20%, 60% { transform: rotate(15deg); }
-  40%, 80% { transform: rotate(-15deg); }
+
+/* FOOTER */
+.web-footer {
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 64px 48px;
+  border-top: 1px solid #1e293b;
 }
-.ticker-content-wrapper {
-  flex: 1;
-  overflow: hidden;
-  height: 100%;
-  position: relative;
-}
-.ticker-content {
-  position: absolute;
-  white-space: nowrap;
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 32px;
-  height: 100%;
-  animation: tickerScroll 25s linear infinite;
+  flex-wrap: wrap;
+  gap: 24px;
 }
-.ticker-content:hover {
-  animation-play-state: paused;
-}
-.ticker-item {
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ticker-item:hover {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: underline;
-}
-.ticker-item-category {
-  font-size: 9.5px;
-  font-weight: 800; /* Extra bold category */
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 2.5px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.ticker-separator {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 12px;
-  user-select: none;
-}
-
-@keyframes tickerScroll {
-  0% { transform: translate3d(100%, 0, 0); }
-  100% { transform: translate3d(-100%, 0, 0); }
-}
-
-
-.about-item {
+.footer-logo {
   display: flex;
   align-items: center;
   gap: 12px;
+  color: #ffffff;
+  text-decoration: none;
 }
-.about-icon {
-  font-size: 16px;
+.footer-logo img {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--brand);
-  flex-shrink: 0;
+  object-fit: contain;
 }
-.about-info {
-  display: flex;
-  flex-direction: column;
-}
-.about-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.about-value {
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
+.footer-text {
+  font-size: 13.5px;
 }
 
-/* Fallback Background & Features for Branding Panel */
-.branding-fallback-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
+/* RESPONSIVE LAYOUT */
+@media (max-width: 960px) {
+  .navbar {
+    padding: 0 24px;
+  }
+  .nav-links {
+    display: none;
+  }
+  .hero-section {
+    grid-template-columns: 1fr;
+    padding: 120px 24px 60px;
+    gap: 48px;
+    text-align: center;
+  }
+  .hero-content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .notices-grid-web {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .about-grid-web {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
-.glowing-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.12;
-  mix-blend-mode: screen;
-  animation: floatOrb 15s infinite alternate ease-in-out;
+@media (max-width: 640px) {
+  .notices-grid-web {
+    grid-template-columns: 1fr;
+  }
+  .section {
+    padding: 64px 20px;
+  }
 }
-.orb-1 {
-  top: 10%;
-  left: -10%;
-  width: 380px;
-  height: 380px;
-  background: var(--brand);
+@media (max-width: 580px) {
+  .navbar .nav-title,
+  .navbar .nav-actions span {
+    display: none !important;
+  }
+  .navbar {
+    padding: 0 16px;
+  }
 }
-.orb-2 {
-  bottom: 10%;
-  right: -10%;
-  width: 420px;
-  height: 420px;
-  background: #0ea5e9;
-  animation-delay: -7s;
-}
-.grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 50px 50px;
-  mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
-  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
-}
-
-@keyframes floatOrb {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, -30px) scale(1.1); }
-  100% { transform: translate(-30px, 50px) scale(0.95); }
-}
-
-/* Features Showcase styling */
-.portal-features-showcase {
-  margin: auto 0;
-  position: relative;
-  z-index: 2;
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 24px 0;
-}
-.showcase-title {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--brand);
-  margin-bottom: 24px;
-  opacity: 0.9;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.showcase-title::after {
-  content: '';
-  flex-grow: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
-}
-.feature-cards-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.feature-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 18px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.feature-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
-}
-.feature-icon-wrapper {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--brand);
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.feature-card:nth-child(2) .feature-icon-wrapper {
-  color: #0ea5e9;
-}
-.feature-card:nth-child(3) .feature-icon-wrapper {
-  color: #10b981;
-}
-.feature-details h4 {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 5px;
-}
-.feature-details p {
-  font-size: 12.5px;
-  color: #94a3b8;
-  line-height: 1.45;
-}
-
-/* Fallback Initials Badges styling */
-.is-hidden {
-  display: none !important;
-}
-.school-initials.is-hidden,
-.initials-fallback.is-hidden,
-.card-initials.is-hidden {
-  display: none !important;
-}
-.card-initials {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--brand);
-  text-transform: uppercase;
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.03);
-}
-.erp-card-logo .card-initials {
-  color: #10b981;
-}
-.initials-fallback {
-  font-size: 14px;
-  font-weight: 800;
-  color: #10b981;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+  .login-tabs {
+    margin-bottom: 18px;
+  }
+  .login-tab-btn {
+    font-size: 12.5px;
+    padding: 8px;
+  }
+  .form-header-group {
+    margin-bottom: 16px;
+  }
+  .form-heading {
+    font-size: 18px;
+  }
+  .form-sub {
+    font-size: 12px;
+  }
+  .close-modal-btn {
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
 }
 </style>
 </head>
 <body>
 
-  <!-- Top Scrolling Announcement Ticker -->
-  {% if public_notifications %}
-  <div class="announcement-ticker-bar">
-    <div class="ticker-label-container">
-      <div class="ticker-label" id="tickerBellBtn" role="button" aria-haspopup="true" aria-expanded="false">
-        <span class="ticker-label-icon">📢</span>
-        <span>Latest Notifications</span>
-        <svg id="tickerChevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px; transition: transform 0.2s ease;">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </div>
-      
-      <div class="notification-dropdown" id="tickerDropdown" style="left: 0; right: auto; top: 40px; transform-origin: top left;">
-        <div class="dropdown-header">
-          <h3>Latest Announcements</h3>
-          <span class="dropdown-header-badge">{{ public_notifications|length }} New</span>
-        </div>
-        <div class="dropdown-list">
-          {% for notice in public_notifications %}
-          <div class="dropdown-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-size: 10px; color: var(--brand); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{{ notice.get_category_display }}</span>
-              <span style="font-size: 10px; color: #64748b;">{{ notice.publish_date|date:"d M Y" }}</span>
-            </div>
-            <h4 style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ notice.title }}</h4>
-            <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              {{ notice.description }}
-            </p>
-            {% if notice.attachment %}
-              <div style="margin-top: 6px; display: flex; align-items: center;" onclick="event.stopPropagation();">
-                <a href="{{ notice.attachment.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--brand); text-decoration: none; font-weight: 500;">
-                  📎 Attachment
-                </a>
-              </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="ticker-content-wrapper">
-      <div class="ticker-content">
-        {% for notice in public_notifications %}
-          {% if not forloop.first %}
-            <span class="ticker-separator">•</span>
-          {% endif %}
-          <span class="ticker-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
-            <span class="ticker-item-category">{{ notice.get_category_display }}</span>
-            <span class="ticker-item-title">{{ notice.title }}</span>
+  <!-- WEBSITE NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <!-- Left side: SaaS Logo & Name, linking to eduvault.net/super/ -->
+    <a href="https://eduvault.net/super/" class="nav-brand" style="text-decoration: none;">
+      <div class="nav-logo-wrap">
+        {% if settings.logo %}
+          <img src="{{ settings.logo.url }}" alt="Logo" onerror="handleImageError(this)">
+          <span class="nav-initials is-hidden">
+            {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}EV{% endif %}
           </span>
-        {% endfor %}
+        {% else %}
+          <span class="nav-initials">
+            {% if settings.software_name %}{{ settings.software_name|slice:":2"|upper }}{% else %}EV{% endif %}
+          </span>
+        {% endif %}
+      </div>
+      <span class="nav-title">{% if settings.software_name %}{{ settings.software_name }}{% else %}EduVault{% endif %}</span>
+    </a>
+
+    <!-- Center: Links -->
+    <ul class="nav-links">
+      <li><a href="#notices" class="nav-link">Notice Board</a></li>
+      <li><a href="#about" class="nav-link">About School</a></li>
+    </ul>
+
+    <!-- Right side: School Logo & Name (Clicking opens Login Modal) -->
+    <div class="nav-actions" onclick="openLoginModal(event)" style="cursor: pointer; display: flex; align-items: center; gap: 12px;" title="Portal Sign In">
+      <span style="font-weight: 700; color: var(--text-2); font-size: 15px;">{{ tenant.name }}</span>
+      <div class="nav-logo-wrap" style="width: 36px; height: 36px; border-radius: 8px;">
+        {% if tenant.logo %}
+          <img src="{{ tenant.logo.url }}" alt="School Logo" onerror="handleImageError(this)">
+          <span class="initials-fallback is-hidden" style="font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+            {{ tenant.name|slice:":2"|upper }}
+          </span>
+        {% else %}
+          <span class="initials-fallback" style="font-size: 12px; font-weight: 800; color: var(--brand); text-transform: uppercase; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+            {{ tenant.name|slice:":2"|upper }}
+          </span>
+        {% endif %}
       </div>
     </div>
-  </div>
-  {% endif %}
+  </nav>
 
-<div class="app-container">
-
-  <!-- Floating Actions (Bell & Info) -->
-  <div class="floating-actions-container">
-    {% if public_notifications %}
-    <div class="action-dropdown-wrapper">
-      <button class="action-btn notification-bell-btn" id="bellBtn" aria-label="Notifications">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span class="bell-badge">{{ public_notifications|length }}</span>
-      </button>
-      
-      <div class="notification-dropdown" id="notificationDropdown">
-        <div class="dropdown-header">
-          <h3>Latest Announcements</h3>
-          <span class="dropdown-header-badge">{{ public_notifications|length }} New</span>
-        </div>
-        <div class="dropdown-list">
-          {% for notice in public_notifications %}
-          <div class="dropdown-item" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.description|escapejs }}', '{{ notice.publish_date|date:"d M Y" }}', '{{ notice.get_category_display|escapejs }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-size: 10px; color: var(--brand); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">{{ notice.get_category_display }}</span>
-              <span style="font-size: 10px; color: #64748b;">{{ notice.publish_date|date:"d M Y" }}</span>
-            </div>
-            <h4 style="font-size: 13px; font-weight: 600; color: #ffffff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ notice.title }}</h4>
-            <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              {{ notice.description }}
-            </p>
-            {% if notice.attachment %}
-              <div style="margin-top: 6px; display: flex; align-items: center;" onclick="event.stopPropagation();">
-                <a href="{{ notice.attachment.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--brand); text-decoration: none; font-weight: 500;">
-                  📎 Attachment
-                </a>
-              </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <div class="action-dropdown-wrapper">
-      <button class="action-btn about-btn" id="aboutBtn" aria-label="About School">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-      </button>
-
-      <div class="about-dropdown" id="aboutDropdown">
-        <div class="dropdown-header">
-          <h3>About Our School</h3>
-        </div>
-        <div class="dropdown-list">
-          <div class="about-item">
-            <span class="about-icon">🏛️</span>
-            <div class="about-info">
-              <span class="about-label">School Name</span>
-              <span class="about-value">{{ tenant.name }}</span>
-            </div>
-          </div>
-          {% if tenant.phone %}
-          <div class="about-item">
-            <span class="about-icon">📞</span>
-            <div class="about-info">
-              <span class="about-label">Phone Number</span>
-              <span class="about-value">{{ tenant.phone }}</span>
-            </div>
-          </div>
-          {% endif %}
-          {% if tenant.email %}
-          <div class="about-item">
-            <span class="about-icon">✉️</span>
-            <div class="about-info">
-              <span class="about-label">Email ID</span>
-              <span class="about-value">{{ tenant.email }}</span>
-            </div>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- LEFT PANEL - School Brand & Features Grid -->
-  <div class="branding-panel">
-    <!-- Campus Image Showcase as full background -->
+  <!-- HERO SECTION WITH FULL BACKDROP SLIDESHOW -->
+  <header class="hero-section" id="home">
+    <!-- Full background campus slider -->
     {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
-    <div class="campus-bg-slider">
-      <div class="slider-wrapper">
+    <div class="hero-bg-slider">
+      <div class="hero-slider-inner">
         {% if tenant.campus_image %}
-          <img src="{{ tenant.campus_image.url }}" alt="Campus Image 1" class="campus-img active" data-index="0">
+          <img src="{{ tenant.campus_image.url }}" alt="Campus 1" class="hero-slide-img active" data-index="0">
         {% endif %}
         {% if tenant.campus_image2 %}
-          <img src="{{ tenant.campus_image2.url }}" alt="Campus Image 2" class="campus-img" data-index="1" style="display: none; opacity: 0;">
+          <img src="{{ tenant.campus_image2.url }}" alt="Campus 2" class="hero-slide-img" data-index="1" style="display: none; opacity: 0;">
         {% endif %}
         {% if tenant.campus_image3 %}
-          <img src="{{ tenant.campus_image3.url }}" alt="Campus Image 3" class="campus-img" data-index="2" style="display: none; opacity: 0;">
+          <img src="{{ tenant.campus_image3.url }}" alt="Campus 3" class="hero-slide-img" data-index="2" style="display: none; opacity: 0;">
         {% endif %}
       </div>
-      <div class="campus-slider-overlay"></div>
+      <div class="hero-slider-overlay"></div>
     </div>
     {% else %}
-    <!-- Lucrative fallback background and features when no campus image is uploaded -->
-    <div class="branding-fallback-bg">
-      <div class="glowing-orb orb-1"></div>
-      <div class="glowing-orb orb-2"></div>
-      <div class="grid-overlay"></div>
+    <div class="hero-bg-decorations">
+      <div class="hero-bg-mesh"></div>
+      <div class="hero-grid-overlay"></div>
     </div>
     {% endif %}
 
-    <!-- Foreground Content Wrapper -->
-    <div class="branding-content">
-      <div class="school-brand-banner">
-        <div class="school-logo-container">
-          {% if tenant.logo %}
-            <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" onerror="handleImageError(this)">
-            <span class="school-initials is-hidden">
-              {{ tenant.name|slice:":2"|upper }}
-            </span>
-          {% else %}
-            <span class="school-initials">
-              {{ tenant.name|slice:":2"|upper }}
-            </span>
-          {% endif %}
-        </div>
-        <div class="school-title-group">
-          <h2 class="school-name-heading">{{ tenant.name }}</h2>
-          {% if tenant.motto %}
-            <p class="school-motto-text">"{{ tenant.motto }}"</p>
-          {% endif %}
-        </div>
-      </div>
+    <!-- Left aligned Content -->
+    <div class="hero-content" style="max-width: 800px; text-align: left; margin: 0 auto 0 0;">
+      <span class="hero-tag">🏫 Official Portal</span>
+      <h1 class="hero-heading" style="font-size: 52px; font-weight: 800; line-height: 1.1;">{{ tenant.name }}</h1>
+      <p class="hero-motto" style="font-size: 19px; max-width: 680px; color: #cbd5e1; margin-top: 10px; margin-bottom: 24px;">
+        {% if tenant.motto %}
+          "{{ tenant.motto }}"
+        {% else %}
+          Welcome to our campus digital management portal. Access schedules, check notifications, view academic records, and handle fee payments.
+        {% endif %}
+      </p>
 
-      <!-- Feature/Portal Highlights (Rendered when no campus image is uploaded) -->
-      {% if not tenant.campus_image and not tenant.campus_image2 and not tenant.campus_image3 %}
-      <div class="portal-features-showcase">
-        <h3 class="showcase-title">Portal Highlights</h3>
-        <div class="feature-cards-grid">
-          <div class="feature-card">
-            <div class="feature-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-            </div>
-            <div class="feature-details">
-              <h4>Academic Hub</h4>
-              <p>Keep track of curriculum, daily attendance, examinations, and performance reports seamlessly.</p>
-            </div>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                <line x1="12" y1="4" x2="12" y2="20"></line>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-              </svg>
-            </div>
-            <div class="feature-details">
-              <h4>Fee & Finances</h4>
-              <p>Review fee schedules, pay dues securely online, and access printable receipts instantly.</p>
-            </div>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </div>
-            <div class="feature-details">
-              <h4>Real-time Notifications</h4>
-              <p>Never miss important updates with instant school alerts and public announcement details.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-
-
-
-      <!-- Modern Pill Indicators -->
-      {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
-      <div class="slider-indicators-container">
-        <div class="slider-indicators">
-          {% if tenant.campus_image %}
-            <button type="button" class="indicator-dot active" onclick="switchSlide(0)" aria-label="Campus Image 1"></button>
-          {% endif %}
-          {% if tenant.campus_image2 %}
-            <button type="button" class="indicator-dot" onclick="switchSlide(1)" aria-label="Campus Image 2"></button>
-          {% endif %}
-          {% if tenant.campus_image3 %}
-            <button type="button" class="indicator-dot" onclick="switchSlide(2)" aria-label="Campus Image 3"></button>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Powered by ERP SaaS Footer -->
-    <div class="powered-by-footer">
-      <span class="powered-text">Powered by</span>
-      <div class="erp-mini-brand">
-        <div class="erp-mini-logo">
-          {% if settings.logo %}
-            <img src="{{ settings.logo.url }}" alt="ERP Logo" onerror="handleImageError(this)">
-            <span class="initials-fallback is-hidden">{{ settings.software_name|slice:":2"|upper }}</span>
-          {% else %}
-            <span class="initials-fallback">{{ settings.software_name|slice:":2"|upper }}</span>
-          {% endif %}
-        </div>
-        <span class="erp-mini-name">{{ settings.software_name|default:"SchoolERP" }}</span>
+      <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
+        <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-primary" style="padding: 14px 28px; font-size: 15px; box-shadow: 0 4px 14px var(--brand-glow);">Portal Login</a>
+        <a href="#notices" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #fff; border-color: rgba(255,255,255,0.25);">Notice Board</a>
       </div>
     </div>
-  </div>
 
-  <!-- RIGHT PANEL - Floating Login Form -->
-  <div class="form-panel">
-    <div class="form-panel-inner">
+    <!-- Indicators overlay centered at bottom of hero -->
+    {% if tenant.campus_image or tenant.campus_image2 or tenant.campus_image3 %}
+    <div class="hero-slider-indicators">
+      {% if tenant.campus_image %}
+        <button type="button" class="indicator-dot active" onclick="switchSlide(0)" aria-label="Campus Image 1"></button>
+      {% endif %}
+      {% if tenant.campus_image2 %}
+        <button type="button" class="indicator-dot" onclick="switchSlide(1)" aria-label="Campus Image 2"></button>
+      {% endif %}
+      {% if tenant.campus_image3 %}
+        <button type="button" class="indicator-dot" onclick="switchSlide(2)" aria-label="Campus Image 3"></button>
+      {% endif %}
+    </div>
+    {% endif %}
+  </header>
 
-      <!-- Dynamic Logo Badge Header -->
-      <div class="card-logo-row">
+  <!-- NOTICE BOARD SECTION -->
+  <section class="section notices-section" id="notices">
+    <div class="section-header">
+      <span class="section-tag">Notice Board</span>
+      <h2 class="section-title">Latest Announcements</h2>
+      <p class="section-desc">Keep track of school schedules, examination dates, fee circulars, and campus events.</p>
+    </div>
+
+    <div class="notices-grid-web">
+      {% if public_notifications %}
+        {% for notice in public_notifications %}
+        <div class="notice-card-web" onclick="openNoticeModal('{{ notice.title|escapejs }}', '{{ notice.content|escapejs }}', '{{ notice.publish_date|date:'d M Y' }}', '{{ notice.category|upper }}', '{% if notice.attachment %}{{ notice.attachment.url }}{% endif %}')">
+          <div>
+            <div class="notice-card-meta">
+              <span class="notice-badge {% if notice.category == 'exam' %}exam{% elif notice.category == 'event' %}event{% else %}general{% endif %}">
+                {{ notice.category|default:"general" }}
+              </span>
+              <span class="notice-date">{{ notice.publish_date|date:"d M Y" }}</span>
+            </div>
+            <h4>{{ notice.title }}</h4>
+            <p>{{ notice.content }}</p>
+          </div>
+          <div class="notice-card-footer">
+            Read Announcement &rarr;
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Blank State Notice Card -->
+        <div class="notice-card-web" style="grid-column: span 3; max-width: 500px; margin: 0 auto; text-align: center; cursor: default;">
+          <div style="font-size: 32px; margin-bottom: 16px;">🔔</div>
+          <h4 style="margin-bottom: 8px;">Notice Board is Clear</h4>
+          <p style="margin: 0; color:#64748b;">All campus systems and classes are currently running on standard schedule. Check back later for circulars.</p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ABOUT & DETAILS SECTION -->
+  <section class="section about-section" id="about">
+    <div class="section-header">
+      <span class="section-tag">School Info</span>
+      <h2 class="section-title">About Our Institution</h2>
+      <p class="section-desc">Get in touch directly with our administration office or review campus configurations.</p>
+    </div>
+
+    <div class="about-grid-web">
+      <!-- School info blocks -->
+      <div class="about-info-block">
+        <div class="about-item-web">
+          <div class="about-item-icon">🏛️</div>
+          <div class="about-item-detail">
+            <h4>Campus Address</h4>
+            <p>{{ tenant.address|default:"Campus location details not configured." }}</p>
+          </div>
+        </div>
+        {% if tenant.phone %}
+        <div class="about-item-web">
+          <div class="about-item-icon">📞</div>
+          <div class="about-item-detail">
+            <h4>Office Phone</h4>
+            <p>{{ tenant.phone }}</p>
+          </div>
+        </div>
+        {% endif %}
+        {% if tenant.email %}
+        <div class="about-item-web">
+          <div class="about-item-icon">✉️</div>
+          <div class="about-item-detail">
+            <h4>Direct Email</h4>
+            <p>{{ tenant.email }}</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- SaaS platform summary -->
+      <div class="saas-info-block">
+        <div class="saas-info-header">
+          <h3>ERP Portal System</h3>
+          <p>
+            Our administration is fully digitized and powered by {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %} cloud system, ensuring smooth updates and transparent reports.
+          </p>
+        </div>
+        <div class="saas-badge-list">
+
+          <div class="saas-badge-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            256-Bit Encrypted Data Isolation
+          </div>
+          <div class="saas-badge-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Automated Fees & Invoicing Updates
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEBSITE FOOTER -->
+  <footer class="web-footer">
+    <div class="footer-container">
+      <a href="#" class="footer-logo">
         {% if tenant.logo %}
-        <div class="card-logo school-card-logo">
-          <img src="{{ tenant.logo.url }}" alt="{{ tenant.name }}" onerror="handleImageError(this)">
-          <span class="card-initials is-hidden">{{ tenant.name|slice:":2"|upper }}</span>
-        </div>
-        {% else %}
-        <div class="card-logo school-card-logo">
-          <span class="card-initials">{{ tenant.name|slice:":2"|upper }}</span>
-        </div>
+          <img src="{{ tenant.logo.url }}" alt="Logo" onerror="handleImageError(this)">
         {% endif %}
-        
-        {% if settings.logo %}
-        <div class="card-logo erp-card-logo">
-          <img src="{{ settings.logo.url }}" alt="{{ settings.software_name }}" onerror="handleImageError(this)">
-          <span class="card-initials is-hidden">{{ settings.software_name|slice:":2"|upper }}</span>
-        </div>
-        {% else %}
-        <div class="card-logo erp-card-logo">
-          <span class="card-initials">{{ settings.software_name|slice:":2"|upper }}</span>
-        </div>
-        {% endif %}
+        <span>{{ tenant.name }}</span>
+      </a>
+      <div class="footer-text">
+        &copy; {% now "Y" %} {{ tenant.name }}. Powered by {% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}.
       </div>
+    </div>
+  </footer>
 
+  <!-- DYNAMIC LOGIN MODAL OVERLAY -->
+  <div class="login-modal-overlay" id="loginModal" onclick="closeLoginModalOnBackdrop(event)">
+    <div class="login-card">
+      <button class="close-modal-btn" onclick="closeLoginModal()" aria-label="Close modal">&times;</button>
+      
       <div class="form-header-group">
         <span class="welcome-badge">Welcome back</span>
-        <h1 class="form-heading">Login to continue</h1>
+        <h2 class="form-heading">Login to continue</h2>
         <p class="form-sub">Enter your school credentials to manage students, fees, and reports.</p>
       </div>
 
-      <!-- Modern Card for Login Forms -->
-      <div class="login-card">
-        <!-- Tabs for Dual Login -->
-        <div class="login-tabs">
-          <button type="button" id="tab-staff" class="login-tab-btn active" onclick="switchTab('staff')">
-            Staff Login
-          </button>
-          <button type="button" id="tab-student" class="login-tab-btn" onclick="switchTab('student')">
-            Student Login
-          </button>
-        </div>
-
-        {% for msg in messages %}
-        <div class="alert-error">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span>{{ msg }}</span>
-        </div>
-        {% endfor %}
-
-        <!-- Staff Login Form -->
-        <form method="post" id="loginForm">
-          {% csrf_token %}
-          <input type="hidden" name="login_type" value="staff">
-
-          <div class="form-group">
-            <label class="form-label" for="id_username">Username</label>
-            <div class="input-wrapper">
-              <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter your username" required autofocus autocomplete="username">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="id_password">Password</label>
-            <div class="input-wrapper">
-              <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter your password" required autocomplete="current-password">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
-                <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Sign In
-          </button>
-        </form>
-
-        <!-- Student Login Form -->
-        <form method="post" id="studentLoginForm" style="display: none;">
-          {% csrf_token %}
-          <input type="hidden" name="login_type" value="student">
-
-          <div class="form-group">
-            <label class="form-label" for="id_student_search">Student Name</label>
-            <div class="input-wrapper">
-              <input type="text" id="id_student_search" name="student_search" class="form-control" placeholder="Enter student name" required autocomplete="off">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="id_dob">Date of Birth</label>
-            <div class="input-wrapper">
-              <input type="date" id="id_dob" name="dob" class="form-control" required placeholder="DD/MM/YYYY">
-              <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit" style="margin-top: 24px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Student Login
-          </button>
-        </form>
+      <!-- Dual login tabs -->
+      <div class="login-tabs">
+        <button type="button" id="tab-staff" class="login-tab-btn active" onclick="switchTab('staff')">
+          Staff Login
+        </button>
+        <button type="button" id="tab-student" class="login-tab-btn" onclick="switchTab('student')">
+          Student/Parent Login
+        </button>
       </div>
+
+      {% for msg in messages %}
+      <div class="alert-error">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+      {% endfor %}
+
+      <!-- Staff Login Form -->
+      <form method="post" id="loginForm">
+        {% csrf_token %}
+        <input type="hidden" name="login_type" value="staff">
+
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <div class="input-wrapper">
+            <input type="text" id="id_username" name="username" class="form-control" placeholder="Enter username" required autocomplete="username">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_password">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="id_password" name="password" class="form-control has-password-toggle" placeholder="Enter password" required autocomplete="current-password">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <button type="button" class="btn-password-toggle" onclick="togglePw()" aria-label="Show password">
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" style="margin-top: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Staff Sign In
+        </button>
+      </form>
+
+      <!-- Student Login Form -->
+      <form method="post" id="studentLoginForm" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="login_type" value="student">
+
+        <div class="form-group">
+          <label class="form-label" for="id_student_search">Student Name or Admission No.</label>
+          <div class="input-wrapper">
+            <input type="text" id="id_student_search" name="student_search" class="form-control" placeholder="Enter name or admission number" required autocomplete="off">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_dob">Date of Birth</label>
+          <div class="input-wrapper">
+            <input type="date" id="id_dob" name="dob" class="form-control" required placeholder="DD/MM/YYYY">
+            <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" style="margin-top: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Student Sign In
+        </button>
+      </form>
 
       <div class="secure-notice">
         <div class="secure-heading">
@@ -1630,50 +1241,59 @@ body {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          Secure Login
+          Secure Portal
         </div>
-        <span class="secure-text">Protected by encrypted authentication.</span>
+        <span class="secure-text">Protected by encrypted authentication bounds.</span>
       </div>
-
     </div>
   </div>
 
-</div>
-
-<!-- Modal for Full Announcement -->
-<div id="noticeModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; width: 100%; max-width: 500px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); position: relative; animation: modalSlide 0.3s ease-out;">
-    <button onclick="closeNoticeModal()" style="position: absolute; top: 18px; right: 18px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 20px;">&times;</button>
-    <div style="margin-bottom: 12px;">
-      <span id="modal-category" style="font-size: 11px; color: var(--brand); font-weight: 800; text-transform: uppercase; background: var(--brand-glow); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px;">Category</span>
-      <span id="modal-date" style="font-size: 12px; color: var(--text-3); margin-left: 10px;">Date</span>
-    </div>
-    <h3 id="modal-title" style="font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 14px;">Notice Title</h3>
-    <div id="modal-body" style="font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap;">Notice Description</div>
-    <div id="modal-attachment-container" style="display: none; border-top: 1px solid var(--border); padding-top: 14px;">
-      <a id="modal-attachment-link" href="#" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; text-decoration: none;">
-        Download Attachment
-      </a>
+  <!-- PUBLIC NOTICE BOARD DETAIL MODAL -->
+  <div class="notice-modal-overlay" id="noticeModal" onclick="closeNoticeModalOnBackdrop(event)">
+    <div class="notice-modal-card">
+      <button class="close-modal-btn" onclick="closeNoticeModal()" aria-label="Close modal">&times;</button>
+      <div class="notice-modal-header">
+        <span class="notice-badge general" id="modal-category">GENERAL</span>
+        <span class="notice-date" id="modal-date">01 Jan 2026</span>
+      </div>
+      <h3 id="modal-title">Announcement Details</h3>
+      <div class="notice-modal-body" id="modal-body">
+        Full circular body content goes here.
+      </div>
+      <div class="notice-modal-attachment" id="modal-attachment-container" style="display: none;">
+        <a href="#" class="attachment-btn" id="modal-attachment-link" download>
+          📎 Download Attachment File
+        </a>
+      </div>
     </div>
   </div>
-</div>
-
-<style>
-@keyframes modalSlide {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-</style>
 
 <script>
 function handleImageError(img) {
   img.style.display = 'none';
   const container = img.parentElement;
   if (container) {
-    const fallback = container.querySelector('.school-initials') || container.querySelector('.card-initials') || container.querySelector('.initials-fallback');
+    const fallback = container.querySelector('.nav-initials') || container.querySelector('.initials-fallback');
     if (fallback) {
       fallback.classList.remove('is-hidden');
     }
+  }
+}
+
+function togglePw() {
+  const input = document.getElementById('id_password');
+  const button = document.querySelector('.btn-password-toggle');
+  const icon = document.getElementById('eyeIcon');
+  if (!input || !button) return;
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    button.setAttribute('aria-label', 'Hide password');
+    icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/><circle cx="12" cy="12" r="3" fill="none"/>';
+  } else {
+    input.type = 'password';
+    button.setAttribute('aria-label', 'Show password');
+    icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
   }
 }
 
@@ -1691,7 +1311,7 @@ function switchTab(type) {
     studentBtn.classList.add('active');
     staffBtn.classList.remove('active');
     if (formSub) {
-      formSub.innerText = "Enter student details to view profile, receipts ";
+      formSub.innerText = "Enter student details to view profile, receipts and results.";
     }
   } else {
     staffForm.style.display = 'block';
@@ -1704,6 +1324,44 @@ function switchTab(type) {
   }
 }
 
+// Modal open/close actions
+function openLoginModal(e) {
+  if (e) e.preventDefault();
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Disable scroll under modal
+    
+    // Focus the first input inside the active tab
+    setTimeout(() => {
+      const activeTab = document.querySelector('.login-tab-btn.active');
+      if (activeTab && activeTab.id === 'tab-student') {
+        const studentSearchInput = document.getElementById('id_student_search');
+        if (studentSearchInput) studentSearchInput.focus();
+      } else {
+        const usernameInput = document.getElementById('id_username');
+        if (usernameInput) usernameInput.focus();
+      }
+    }, 100);
+  }
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scroll
+  }
+}
+
+function closeLoginModalOnBackdrop(e) {
+  const modal = document.getElementById('loginModal');
+  if (e.target === modal) {
+    closeLoginModal();
+  }
+}
+
+// Notice Modal methods
 function openNoticeModal(title, description, date, category, attachmentUrl) {
   document.getElementById('modal-title').innerText = title;
   document.getElementById('modal-body').innerText = description;
@@ -1727,102 +1385,31 @@ function closeNoticeModal() {
   document.getElementById('noticeModal').style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const active = "{{ active_tab|default:'staff' }}";
-  switchTab(active);
-
-  // Notification dropdown toggle and click-outside handling
-  const bellBtn = document.getElementById('bellBtn');
-  const dropdown = document.getElementById('notificationDropdown');
-  const tickerBellBtn = document.getElementById('tickerBellBtn');
-  const tickerDropdown = document.getElementById('tickerDropdown');
-  const aboutBtn = document.getElementById('aboutBtn');
-  const aboutDropdown = document.getElementById('aboutDropdown');
-
-  if (bellBtn && dropdown) {
-    bellBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dropdown.classList.toggle('active');
-      if (aboutDropdown) aboutDropdown.classList.remove('active');
-      if (tickerDropdown) {
-        tickerDropdown.classList.remove('active');
-        tickerBellBtn.classList.remove('active');
-        tickerBellBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
-
-  if (aboutBtn && aboutDropdown) {
-    aboutBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      aboutDropdown.classList.toggle('active');
-      if (dropdown) dropdown.classList.remove('active');
-      if (tickerDropdown) {
-        tickerDropdown.classList.remove('active');
-        tickerBellBtn.classList.remove('active');
-        tickerBellBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
-
-  if (tickerBellBtn && tickerDropdown) {
-    tickerBellBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isActive = tickerDropdown.classList.toggle('active');
-      tickerBellBtn.classList.toggle('active');
-      tickerBellBtn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-      if (dropdown) dropdown.classList.remove('active');
-      if (aboutDropdown) aboutDropdown.classList.remove('active');
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    // Click outside handling for bell dropdown
-    if (dropdown && bellBtn) {
-      if (!dropdown.contains(e.target) && e.target !== bellBtn && !bellBtn.contains(e.target)) {
-        dropdown.classList.remove('active');
-      }
-    }
-    // Click outside handling for about dropdown
-    if (aboutDropdown && aboutBtn) {
-      if (!aboutDropdown.contains(e.target) && e.target !== aboutBtn && !aboutBtn.contains(e.target)) {
-        aboutDropdown.classList.remove('active');
-      }
-    }
-    // Click outside handling for ticker dropdown
-    if (tickerDropdown && tickerBellBtn) {
-      if (!tickerDropdown.contains(e.target) && e.target !== tickerBellBtn && !tickerBellBtn.contains(e.target)) {
-        tickerDropdown.classList.remove('active');
-        tickerBellBtn.classList.remove('active');
-        tickerBellBtn.setAttribute('aria-expanded', 'false');
-      }
-    }
-  });
-});
-
-function togglePw() {
-  const input = document.getElementById('id_password');
-  const button = document.querySelector('.btn-password-toggle');
-  const icon = document.getElementById('eyeIcon');
-  if (!input || !button) return;
-  
-  if (input.type === 'password') {
-    input.type = 'text';
-    button.setAttribute('aria-label', 'Hide password');
-    icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/><circle cx="12" cy="12" r="3" fill="none"/>';
-  } else {
-    input.type = 'password';
-    button.setAttribute('aria-label', 'Show password');
-    icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+function closeNoticeModalOnBackdrop(e) {
+  const modal = document.getElementById('noticeModal');
+  if (e.target === modal) {
+    closeNoticeModal();
   }
 }
 
-let slideInterval;
+// Scrolled Navbar Effect
+window.addEventListener('scroll', function() {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 50) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+});
 
+
+
+// Slideshow Autoplay logic
+let slideInterval;
 function startAutoSlide() {
   if (slideInterval) clearInterval(slideInterval);
   slideInterval = setInterval(() => {
-    const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
+    const images = Array.from(document.querySelectorAll('.hero-slider-inner .hero-slide-img'));
     if (!images.length) return;
     const activeIdx = images.findIndex(img => img.classList.contains('active'));
     if (activeIdx !== -1) {
@@ -1832,15 +1419,14 @@ function startAutoSlide() {
 }
 
 function switchSlide(index, resetTimer = true) {
-  const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
-  const dots = Array.from(document.querySelectorAll('.slider-indicators .indicator-dot'));
+  const images = Array.from(document.querySelectorAll('.hero-slider-inner .hero-slide-img'));
+  const dots = Array.from(document.querySelectorAll('.hero-slider-indicators .indicator-dot'));
   if (!images.length) return;
   
   if (resetTimer) {
     startAutoSlide();
   }
   
-  // Wrap around indices safely
   if (index < 0) {
     index = images.length - 1;
   } else if (index >= images.length) {
@@ -1867,69 +1453,25 @@ function switchSlide(index, resetTimer = true) {
   dots.forEach((dot, dotIdx) => {
     if (dotIdx === index) {
       dot.classList.add('active');
+      dot.style.background = '#ffffff';
     } else {
       dot.classList.remove('active');
+      dot.style.background = '#ffffff50';
     }
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Start the slideshow automatically
   startAutoSlide();
-
-  // Allow clicking on the branding-panel to advance slides
-  const brandingPanel = document.querySelector('.branding-panel');
-  if (brandingPanel) {
-    brandingPanel.addEventListener('mousemove', function(e) {
-      // Don't change cursor if hovering over interactive elements
-      if (
-        e.target.closest('.slider-indicators') || 
-        e.target.closest('.school-logo-container') ||
-        e.target.closest('.powered-by-footer') ||
-        e.target.closest('a') ||
-        e.target.closest('button')
-      ) {
-        this.style.cursor = 'default';
-        return;
-      }
-      
-      const rect = this.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      if (clickX < rect.width / 2) {
-        this.style.cursor = 'w-resize';
-      } else {
-        this.style.cursor = 'e-resize';
-      }
-    });
-
-    brandingPanel.addEventListener('click', function(e) {
-      // Don't advance slide if the user clicks on links, indicators, or logo container
-      if (
-        e.target.closest('.slider-indicators') || 
-        e.target.closest('.school-logo-container') ||
-        e.target.closest('.powered-by-footer') ||
-        e.target.closest('a') ||
-        e.target.closest('button')
-      ) {
-        return;
-      }
-      
-      const rect = this.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const width = rect.width;
-      
-      const images = Array.from(document.querySelectorAll('.slider-wrapper .campus-img'));
-      const activeIdx = images.findIndex(img => img.classList.contains('active'));
-      
-      if (activeIdx !== -1) {
-        if (clickX < width / 2) {
-          switchSlide(activeIdx - 1);
-        } else {
-          switchSlide(activeIdx + 1);
-        }
-      }
-    });
-  }
+  
+  // Set initial active tab
+  const activeTab = "{{ active_tab|default:'staff' }}";
+  switchTab(activeTab);
+  
+  // Auto-open modal if there are django message alerts present
+  {% if messages %}
+  openLoginModal();
+  {% endif %}
 });
 </script>
 
