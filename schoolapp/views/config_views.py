@@ -234,6 +234,62 @@ def config_view(request):
             )
             messages.success(request, 'WhatsApp configuration saved.')
 
+        elif 'save_website_customization' in request.POST:
+            school.name = request.POST.get('name', '').strip()
+            school.motto = request.POST.get('motto', '').strip()
+            school.theme_color = request.POST.get('theme_color', '#2563eb').strip()
+            
+            school.established_year = request.POST.get('established_year', '').strip()
+            school.stat_students = request.POST.get('stat_students', '').strip()
+            school.stat_staff = request.POST.get('stat_staff', '').strip()
+            school.stat_experience = request.POST.get('stat_experience', '').strip()
+            school.about_us_text = request.POST.get('about_us_text', '').strip()
+            school.about_us_bullets = request.POST.get('about_us_bullets', '').strip()
+            school.admission_open_session = request.POST.get('admission_open_session', '').strip()
+            
+            school.testimonial_1_name = request.POST.get('testimonial_1_name', '').strip()
+            school.testimonial_1_role = request.POST.get('testimonial_1_role', '').strip()
+            school.testimonial_1_text = request.POST.get('testimonial_1_text', '').strip()
+            
+            school.testimonial_2_name = request.POST.get('testimonial_2_name', '').strip()
+            school.testimonial_2_role = request.POST.get('testimonial_2_role', '').strip()
+            school.testimonial_2_text = request.POST.get('testimonial_2_text', '').strip()
+            
+            school.testimonial_3_name = request.POST.get('testimonial_3_name', '').strip()
+            school.testimonial_3_role = request.POST.get('testimonial_3_role', '').strip()
+            school.testimonial_3_text = request.POST.get('testimonial_3_text', '').strip()
+
+            # Handle files
+            if request.FILES.get('logo'):
+                school.logo = request.FILES.get('logo')
+            elif request.POST.get('clear_logo') == '1':
+                school.logo = None
+
+            if request.FILES.get('campus_image'):
+                school.campus_image = request.FILES.get('campus_image')
+            elif request.POST.get('clear_campus_image') == '1':
+                school.campus_image = None
+
+            if request.FILES.get('campus_image2'):
+                school.campus_image2 = request.FILES.get('campus_image2')
+            elif request.POST.get('clear_campus_image2') == '1':
+                school.campus_image2 = None
+
+            if request.FILES.get('campus_image3'):
+                school.campus_image3 = request.FILES.get('campus_image3')
+            elif request.POST.get('clear_campus_image3') == '1':
+                school.campus_image3 = None
+
+            school.save()
+            log_activity_event(
+                request,
+                module='config',
+                action='website_customization_update',
+                record_id=school.pk,
+                details={'name': school.name}
+            )
+            messages.success(request, 'Website landing page settings updated successfully.')
+
         return redirect(f'{cfg_url}?s={view_session}')
 
     view_session = request.GET.get('s', profile.current_academic_session)

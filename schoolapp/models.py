@@ -88,6 +88,28 @@ class School(models.Model):
     campus_image2 = models.ImageField(upload_to=school_campus_upload_to, blank=True, null=True)
     campus_image3 = models.ImageField(upload_to=school_campus_upload_to, blank=True, null=True)
     theme_color = models.CharField(max_length=7, default='#2563eb', help_text='Primary theme color in hex, e.g. #2563eb')
+    
+    # Landing Website Settings
+    established_year = models.CharField(max_length=20, default='2004', blank=True)
+    stat_students = models.CharField(max_length=50, default='2200+', blank=True)
+    stat_staff = models.CharField(max_length=50, default='24+', blank=True)
+    stat_experience = models.CharField(max_length=50, default='22+', blank=True)
+    about_us_text = models.TextField(blank=True, default='')
+    about_us_bullets = models.TextField(blank=True, default='', help_text="One bullet point per line.")
+    admission_open_session = models.CharField(max_length=50, default='2026-27', blank=True)
+    
+    testimonial_1_name = models.CharField(max_length=150, blank=True, default='')
+    testimonial_1_role = models.CharField(max_length=150, blank=True, default='')
+    testimonial_1_text = models.TextField(blank=True, default='')
+    
+    testimonial_2_name = models.CharField(max_length=150, blank=True, default='')
+    testimonial_2_role = models.CharField(max_length=150, blank=True, default='')
+    testimonial_2_text = models.TextField(blank=True, default='')
+    
+    testimonial_3_name = models.CharField(max_length=150, blank=True, default='')
+    testimonial_3_role = models.CharField(max_length=150, blank=True, default='')
+    testimonial_3_text = models.TextField(blank=True, default='')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
