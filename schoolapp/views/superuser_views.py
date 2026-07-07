@@ -361,12 +361,6 @@ def school_add(request):
                 subscription_amount=request.POST.get('subscription_amount') or 0,
                 subscription_start_date=request.POST.get('subscription_start_date') or None,
                 subscription_end_date=request.POST.get('subscription_end_date') or None,
-                logo=request.FILES.get('logo'),
-                motto=request.POST.get('motto', '').strip(),
-                theme_color=request.POST.get('theme_color', '#2563eb').strip(),
-                campus_image=request.FILES.get('campus_image'),
-                campus_image2=request.FILES.get('campus_image2'),
-                campus_image3=request.FILES.get('campus_image3'),
             )
             SchoolProfile.objects.create(
                 school=school, current_academic_session=session,
@@ -434,8 +428,6 @@ def school_edit(request, pk):
             'is_active': school.is_active,
             'fee_per_student': str(school.fee_per_student),
             'subdomain': school.subdomain,
-            'motto': school.motto,
-            'theme_color': school.theme_color,
             'current_academic_session': profile.current_academic_session,
             'billing_start_month': profile.billing_start_month,
             'billing_end_month': profile.billing_end_month,
@@ -444,37 +436,15 @@ def school_edit(request, pk):
         school.phone = request.POST.get('phone', '')
         school.email = request.POST.get('email', '')
         school.address = request.POST.get('address', '')
-        school.motto = request.POST.get('motto', '').strip()
-        school.theme_color = request.POST.get('theme_color', '#2563eb').strip()
         school.is_active = 'is_active' in request.POST
         school.fee_per_student = request.POST.get('fee_per_student') or 0
         school.yearly_plan_id = request.POST.get('yearly_plan') or None
         school.subscription_amount = request.POST.get('subscription_amount') or 0
         school.subscription_start_date = request.POST.get('subscription_start_date') or None
         school.subscription_end_date = request.POST.get('subscription_end_date') or None
-        new_logo = request.FILES.get('logo')
-        if new_logo:
-            school.logo = new_logo
-        elif request.POST.get('clear_logo') == '1':
-            school.logo = None
+
         
-        new_campus = request.FILES.get('campus_image')
-        if new_campus:
-            school.campus_image = new_campus
-        elif request.POST.get('clear_campus_image') == '1':
-            school.campus_image = None
 
-        new_campus2 = request.FILES.get('campus_image2')
-        if new_campus2:
-            school.campus_image2 = new_campus2
-        elif request.POST.get('clear_campus_image2') == '1':
-            school.campus_image2 = None
-
-        new_campus3 = request.FILES.get('campus_image3')
-        if new_campus3:
-            school.campus_image3 = new_campus3
-        elif request.POST.get('clear_campus_image3') == '1':
-            school.campus_image3 = None
 
         new_subdomain = request.POST.get('subdomain', '').strip().lower() or None
         if new_subdomain != school.subdomain:

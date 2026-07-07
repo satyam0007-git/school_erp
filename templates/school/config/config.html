@@ -27,6 +27,7 @@
   .cfg-header.green  { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; border-left: 4px solid #22c55e; }
   .cfg-header.purple { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; border-left: 4px solid #a855f7; }
   .cfg-header.whatsapp { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; border-left: 4px solid #25d366; }
+  .cfg-header.orange { background: #fff7ed; color: #c2410c; border-color: #ffedd5; border-left: 4px solid #f97316; }
   .cfg-body { padding: 22px; background: #fff; }
 
   /* ── Form labels & inputs ───────────────────────────────────────────── */
@@ -174,8 +175,30 @@
 {% block content %}
 {% load fee_tags %}
 
-{# ── School Profile ──────────────────────────────────────────────────── #}
-<div class="cfg-card">
+<ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-bold" id="academic-tab" data-bs-toggle="tab" data-bs-target="#academic" type="button" role="tab" aria-controls="academic" aria-selected="true">
+      🎓 Academic &amp; Class Settings
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold" id="website-tab" data-bs-toggle="tab" data-bs-target="#website" type="button" role="tab" aria-controls="website" aria-selected="false">
+      🌐 Landing Website Customize
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button" role="tab" aria-controls="whatsapp" aria-selected="false">
+      💬 WhatsApp Config
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="configTabsContent">
+  <!-- Tab 1: Academic & Class Settings -->
+  <div class="tab-pane fade show active" id="academic" role="tabpanel" aria-labelledby="academic-tab">
+    
+    {# ── School Profile ──────────────────────────────────────────────────── #}
+    <div class="cfg-card">
   <div class="cfg-header blue">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     School Profile
@@ -556,10 +579,164 @@
       </div>
     </div>
   </div>
-</div>
+</div> <!-- Close the row container opened at line 282 -->
+</div> <!-- End Tab 1: Academic & Class Settings -->
 
-{# ── WhatsApp Configuration ──────────────────────────────────────────── #}
-<div class="cfg-card">
+  <!-- Tab 2: Landing Website Customization -->
+  <div class="tab-pane fade" id="website" role="tabpanel" aria-labelledby="website-tab">
+    <div class="cfg-card">
+      <div class="cfg-header orange d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+          Landing Website Customization (Prakhar Modern Theme)
+        </div>
+      </div>
+      <div class="cfg-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="save_website_customization" value="1">
+
+          <p class="wa-section-label">General School Details</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">School Name</label>
+              <input type="text" name="name" class="form-control" value="{{ school.name }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Theme Color</label>
+              <select name="theme_color" class="form-select">
+                <option value="#dc2626" {% if school.theme_color == "#dc2626" or school.theme_color == "#5a1205" %}selected{% endif %}>Red</option>
+                <option value="#16a34a" {% if school.theme_color == "#16a34a" or not school.theme_color %}selected{% endif %}>Green</option>
+                <option value="#2563eb" {% if school.theme_color == "#2563eb" %}selected{% endif %}>Blue</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Slogan / Motto</label>
+              <input type="text" name="motto" class="form-control" value="{{ school.motto }}" placeholder="e.g. Nurturing Futures, One Bright Mind at a Time">
+            </div>
+          </div>
+
+
+
+          <p class="wa-section-label">Website Statistics Counters</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">Established Year</label>
+              <input type="text" name="established_year" class="form-control" value="{{ school.established_year|default:'2004' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Happy Students Counter</label>
+              <input type="text" name="stat_students" class="form-control" value="{{ school.stat_students|default:'2200+' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Dedicated Staff Counter</label>
+              <input type="text" name="stat_staff" class="form-control" value="{{ school.stat_staff|default:'24+' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Years of Excellence Counter</label>
+              <input type="text" name="stat_experience" class="form-control" value="{{ school.stat_experience|default:'22+' }}">
+            </div>
+          </div>
+
+          <p class="wa-section-label">About Us & Admissions</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">About Us Text Description</label>
+              <textarea name="about_us_text" class="form-control" style="height:120px; font-size: 13px;" placeholder="Established in 2004, Prakhar Modern School has become one of Hathras' most trusted educational institutions...">{{ school.about_us_text }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Why Choose Us / Features (One per line)</label>
+              <textarea name="about_us_bullets" class="form-control" style="height:120px; font-size: 13px;" placeholder="Bhartiya Shiksha Board (BSB) Affiliated&#10;English Medium • Nursery to Class 12&#10;CCTV Monitored, Secure Campus">{{ school.about_us_bullets }}</textarea>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label">Admissions Open Session</label>
+              <input type="text" name="admission_open_session" class="form-control" value="{{ school.admission_open_session|default:'2026-27' }}">
+            </div>
+          </div>
+
+          <p class="wa-section-label">School Logo & Campus Showcases</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label">School Logo</label>
+              {% if school.logo %}
+                <div class="mb-2"><img src="{{ school.logo.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
+                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_logo" value="1" id="clear_logo"><label class="form-check-label" style="font-size:12px;" for="clear_logo">Clear current logo</label></div>
+              {% endif %}
+              <input type="file" name="logo" class="form-control" accept="image/*">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Campus Slider Image 1</label>
+              {% if school.campus_image %}
+                <div class="mb-2"><img src="{{ school.campus_image.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
+                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image" value="1" id="clear_c1"><label class="form-check-label" style="font-size:12px;" for="clear_c1">Clear current</label></div>
+              {% endif %}
+              <input type="file" name="campus_image" class="form-control" accept="image/*">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Campus Slider Image 2</label>
+              {% if school.campus_image2 %}
+                <div class="mb-2"><img src="{{ school.campus_image2.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
+                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image2" value="1" id="clear_c2"><label class="form-check-label" style="font-size:12px;" for="clear_c2">Clear current</label></div>
+              {% endif %}
+              <input type="file" name="campus_image2" class="form-control" accept="image/*">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Campus Slider Image 3</label>
+              {% if school.campus_image3 %}
+                <div class="mb-2"><img src="{{ school.campus_image3.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
+                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image3" value="1" id="clear_c3"><label class="form-check-label" style="font-size:12px;" for="clear_c3">Clear current</label></div>
+              {% endif %}
+              <input type="file" name="campus_image3" class="form-control" accept="image/*">
+            </div>
+          </div>
+
+          <p class="wa-section-label">Parent Testimonials / Reviews</p>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="p-3 border rounded" style="background:#fdfdfd;">
+                <label class="form-label text-primary">Testimonial 1</label>
+                <input type="text" name="testimonial_1_name" class="form-control mb-2" value="{{ school.testimonial_1_name }}" placeholder="Parent Name (e.g. Neha Sharma)">
+                <input type="text" name="testimonial_1_role" class="form-control mb-2" value="{{ school.testimonial_1_role }}" placeholder="Role/Class (e.g. Parent of Class 4 Student)">
+                <textarea name="testimonial_1_text" class="form-control" style="height:70px; font-size:12px;" placeholder="Review feedback text...">{{ school.testimonial_1_text }}</textarea>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 border rounded" style="background:#fdfdfd;">
+                <label class="form-label text-primary">Testimonial 2</label>
+                <input type="text" name="testimonial_2_name" class="form-control mb-2" value="{{ school.testimonial_2_name }}" placeholder="Parent Name">
+                <input type="text" name="testimonial_2_role" class="form-control mb-2" value="{{ school.testimonial_2_role }}" placeholder="Role/Class">
+                <textarea name="testimonial_2_text" class="form-control" style="height:70px; font-size:12px;" placeholder="Review feedback text...">{{ school.testimonial_2_text }}</textarea>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 border rounded" style="background:#fdfdfd;">
+                <label class="form-label text-primary">Testimonial 3</label>
+                <input type="text" name="testimonial_3_name" class="form-control mb-2" value="{{ school.testimonial_3_name }}" placeholder="Parent Name">
+                <input type="text" name="testimonial_3_role" class="form-control mb-2" value="{{ school.testimonial_3_role }}" placeholder="Role/Class">
+                <textarea name="testimonial_3_text" class="form-control" style="height:70px; font-size:12px;" placeholder="Review feedback text...">{{ school.testimonial_3_text }}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top text-end">
+            <button class="btn btn-cfg btn-cfg-blue px-4" type="submit">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="me-1"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Website Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: WhatsApp Config -->
+  <div class="tab-pane fade" id="whatsapp" role="tabpanel" aria-labelledby="whatsapp-tab">
+
+    {# ── WhatsApp Configuration ──────────────────────────────────────────── #}
+    <div class="cfg-card">
   <div class="cfg-header whatsapp d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.86L.057 23.428a.75.75 0 0 0 .916.968l5.844-1.53A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.686-.524-5.208-1.433l-.374-.22-3.87 1.013 1.03-3.77-.243-.386A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
@@ -676,6 +853,8 @@
     </form>
   </div>
 </div>
+</div> <!-- End Tab 3: WhatsApp Config -->
+</div> <!-- End tab-content -->
 
 {% endblock %}
 
@@ -746,5 +925,22 @@
     document.querySelectorAll('.edit-cls-' + pk).forEach(el => el.style.display = 'none');
     document.querySelectorAll('.view-cls-' + pk).forEach(el => el.style.display = '');
   }
+
+  // Active config tab state restoration
+  document.addEventListener('DOMContentLoaded', function() {
+    const activeTabId = localStorage.getItem('activeConfigTab');
+    if (activeTabId) {
+      const tabTrigger = document.getElementById(activeTabId);
+      if (tabTrigger) {
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+      }
+    }
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
+      btn.addEventListener('shown.bs.tab', function(e) {
+        localStorage.setItem('activeConfigTab', e.target.id);
+      });
+    });
+  });
 </script>
 {% endblock %}
