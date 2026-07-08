@@ -169,6 +169,84 @@
 
   /* ── Missing fee highlight ──────────────────────────────────────────── */
   .fee-missing { color: #dc2626; font-style: italic; font-size: 12px; }
+
+  /* ── Image Upload & Delete Styling ──────────────────────────────────── */
+  .image-preview-container {
+    position: relative;
+    display: inline-block;
+  }
+  .image-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 3px;
+    background: #fff;
+    transition: all 0.3s ease;
+  }
+  .preview-img {
+    height: 50px;
+    border-radius: 4px;
+    display: block;
+    transition: all 0.3s ease;
+  }
+  .btn-delete-img {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    border: 1px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.2s, background 0.2s;
+    z-index: 10;
+  }
+  .btn-delete-img:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+  }
+  .image-marked-deleted .image-preview-wrapper {
+    opacity: 0.3;
+    filter: grayscale(100%) blur(0.5px);
+    border-color: #ef4444;
+  }
+  .image-marked-deleted .btn-delete-img {
+    display: none;
+  }
+  .undo-delete-badge {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 12;
+    transition: background 0.2s;
+  }
+  .undo-delete-badge:hover {
+    background: #0f172a;
+  }
+  .image-marked-deleted .undo-delete-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
 </style>
 {% endblock %}
 
@@ -178,17 +256,17 @@
 <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active fw-bold" id="academic-tab" data-bs-toggle="tab" data-bs-target="#academic" type="button" role="tab" aria-controls="academic" aria-selected="true">
-      🎓 Academic &amp; Class Settings
+      Academic &amp; Class Settings
     </button>
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link fw-bold" id="website-tab" data-bs-toggle="tab" data-bs-target="#website" type="button" role="tab" aria-controls="website" aria-selected="false">
-      🌐 Landing Website Customize
+      Landing Website Customize
     </button>
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link fw-bold" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button" role="tab" aria-controls="whatsapp" aria-selected="false">
-      💬 WhatsApp Config
+      WhatsApp Config
     </button>
   </li>
 </ul>
@@ -588,7 +666,7 @@
       <div class="cfg-header orange d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-2">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-          Landing Website Customization (Prakhar Modern Theme)
+          Landing Website
         </div>
       </div>
       <div class="cfg-body">
@@ -662,34 +740,78 @@
             <div class="col-md-3">
               <label class="form-label">School Logo</label>
               {% if school.logo %}
-                <div class="mb-2"><img src="{{ school.logo.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
-                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_logo" value="1" id="clear_logo"><label class="form-check-label" style="font-size:12px;" for="clear_logo">Clear current logo</label></div>
+                <div class="image-preview-container mb-2" id="container_clear_logo">
+                  <div class="image-preview-wrapper">
+                    <img src="{{ school.logo.url }}" class="preview-img">
+                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_logo')" title="Delete existing logo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_logo')" title="Undo delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      Undo
+                    </div>
+                  </div>
+                  <input type="hidden" name="clear_logo" id="clear_logo" value="0">
+                </div>
               {% endif %}
-              <input type="file" name="logo" class="form-control" accept="image/*">
+              <input type="file" name="logo" class="form-control" accept="image/*" onchange="fileInputChanged('clear_logo')">
             </div>
             <div class="col-md-3">
               <label class="form-label">Campus Slider Image 1</label>
               {% if school.campus_image %}
-                <div class="mb-2"><img src="{{ school.campus_image.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
-                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image" value="1" id="clear_c1"><label class="form-check-label" style="font-size:12px;" for="clear_c1">Clear current</label></div>
+                <div class="image-preview-container mb-2" id="container_clear_campus_image">
+                  <div class="image-preview-wrapper">
+                    <img src="{{ school.campus_image.url }}" class="preview-img">
+                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image')" title="Delete existing image">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image')" title="Undo delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      Undo
+                    </div>
+                  </div>
+                  <input type="hidden" name="clear_campus_image" id="clear_campus_image" value="0">
+                </div>
               {% endif %}
-              <input type="file" name="campus_image" class="form-control" accept="image/*">
+              <input type="file" name="campus_image" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image')">
             </div>
             <div class="col-md-3">
               <label class="form-label">Campus Slider Image 2</label>
               {% if school.campus_image2 %}
-                <div class="mb-2"><img src="{{ school.campus_image2.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
-                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image2" value="1" id="clear_c2"><label class="form-check-label" style="font-size:12px;" for="clear_c2">Clear current</label></div>
+                <div class="image-preview-container mb-2" id="container_clear_campus_image2">
+                  <div class="image-preview-wrapper">
+                    <img src="{{ school.campus_image2.url }}" class="preview-img">
+                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image2')" title="Delete existing image">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image2')" title="Undo delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      Undo
+                    </div>
+                  </div>
+                  <input type="hidden" name="clear_campus_image2" id="clear_campus_image2" value="0">
+                </div>
               {% endif %}
-              <input type="file" name="campus_image2" class="form-control" accept="image/*">
+              <input type="file" name="campus_image2" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image2')">
             </div>
             <div class="col-md-3">
               <label class="form-label">Campus Slider Image 3</label>
               {% if school.campus_image3 %}
-                <div class="mb-2"><img src="{{ school.campus_image3.url }}" style="height:50px; border-radius:5px; border:1px solid #cbd5e1; padding:2px;"></div>
-                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="clear_campus_image3" value="1" id="clear_c3"><label class="form-check-label" style="font-size:12px;" for="clear_c3">Clear current</label></div>
+                <div class="image-preview-container mb-2" id="container_clear_campus_image3">
+                  <div class="image-preview-wrapper">
+                    <img src="{{ school.campus_image3.url }}" class="preview-img">
+                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image3')" title="Delete existing image">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image3')" title="Undo delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      Undo
+                    </div>
+                  </div>
+                  <input type="hidden" name="clear_campus_image3" id="clear_campus_image3" value="0">
+                </div>
               {% endif %}
-              <input type="file" name="campus_image3" class="form-control" accept="image/*">
+              <input type="file" name="campus_image3" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image3')">
             </div>
           </div>
 
@@ -924,6 +1046,33 @@
   function cancelEditCls(pk) {
     document.querySelectorAll('.edit-cls-' + pk).forEach(el => el.style.display = 'none');
     document.querySelectorAll('.view-cls-' + pk).forEach(el => el.style.display = '');
+  }
+
+  // ── Image Upload & Delete Handlers ─────────────────────────────────────
+  function deleteImage(fieldId) {
+    const input = document.getElementById(fieldId);
+    if (input) {
+      input.value = '1';
+    }
+    const container = document.getElementById('container_' + fieldId);
+    if (container) {
+      container.classList.add('image-marked-deleted');
+    }
+  }
+
+  function undoDeleteImage(fieldId) {
+    const input = document.getElementById(fieldId);
+    if (input) {
+      input.value = '0';
+    }
+    const container = document.getElementById('container_' + fieldId);
+    if (container) {
+      container.classList.remove('image-marked-deleted');
+    }
+  }
+
+  function fileInputChanged(fieldId) {
+    undoDeleteImage(fieldId);
   }
 
   // Active config tab state restoration
