@@ -247,6 +247,89 @@
     align-items: center;
     gap: 4px;
   }
+
+  /* ── Enhanced Upload Card ───────────────────────────────────────────── */
+  .upload-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    transition: all 0.2s ease-in-out;
+    height: 100%;
+  }
+  .upload-card:hover {
+    border-color: #3b82f6;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.05);
+  }
+  .upload-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .upload-card-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .upload-card-preview {
+    flex-shrink: 0;
+  }
+  .upload-card-input {
+    flex-grow: 1;
+  }
+  .upload-card-input .form-control {
+    height: 30px;
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+  .upload-card .btn-delete-img {
+    top: -6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+  }
+  .upload-card .btn-delete-img svg {
+    width: 8px;
+    height: 8px;
+  }
+  .upload-card .undo-delete-badge {
+    padding: 2px 4px;
+    font-size: 9px;
+  }
+  .upload-card .undo-delete-badge svg {
+    width: 10px;
+    height: 10px;
+  }
+  .no-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 6px;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+  .no-image-placeholder.logo-placeholder {
+    width: 44px;
+    height: 44px;
+  }
+  .no-image-placeholder.slider-placeholder {
+    width: 72px;
+    height: 40px;
+  }
+  .preview-img.logo-preview {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+  .preview-img.slider-preview {
+    width: 72px;
+    height: 40px;
+    object-fit: cover;
+  }
 </style>
 {% endblock %}
 
@@ -736,82 +819,153 @@
           </div>
 
           <p class="wa-section-label">School Logo & Campus Showcases</p>
-          <div class="row g-3 mb-4">
-            <div class="col-md-3">
-              <label class="form-label">School Logo</label>
-              {% if school.logo %}
-                <div class="image-preview-container mb-2" id="container_clear_logo">
-                  <div class="image-preview-wrapper">
-                    <img src="{{ school.logo.url }}" class="preview-img">
-                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_logo')" title="Delete existing logo">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_logo')" title="Undo delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                      Undo
-                    </div>
-                  </div>
-                  <input type="hidden" name="clear_logo" id="clear_logo" value="0">
+          <div class="row g-4 mb-4">
+            <!-- School Logo -->
+            <div class="col-md-6">
+              <div class="upload-card">
+                <div class="upload-card-header">
+                  <label class="form-label mb-0">School Logo</label>
+                  <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px; text-transform: uppercase;">Square / 1:1</span>
                 </div>
-              {% endif %}
-              <input type="file" name="logo" class="form-control" accept="image/*" onchange="fileInputChanged('clear_logo')">
+                <div class="upload-card-body">
+                  <div class="upload-card-preview">
+                    {% if school.logo %}
+                      <div class="image-preview-container" id="container_clear_logo">
+                        <div class="image-preview-wrapper shadow-sm">
+                          <img src="{{ school.logo.url }}" class="preview-img logo-preview">
+                          <button type="button" class="btn-delete-img" onclick="deleteImage('clear_logo')" title="Delete existing logo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                          <div class="undo-delete-badge" onclick="undoDeleteImage('clear_logo')" title="Undo delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            Undo
+                          </div>
+                        </div>
+                        <input type="hidden" name="clear_logo" id="clear_logo" value="0">
+                      </div>
+                    {% else %}
+                      <div class="no-image-placeholder logo-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="upload-card-input">
+                    <input type="file" name="logo" class="form-control" accept="image/*" onchange="fileInputChanged('clear_logo')">
+                    <div class="form-text text-muted mt-1" style="font-size: 10px;">Recommended for header icon</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Campus Slider Image 1</label>
-              {% if school.campus_image %}
-                <div class="image-preview-container mb-2" id="container_clear_campus_image">
-                  <div class="image-preview-wrapper">
-                    <img src="{{ school.campus_image.url }}" class="preview-img">
-                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image')" title="Delete existing image">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image')" title="Undo delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                      Undo
-                    </div>
-                  </div>
-                  <input type="hidden" name="clear_campus_image" id="clear_campus_image" value="0">
+
+            <!-- Campus Slider Image 1 -->
+            <div class="col-md-6">
+              <div class="upload-card">
+                <div class="upload-card-header">
+                  <label class="form-label mb-0">Campus Slider Image 1</label>
+                  <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px; text-transform: uppercase;">Landscape / 16:9</span>
                 </div>
-              {% endif %}
-              <input type="file" name="campus_image" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image')">
+                <div class="upload-card-body">
+                  <div class="upload-card-preview">
+                    {% if school.campus_image %}
+                      <div class="image-preview-container" id="container_clear_campus_image">
+                        <div class="image-preview-wrapper shadow-sm">
+                          <img src="{{ school.campus_image.url }}" class="preview-img slider-preview">
+                          <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image')" title="Delete existing image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                          <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image')" title="Undo delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            Undo
+                          </div>
+                        </div>
+                        <input type="hidden" name="clear_campus_image" id="clear_campus_image" value="0">
+                      </div>
+                    {% else %}
+                      <div class="no-image-placeholder slider-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="upload-card-input">
+                    <input type="file" name="campus_image" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image')">
+                    <div class="form-text text-muted mt-1" style="font-size: 10px;">For the home page slideshow</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Campus Slider Image 2</label>
-              {% if school.campus_image2 %}
-                <div class="image-preview-container mb-2" id="container_clear_campus_image2">
-                  <div class="image-preview-wrapper">
-                    <img src="{{ school.campus_image2.url }}" class="preview-img">
-                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image2')" title="Delete existing image">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image2')" title="Undo delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                      Undo
-                    </div>
-                  </div>
-                  <input type="hidden" name="clear_campus_image2" id="clear_campus_image2" value="0">
+
+            <!-- Campus Slider Image 2 -->
+            <div class="col-md-6">
+              <div class="upload-card">
+                <div class="upload-card-header">
+                  <label class="form-label mb-0">Campus Slider Image 2</label>
+                  <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px; text-transform: uppercase;">Landscape / 16:9</span>
                 </div>
-              {% endif %}
-              <input type="file" name="campus_image2" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image2')">
+                <div class="upload-card-body">
+                  <div class="upload-card-preview">
+                    {% if school.campus_image2 %}
+                      <div class="image-preview-container" id="container_clear_campus_image2">
+                        <div class="image-preview-wrapper shadow-sm">
+                          <img src="{{ school.campus_image2.url }}" class="preview-img slider-preview">
+                          <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image2')" title="Delete existing image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                          <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image2')" title="Undo delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            Undo
+                          </div>
+                        </div>
+                        <input type="hidden" name="clear_campus_image2" id="clear_campus_image2" value="0">
+                      </div>
+                    {% else %}
+                      <div class="no-image-placeholder slider-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="upload-card-input">
+                    <input type="file" name="campus_image2" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image2')">
+                    <div class="form-text text-muted mt-1" style="font-size: 10px;">For the home page slideshow</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Campus Slider Image 3</label>
-              {% if school.campus_image3 %}
-                <div class="image-preview-container mb-2" id="container_clear_campus_image3">
-                  <div class="image-preview-wrapper">
-                    <img src="{{ school.campus_image3.url }}" class="preview-img">
-                    <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image3')" title="Delete existing image">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image3')" title="Undo delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                      Undo
-                    </div>
-                  </div>
-                  <input type="hidden" name="clear_campus_image3" id="clear_campus_image3" value="0">
+
+            <!-- Campus Slider Image 3 -->
+            <div class="col-md-6">
+              <div class="upload-card">
+                <div class="upload-card-header">
+                  <label class="form-label mb-0">Campus Slider Image 3</label>
+                  <span class="badge bg-light text-secondary border fw-normal" style="font-size: 10px; text-transform: uppercase;">Landscape / 16:9</span>
                 </div>
-              {% endif %}
-              <input type="file" name="campus_image3" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image3')">
+                <div class="upload-card-body">
+                  <div class="upload-card-preview">
+                    {% if school.campus_image3 %}
+                      <div class="image-preview-container" id="container_clear_campus_image3">
+                        <div class="image-preview-wrapper shadow-sm">
+                          <img src="{{ school.campus_image3.url }}" class="preview-img slider-preview">
+                          <button type="button" class="btn-delete-img" onclick="deleteImage('clear_campus_image3')" title="Delete existing image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                          <div class="undo-delete-badge" onclick="undoDeleteImage('clear_campus_image3')" title="Undo delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            Undo
+                          </div>
+                        </div>
+                        <input type="hidden" name="clear_campus_image3" id="clear_campus_image3" value="0">
+                      </div>
+                    {% else %}
+                      <div class="no-image-placeholder slider-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="upload-card-input">
+                    <input type="file" name="campus_image3" class="form-control" accept="image/*" onchange="fileInputChanged('clear_campus_image3')">
+                    <div class="form-text text-muted mt-1" style="font-size: 10px;">For the home page slideshow</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
