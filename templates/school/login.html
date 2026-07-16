@@ -114,6 +114,9 @@ body {
   box-shadow: 0 10px 30px rgba(90, 18, 5, 0.05);
   margin-top: 0;
 }
+.is-hidden {
+  display: none !important;
+}
 .nav-brand {
   display: flex;
   align-items: center;
@@ -1228,7 +1231,7 @@ body {
           <span class="nav-initials">{{ tenant.name|slice:":2"|upper }}</span>
         {% endif %}
       </div>
-      <span class="nav-title">{{ tenant.name }}</span>
+      <span class="nav-title {% if tenant.logo %}is-hidden{% endif %}" id="nav-title-text">{{ tenant.name }}</span>
     </a>
     
     <ul class="nav-links">
@@ -1811,6 +1814,10 @@ function handleImageError(img) {
     if (fallback) {
       fallback.classList.remove('is-hidden');
     }
+  }
+  const title = document.getElementById('nav-title-text');
+  if (title) {
+    title.classList.remove('is-hidden');
   }
 }
 

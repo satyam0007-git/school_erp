@@ -62,6 +62,9 @@ body {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 }
+.is-hidden {
+  display: none !important;
+}
 .nav-brand {
   display: flex;
   align-items: center;
@@ -903,7 +906,7 @@ body {
           </span>
         {% endif %}
       </div>
-      <span class="nav-title">{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
+      <span class="nav-title {% if settings.logo %}is-hidden{% endif %}" id="nav-title-text">{% if settings.software_name %}{{ settings.software_name }}{% else %}SchoolERP{% endif %}</span>
     </a>
     <ul class="nav-links">
       <li><a href="#features" class="nav-link">Modules</a></li>
@@ -1289,6 +1292,10 @@ function handleImageError(img) {
     if (fallback) {
       fallback.classList.remove('is-hidden');
     }
+  }
+  const title = document.getElementById('nav-title-text');
+  if (title) {
+    title.classList.remove('is-hidden');
   }
 }
 
