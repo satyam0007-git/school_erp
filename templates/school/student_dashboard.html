@@ -39,9 +39,6 @@
       z-index: 100;
       box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
-    .logo-only-hide {
-      display: none !important;
-    }
     .school-info {
       display: flex;
       align-items: center;
@@ -251,17 +248,12 @@
   <header class="topbar">
     <div class="school-info">
       {% if school.logo %}
-        <img src="{{ school.logo.url }}" alt="School Logo" class="school-logo" onerror="this.style.display='none'; document.getElementById('student-school-name').classList.remove('logo-only-hide');">
-        <div id="student-school-name" class="logo-only-hide">
-          <div class="school-name">{{ school.name }}</div>
-          <span class="student-badge">Student Portal</span>
-        </div>
-      {% else %}
-        <div>
-          <div class="school-name">{{ school.name }}</div>
-          <span class="student-badge">Student Portal</span>
-        </div>
+        <img src="{{ school.logo.url }}" alt="School Logo" class="school-logo">
       {% endif %}
+      <div>
+        <div class="school-name">{{ school.name }}</div>
+        <span class="student-badge">Student Portal</span>
+      </div>
     </div>
     <div style="display: flex; align-items: center;">
       <a href="{% url 'logout' %}" class="logout-btn">
