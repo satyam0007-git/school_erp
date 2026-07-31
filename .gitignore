@@ -4,3 +4,5 @@ env
 .env.production
 logs
 media
+__pycache__/
+*.py[cod]
