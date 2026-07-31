@@ -46,10 +46,10 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 80px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(3, 7, 18, 0.85); /* Sleek glassmorphic dark matching space dark */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -59,8 +59,8 @@ body {
 }
 .navbar.scrolled {
   height: 70px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  background: rgba(3, 7, 18, 0.98);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 .is-hidden {
   display: none !important;
@@ -70,19 +70,19 @@ body {
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: var(--text-1);
+  color: #ffffff; /* Bright white text for brand */
 }
 .nav-logo-wrap {
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 .nav-logo-wrap img {
   width: 100%;
@@ -93,12 +93,13 @@ body {
 .nav-initials {
   font-size: 16px;
   font-weight: 800;
-  color: var(--brand);
+  color: var(--brand-light);
 }
 .nav-title {
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.5px;
+  color: #ffffff;
 }
 .nav-links {
   display: flex;
@@ -109,12 +110,12 @@ body {
 .nav-link {
   font-size: 14.5px;
   font-weight: 600;
-  color: var(--text-2);
+  color: #cbd5e1; /* Slate 200 */
   text-decoration: none;
   transition: var(--transition);
 }
 .nav-link:hover {
-  color: var(--brand);
+  color: #ffffff; /* White on hover */
 }
 .nav-actions {
   display: flex;
@@ -155,7 +156,7 @@ body {
 .hero-section {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0d14 0%, #151a26 100%);
+  background: #030712; /* Deep space dark */
   padding: 90px 48px 80px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -176,28 +177,29 @@ body {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
-  animation: meshAnim 15s ease-in-out infinite alternate;
+    radial-gradient(ellipse 65% 55% at 5% 5%, rgba(99, 102, 241, 0.35) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 60% at 95% 95%, rgba(217, 70, 239, 0.3) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 45% at 50% 50%, rgba(14, 165, 233, 0.18) 0%, transparent 60%);
+  animation: meshAnim 20s ease-in-out infinite alternate;
 }
 .hero-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  animation: orbFloat 12s ease-in-out infinite alternate;
+  filter: blur(95px);
+  opacity: 0.35;
+  animation: orbFloat 16s ease-in-out infinite alternate;
 }
-.hero-orb-1 { width: 500px; height: 500px; background: var(--brand); top: -10%; left: -10%; }
-.hero-orb-2 { width: 400px; height: 400px; background: #0ea5e9; bottom: -10%; right: -5%; animation-delay: -4s; }
+.hero-orb-1 { width: 580px; height: 580px; background: #6366f1; top: -10%; left: -5%; }
+.hero-orb-2 { width: 480px; height: 480px; background: #d946ef; bottom: -12%; right: -5%; animation-delay: -6s; }
+.hero-orb-3 { width: 350px; height: 350px; background: #0ea5e9; top: 30%; left: 35%; animation-delay: -3s; }
 .hero-grid-overlay {
   position: absolute;
   inset: 0;
   background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
                     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 50px 50px;
-  mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
-  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 80%);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(circle at 30% 30%, black, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle at 30% 30%, black, transparent 85%);
 }
 
 @keyframes meshAnim {
@@ -218,9 +220,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #c7d2fe;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -230,12 +232,12 @@ body {
   margin-bottom: 24px;
 }
 .hero-heading {
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1px;
+  line-height: 1.12;
+  letter-spacing: -1.2px;
   margin-bottom: 20px;
-  background: linear-gradient(to right, #ffffff, #cbd5e1);
+  background: linear-gradient(135deg, #ffffff 40%, #c7d2fe 80%, #6366f1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -254,12 +256,12 @@ body {
 }
 .hero-slider-wrap {
   width: 100%;
-  height: 380px;
-  border-radius: 20px;
+  height: 390px;
+  border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.08);
 }
 .hero-slider-inner {
   position: relative;
@@ -309,13 +311,15 @@ body {
 .school-ticker-container {
   width: 100%;
   overflow: hidden;
-  background: #0b0f19; /* Deep dark background matching hero start */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 14px 0;
   position: relative;
   z-index: 10;
   margin-top: 80px; /* Push it below the fixed navbar */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
 }
 
 /* Gradient overlays on left and right for fade out effect */
@@ -331,11 +335,11 @@ body {
 }
 .school-ticker-container::before {
   left: 0;
-  background: linear-gradient(to right, #0b0f19 0%, transparent 100%);
+  background: linear-gradient(to right, #030712 0%, transparent 100%);
 }
 .school-ticker-container::after {
   right: 0;
-  background: linear-gradient(to left, #0b0f19 0%, transparent 100%);
+  background: linear-gradient(to left, #030712 0%, transparent 100%);
 }
 
 .school-ticker-wrapper {
@@ -354,7 +358,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 0 40px;
-  color: #94a3b8; /* Muted slate text */
+  color: #cbd5e1; /* Light slate text */
   font-size: 14.5px;
   font-weight: 600;
   text-decoration: none;
@@ -364,7 +368,7 @@ body {
 
 .school-ticker-item:hover {
   transform: translateY(-1px);
-  color: #ffffff; /* Bright white on hover */
+  color: #818cf8; /* Light Indigo on hover */
 }
 
 .school-ticker-logo {
@@ -1192,6 +1196,7 @@ body {
       <div class="hero-bg-mesh"></div>
       <div class="hero-orb hero-orb-1"></div>
       <div class="hero-orb hero-orb-2"></div>
+      <div class="hero-orb hero-orb-3"></div>
       <div class="hero-grid-overlay"></div>
     </div>
 
@@ -1203,13 +1208,13 @@ body {
         {% if settings.organization_address %}
           "{{ settings.organization_address }}"
         {% else %}
-          An integrated, enterprise-level ERP solution designed to handle student portfolios, collections, academics, and automated reporting.
+          Elevating the learning and study experience for students.<br>Simplifying administrative and management control for institutions.
         {% endif %}
       </p>
 
       <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
         <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-primary" style="padding: 14px 28px; font-size: 15px;">Console Sign In</a>
-        <a href="#features" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #fff; border-color: rgba(255,255,255,0.25);">Explore Modules</a>
+        <a href="#features" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #ffffff; border-color: rgba(255,255,255,0.25);">Explore Modules</a>
       </div>
     </div>
 
