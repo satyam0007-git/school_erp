@@ -1,6 +1,5 @@
 
 env
-.env
-.env.production
+.venv
 logs
 media

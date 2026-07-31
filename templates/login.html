@@ -305,6 +305,106 @@ body {
   gap: 8px;
 }
 
+/* SCHOOL TICKER / MARQUEE */
+.school-ticker-container {
+  width: 100%;
+  overflow: hidden;
+  background: #0f172a; /* Slate 900 background to match the theme */
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 0;
+  position: relative;
+  z-index: 10;
+  box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient overlays on left and right for fade out effect */
+.school-ticker-container::before,
+.school-ticker-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 150px;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
+}
+.school-ticker-container::before {
+  left: 0;
+  background: linear-gradient(to right, #0f172a 0%, transparent 100%);
+}
+.school-ticker-container::after {
+  right: 0;
+  background: linear-gradient(to left, #0f172a 0%, transparent 100%);
+}
+
+.school-ticker-wrapper {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  animation: marquee-scroll 25s linear infinite;
+}
+
+.school-ticker-wrapper:hover {
+  animation-play-state: paused;
+}
+
+.school-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 40px;
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.school-ticker-item:hover {
+  transform: translateY(-2px);
+  color: var(--brand-light);
+}
+
+.school-ticker-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #ffffff;
+  object-fit: contain;
+  padding: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.school-ticker-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.school-ticker-name {
+  letter-spacing: -0.2px;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 /* LOGIN MODAL OVERLAY */
 .login-modal-overlay {
   position: fixed;
@@ -990,6 +1090,27 @@ body {
       {% endif %}
     </div>
   </header>
+
+  <!-- SCHOOL TICKER SECTION -->
+  {% if schools %}
+  <div class="school-ticker-container">
+    <div class="school-ticker-wrapper">
+      {% for i in "1234" %}
+        {% for school in schools %}
+          <a href="{{ school.get_tenant_url }}" target="_blank" class="school-ticker-item">
+            {% if school.logo %}
+              <img src="{{ school.logo.url }}" alt="{{ school.name }}" class="school-ticker-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="school-ticker-initials" style="display: none;">{{ school.name|slice:":2"|upper }}</div>
+            {% else %}
+              <div class="school-ticker-initials">{{ school.name|slice:":2"|upper }}</div>
+            {% endif %}
+            <span class="school-ticker-name">{{ school.name }}</span>
+          </a>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
   <!-- FEATURES / ERP MODULES SECTION -->
   <section class="section features-section" id="features">
