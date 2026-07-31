@@ -5,4 +5,9 @@ env
 logs
 media
 __pycache__/
+<<<<<<< HEAD
 *.py[cod]
+=======
+*.py[cod]
+*.pyo
+>>>>>>> e74b8cc94b701da72c73c957cb5bff862d51347d
