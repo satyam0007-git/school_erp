@@ -1197,6 +1197,142 @@ body {
 @media (max-width: 580px) {
   .navbar .nav-title, .topbar-strip-info { display: none !important; }
 }
+
+/* PULSE DOT STYLE */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* FLOATING SUPPORT HELP WIDGET */
+.help-widget-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1500;
+}
+.help-widget-trigger {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 10px 25px var(--brand-glow);
+  transition: var(--transition);
+}
+.help-widget-trigger:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2), 0 12px 30px var(--brand-glow);
+}
+.help-widget-trigger svg {
+  width: 24px;
+  height: 24px;
+}
+.help-widget-card {
+  position: absolute;
+  bottom: 76px;
+  right: 0;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.help-widget-card.active {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.help-card-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 20px;
+  color: #ffffff;
+}
+.help-card-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.help-card-header p {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.help-card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.help-card-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text-dark);
+  transition: var(--transition);
+  cursor: pointer;
+}
+.help-card-item:hover {
+  background: #f8fafc;
+}
+.help-item-icon {
+  font-size: 20px;
+}
+.help-item-details h5 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.help-item-details p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.help-status-item {
+  cursor: default;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+.help-status-item:hover {
+  background: #f0fdf4;
+}
+
+@media (max-width: 480px) {
+  .help-widget-card {
+    width: 280px;
+    right: -10px;
+  }
+}
 </style>
 </head>
 <body>
@@ -1787,6 +1923,41 @@ body {
     </div>
   </div>
 
+  <!-- SUPPORT HELP WIDGET -->
+  <div class="help-widget-container" id="helpWidget">
+    <button class="help-widget-trigger" onclick="toggleHelpWidget()" aria-label="Open support options">
+      <svg class="help-icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <svg class="help-icon-close" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="help-widget-card" id="helpWidgetCard">
+      <div class="help-card-header">
+        <h4>Enterprise Help Desk</h4>
+        <p>How can we assist you today?</p>
+      </div>
+      <div class="help-card-body">
+        <a href="#support" class="help-card-item" onclick="toggleHelpWidget()">
+          <span class="help-item-icon">📞</span>
+          <div class="help-item-details">
+            <h5>Contact Support</h5>
+            <p>Direct lines to administration head</p>
+          </div>
+        </a>
+        <a href="#features" class="help-card-item" onclick="toggleHelpWidget()">
+          <span class="help-item-icon">📖</span>
+          <div class="help-item-details">
+            <h5>Offered Solutions</h5>
+            <p>Explore ERP modules & usage guides</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
 <script>
 // Bullets rendering
 (function() {
@@ -2005,6 +2176,32 @@ document.addEventListener('DOMContentLoaded', () => {
   {% if messages %}
   openLoginModal();
   {% endif %}
+});
+
+function toggleHelpWidget() {
+  const card = document.getElementById('helpWidgetCard');
+  const trigger = document.getElementById('helpWidget');
+  const iconOpen = trigger.querySelector('.help-icon-open');
+  const iconClose = trigger.querySelector('.help-icon-close');
+  
+  if (card.classList.contains('active')) {
+    card.classList.remove('active');
+    iconOpen.style.display = 'block';
+    iconClose.style.display = 'none';
+  } else {
+    card.classList.add('active');
+    iconOpen.style.display = 'none';
+    iconClose.style.display = 'block';
+  }
+}
+
+// Close help card when clicking outside
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('helpWidget');
+  const card = document.getElementById('helpWidgetCard');
+  if (container && card && !container.contains(e.target) && card.classList.contains('active')) {
+    toggleHelpWidget();
+  }
 });
 </script>
 
