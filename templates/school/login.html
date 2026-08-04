@@ -1420,8 +1420,8 @@ body {
       </p>
 
       <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
-        <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-primary" style="padding: 14px 28px; font-size: 15px;">ERP Student/Staff Sign In</a>
-        <a href="#about" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #fff; border-color: rgba(255,255,255,0.3);">Explore Our Campus</a>
+        <a href="javascript:void(0)" onclick="openLoginModal(event, 'staff')" class="nav-btn nav-btn-primary" style="padding: 14px 28px; font-size: 15px;">School Login</a>
+        <a href="javascript:void(0)" onclick="openLoginModal(event, 'student')" class="nav-btn nav-btn-secondary" style="padding: 14px 28px; font-size: 15px; color: #fff; border-color: rgba(255,255,255,0.3);">Student Login</a>
       </div>
     </div>
 
@@ -1615,7 +1615,7 @@ body {
         <p>Join one of Hathras' most trusted educational institutions. Give your child a nurturing, secure environment where they can grow and excel academically and morally.</p>
         
         <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <a href="javascript:void(0)" onclick="openLoginModal(event)" class="nav-btn nav-btn-secondary" style="color: var(--white); border-color: rgba(255,255,255,0.4);">Student ERP Log In</a>
+          <a href="javascript:void(0)" onclick="openLoginModal(event, 'student')" class="nav-btn nav-btn-secondary" style="color: var(--white); border-color: rgba(255,255,255,0.4);">Student ERP Log In</a>
         </div>
       </div>
       
@@ -2033,8 +2033,11 @@ function switchTab(type) {
 }
 
 // Modal open/close actions
-function openLoginModal(e) {
+function openLoginModal(e, initialTab = null) {
   if (e) e.preventDefault();
+  if (initialTab) {
+    switchTab(initialTab);
+  }
   const modal = document.getElementById('loginModal');
   if (modal) {
     modal.classList.add('active');
